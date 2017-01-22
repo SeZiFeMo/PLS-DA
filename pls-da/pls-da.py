@@ -1,32 +1,66 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # coding: utf-8
 
-import matplotlib.pyplot as plt
-import numpy as np
+import argparse
+import logging
+import sys
 
-if __name__ != '__main__':
-    print('That script should be run, not loaded!')
+if sys.version_info < (3,):
+    major, minor = sys.version_info[0], sys.version_info[1]
+    print('You are using the Python interpreter {}.{}.\n'
+          'Please use at least Python version 3!'.format(major, minor))
     exit(1)
 
-log_level = {'DEBUG': 0,
-             'INFO': 1,
-             'WARNING': 2,
-             'ERROR': 3,
-             'CRITICAL': 4}['WARNING']
+for lib in ('numpy', 'yaml'):
+    try:
+        exec('import ' + lib)
+    except ImportError:
+        print('Could not import {} library, please install it!'.format(lib))
+        exit(1)
 
+if __name__ != '__main__':
+    print('Please do not load that script, run it!')
+    exit(1)
+
+
+args = None
 dataset = None
-namespace = None
 
-def log(record, level=0):
-    """Print log message if above threshold."""
-    global log_level
-    if (level >= log_level):
-        print('{}\n'.format(str(record).strip('\n')))
+
+def parse_args():
+    """Return command line parameters."""
+    global args
+    if args is None:
+        parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawTextHelpFormatter,
+            description='Script to ...\n',
+            epilog='REQUIREMENTS: Python 3 (>= 3.4)\n'
+                   '              NumPy   https://pypi.python.org/pypi/numpy\n'
+                   '              PyYAML  http://pyyaml.org/wiki/PyYAML\n')
+        parser.add_argument('-i', '--input-file',
+                            default='wine.csv',
+                            dest='input_file',
+                            help='File with comma saved value input dataset',
+                            metavar='file',
+                            type=str)
+        args = parser.parse_args()
+    return args
+parse_args()
+
+
+def setup_logging(level):
+    """Initialize logging for all the libraries and the script."""
+    level = getattr(logging, level.upper())
+    logging.basicConfig(format='[%(levelname)s]\t%(message)s', level=level)
+    for l in logging.Logger.manager.loggerDict.keys():
+    logging.getLogger(__name__).setLevel(level)  # current script logging
+setup_logging('debug')  # called here to ensure log function will work
+
 
 def mat2str(data, show=False, h_bar='-', v_bar='|', join='+'):
     """Print or return an ascii table."""
     try:
-        if isinstance(data, (np.ndarray, np.generic)) and data.ndim == 2:
+        if isinstance(data, (numpy.ndarray, numpy.generic)) and data.ndim == 2:
             ret = join + h_bar + h_bar * 11 * len(data[0]) + join + '\n'
             for row in data:
                 ret += v_bar + ' '
@@ -34,8 +68,8 @@ def mat2str(data, show=False, h_bar='-', v_bar='|', join='+'):
                     ret += '{: < 10.3e} '.format(col)
                 ret += v_bar + '\n'
             ret += join + h_bar + h_bar * 11 * len(data[0]) + join + '\n'
-        elif (isinstance(data, (np.ndarray, np.generic)) and data.ndim == 1) \
-                or isinstance(data, (list, tuple)):
+        elif (isinstance(data, (numpy.ndarray, numpy.generic))
+              and data.ndim == 1) or isinstance(data, (list, tuple)):
             ret = join + h_bar + h_bar * 11 * len(data) + join + '\n'
             ret += v_bar + ' '
             for cell in data:
@@ -55,20 +89,36 @@ def mat2str(data, show=False, h_bar='-', v_bar='|', join='+'):
             return ret
 
 
-def seq2str(seq):
-    """Return string representation of a sequence."""
-    return str(seq).translate({ord(d): '' for d in '{}\'[]"()'})
+def log(msg='', data=None, level='debug'):
+    """Print log message if above threshold."""
+    logger = getattr(logging.getLogger(__name__), level)
+    if data is None:
+        logger(msg)
+    else:
+        if (isinstance(data, (numpy.ndarray, numpy.generic))
+            and data.ndim in (1, 2)) or \
+           isinstance(data, (list, tuple)):
+            data = mat2str(data)
+        else:
+            data = yaml.dump(data, default_flow_style=False)
+        logger(msg.rstrip('\n') + '\n    ' + data.replace('\n', '\n    '))
+
 
 class PLS_DA(object):
-    def __init__(self, csv_file):
+
+    def __init__(self, csv_file=None):
+        """Constructor method"""
+        if csv_file is None:
+            csv_file = parse_args().input_file
+
         self._dataset_original = None
         self.parse_csv(csv_file)
-        self.dataset = np.copy(self._dataset_original)
+        self.dataset = numpy.copy(self._dataset_original)
         self.n_rows, self.n_cols = self.dataset.shape
 
     def parse_csv(self, filename):
-        """self.keys             = first row of labels
-           self.categories       = first column of labels about wine type
+        """self.keys              = first row of labels
+           self.categories        = first column of labels about wine type
            self._dataset_original = the rest of the matrix
         """
 
@@ -104,18 +154,16 @@ class PLS_DA(object):
         self._dataset_original = [[float(elem.replace(',', '.'))
                                    for elem in row]
                                   for row in self._dataset_original]
-        self._dataset_original = np.array(self._dataset_original)
-        log('[PLS_DA::parse_csv] '
-            '_dataset_original: \n{}'.format(mat2str(self._dataset_original)),
-            0)
+        self._dataset_original = numpy.array(self._dataset_original)
+        log('[PLS_DA::parse_csv] self._dataset_original',
+            self._dataset_original)
 
     def preprocess_mean(self, use_original=False):
         """Substitute self.dataset with its centered version."""
         dataset = self._dataset_original if use_original else self.dataset
         self.mean = dataset.mean(axis=self.axis)
         self.dataset = dataset - self.mean
-        log('[PLS_DA::preprocess_mean] '
-            'Centered matrix: \n{}'.format(mat2str(self.dataset)), 0)
+        log('[PLS_DA::preprocess_mean] Centered matrix', self.dataset)
         self.centered = True
 
     def preprocess_normalize(self, use_original=False):
@@ -123,18 +171,15 @@ class PLS_DA(object):
         dataset = self._dataset_original if use_original else self.dataset
         self.sigma = dataset.std(axis=self.axis)
         self.dataset = self.dataset / self.sigma
-        log('[PLS_DA::preprocess_normalize] '
-            'Normalized matrix: \n{}'.format(mat2str(self.dataset)), 0)
+        log('[PLS_DA::preprocess_normalize] Normalized matrix', self.dataset)
         self.normalized = True
-
 
     def preprocess_autoscaling(self, use_original=False):
         """Substitute self.dataset with its autoscaled version."""
         dataset = self._dataset_original if use_original else self.dataset
         self.preprocess_mean(use_original)  # it initializes self.dataset
         self.preprocess_normalize(use_original)
-        log('[PLS_DA::preprocess_autoscaling] '
-            'Autoscaled matrix: \n{}'.format(mat2str(self.dataset)), 0)
+        log('[PLS_DA::preprocess_autoscaling] Autoscaled matrix', self.dataset)
         self.autoscaled = True
 
     def get_dummy_variables(self):
@@ -145,11 +190,9 @@ class PLS_DA(object):
         for cat in categories:
             li.append([1 if c == cat else 0 for c in self.categories])
 
-        self.dummy_Y = np.array(li)
+        self.dummy_Y = numpy.array(li)
 
-        log('[PLS_DA::get_dummy_variables] '
-            'dummy Y variables: \n{}'.format(mat2str(self.dummy_Y)), 0)
+        log('[PLS_DA::get_dummy_variables] dummy Y variables', self.dummy_Y)
 
-# main
-pls = PLS_DA("wine.csv")
+pls = PLS_DA()
 pls.get_dummy_variables()
