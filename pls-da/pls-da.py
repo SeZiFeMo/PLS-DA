@@ -26,8 +26,6 @@ if __name__ != '__main__':
 
 
 args = None
-dataset = None
-
 
 def parse_args():
     """Return command line parameters."""
@@ -374,9 +372,9 @@ class PLS_DA(object):
                                    self.scores[:, pc_x]))
         y_val = numpy.concatenate((self.loadings[:, pc_y],
                                    self.scores[:, pc_y]))
-        min_x = math.floor(numpy.min(x_val)),
+        min_x = math.floor(numpy.min(x_val))
         max_x = math.ceil(numpy.max(x_val))
-        min_y = math.floor(numpy.min(y_val)),
+        min_y = math.floor(numpy.min(y_val))
         max_y = math.ceil(numpy.max(y_val))
         return {'x': (min_x, max_x), 'y': (min_y, max_y)}
 
