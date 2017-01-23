@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import logging
+import numpy as np
+import yaml
+
+
+if __name__ == '__main__':
+    PKG.io.Log.warning('Please do not run that script, load it!')
+    exit(1)
+
+
+def mat2str(data, h_bar='-', v_bar='|', join='+'):
+    """Return an ascii table."""
+    try:
+        if isinstance(data, (np.ndarray, np.generic)) and data.ndim == 2:
+            ret = join + h_bar + h_bar * 11 * len(data[0]) + join + '\n'
+            for row in data:
+                ret += v_bar + ' '
+                for col in row:
+                    ret += '{: < 10.3e} '.format(col)
+                ret += v_bar + '\n'
+            ret += join + h_bar + h_bar * 11 * len(data[0]) + join + '\n'
+        elif (isinstance(data, (np.ndarray, np.generic))
+              and data.ndim == 1) or isinstance(data, (list, tuple)):
+            ret = join + h_bar + h_bar * 11 * len(data) + join + '\n'
+            ret += v_bar + ' '
+            for cell in data:
+                ret += '{: < 10.3e} '.format(cell)
+            ret += v_bar + '\n'
+            ret += join + h_bar + h_bar * 11 * len(data) + join + '\n'
+        else:
+            raise Exception('Not supported data type ({}) '
+                            'in mat2str()'.format(type(data)))
+    except Exception as e:
+        PKG.io.Log.warning(e)
+        ret = str(data)
+    finally:
+        return ret
+
+
+class Log(object):
+
+    _default = 'debug'
+    _initialized = False
+    _name = 'PLS_DA'
+
+    def __log(msg='', data=None, level=None):
+        """Print log message if above threshold."""
+        if level is None:
+            level = Log._default
+
+        if not Log._initialized:
+            logging_level = getattr(logging, Log._default.upper())
+            logging.basicConfig(format='[%(levelname)s]\t%(message)s',
+                                level=logging_level)
+            for l in logging.Logger.manager.loggerDict.keys():
+                logging.getLogger(l).setLevel(logging.INFO)
+
+            # current script / package logging
+            logging.getLogger(Log._name).setLevel(logging_level)
+            Log._initialized = True
+
+        logger = getattr(logging.getLogger(Log._name), level)
+        if data is None:
+            logger(msg.replace('\n', '\n    '))
+        else:
+            if (isinstance(data, (np.ndarray, np.generic))
+                and data.ndim in (1, 2)) or \
+               isinstance(data, (list, tuple)):
+                data = mat2str(data)
+            else:
+                data = yaml.dump(data, default_flow_style=False)
+            logger(msg.rstrip('\n') + '\n    ' + data.replace('\n', '\n    '))
+
+    def critical(msg='', data=None):
+        return Log.__log(msg=msg, data=data, level='critical')
+
+    def debug(msg='', data=None):
+        return Log.__log(msg=msg, data=data, level='debug')
+
+    def error(msg='', data=None):
+        return Log.__log(msg=msg, data=data, level='error')
+
+    def info(msg='', data=None):
+        return Log.__log(msg=msg, data=data, level='info')
+
+    def warning(msg='', data=None):
+        return Log.__log(msg=msg, data=data, level='warning')

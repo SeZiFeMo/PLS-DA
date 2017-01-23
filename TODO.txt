@@ -1,0 +1,4 @@
+- split into files
+- clean up code
+- unittest
+- gui
