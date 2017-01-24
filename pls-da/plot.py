@@ -38,7 +38,7 @@ def properties_of(category):
         raise Exception('Unknown category ' + category)
 
 
-def scatter(x_values, y_values, cat):
+def scatter_plot(x_values, y_values, cat):
     plt.scatter(x=x_values,
                 y=y_values,
                 edgecolors=properties_of(cat)['edge_color'],
@@ -46,7 +46,7 @@ def scatter(x_values, y_values, cat):
                 s=40,
                 c=properties_of(cat)['face_color'],
                 alpha=.6,
-                #               linewidth=0.10,
+                # linewidth=0.10,
                 label=cat)
 
 
@@ -60,7 +60,7 @@ def scores_plot(model, pc_x, pc_y):
 
     for n in range(model.scores.shape[0]):
         cat = model.categories[n]
-        scatter(model.scores[n, pc_x], model.scores[n, pc_y], cat)
+        scatter_plot(model.scores[n, pc_x], model.scores[n, pc_y], cat)
 
     ax = plt.gca()
     plt.title('Scores plot')
