@@ -1,0 +1,10 @@
+PC1 identifica perfettamente SA dal resto (a parte outlier di NA), quasi tutte
+nella parte positiva di PC1. Tutti gli acidi a parte oleico e stearico
+
+PC2 separa abbastanza bene WL dal resto. PC1+PC2 separano perfettamente WL e SA
+da NA e U (sovrapposti, acido oleico)
+
+PC2/PC3 separa in maniera discreta U e NA. Rimangono sovrapposti nei valori
+centrali
+
+PC4 perde completamente informazione
