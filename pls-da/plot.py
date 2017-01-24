@@ -2,12 +2,12 @@
 # coding: utf-8
 
 import collections
-import PKG.io
+import IO
 import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
-    PKG.io.Log.warning('Please do not run that script, load it!')
+    IO.Log.warning('Please do not run that script, load it!')
     exit(1)
 
 
@@ -15,8 +15,8 @@ def properties_of(category):
     """Return a dictionary with keys: edge_color, face_color, marker."""
     circle, cross, diamond, triangle = 'o', 'x', 'D', '^'
 
-    blue, dark_red, gold, green, red, orange = '#1F77B4', '#A00000', '#FFD700', \
-                                               '#2CA02C', '#D62728', '#FF7F0E'
+    blue, dark_red, gold, = '#1F77B4', '#A00000', '#FFD700'
+    green, red, orange = '#2CA02C', '#D62728', '#FF7F0E'
 
     if category == 'B':
         return {'edge_color': blue, 'face_color': blue, 'marker': circle}
@@ -26,7 +26,7 @@ def properties_of(category):
         return {'edge_color': red, 'face_color': red, 'marker': triangle}
     elif category == 'N':
         return {'edge_color': gold, 'face_color': dark_red, 'marker': diamond}
-    if category == 'NA':
+    elif category == 'NA':
         return {'edge_color': blue, 'face_color': blue, 'marker': circle}
     elif category == 'SA':
         return {'edge_color': green, 'face_color': green, 'marker': cross}
@@ -37,6 +37,7 @@ def properties_of(category):
     else:
         raise Exception('Unknown category ' + category)
 
+
 def scatter(x_values, y_values, cat):
     plt.scatter(x=x_values,
                 y=y_values,
@@ -45,13 +46,14 @@ def scatter(x_values, y_values, cat):
                 s=40,
                 c=properties_of(cat)['face_color'],
                 alpha=.6,
-#               linewidth=0.10,
+                #               linewidth=0.10,
                 label=cat)
+
 
 def scores_plot(model, pc_x, pc_y):
     """Plot the scores on the specified components."""
     if pc_x == pc_y:
-        PKG.io.Log.warning('Principal components must be different!')
+        IO.Log.warning('Principal components must be different!')
         exit(1)
 
     pc_x, pc_y = min(pc_x, pc_y), max(pc_x, pc_y)
@@ -77,7 +79,7 @@ def scores_plot(model, pc_x, pc_y):
 def loadings_plot(model, pc_x, pc_y):
     """Plot the loadings."""
     if pc_x == pc_y:
-        PKG.io.Log.warning('Principal components must be different!')
+        IO.Log.warning('Principal components must be different!')
         exit(1)
 
     pc_x, pc_y = min(pc_x, pc_y), max(pc_x, pc_y)

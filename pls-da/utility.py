@@ -2,20 +2,20 @@
 # coding: utf-8
 
 import argparse
-import PKG.io
+import IO
 import sys
 
 if __name__ == '__main__':
-    PKG.io.Log.warning('Please do not run that script, load it!')
+    IO.Log.warning('Please do not run that script, load it!')
     exit(1)
 
 
 def check_python_version():
     if sys.version_info < (3,):
-        maj, min = sys.version_info[0], sys.version_info[1]
-        PKG.io.Log.warning('You are using the Python interpreter {}.{}.\n'
-                           'Please use at least Python version 3!'.format(maj,
-                                                                          min))
+        major, minor, *__ = sys.version_info
+        IO.Log.warning('You are using the Python interpreter {}.{}.\n'
+                       'Please use at least Python version 3!'.format(major,
+                                                                      minor))
         exit(1)
     else:
         return True
@@ -36,7 +36,7 @@ class CLI(object):
                 description=CLI._description,
                 epilog=CLI._epilog)
             parser.add_argument('-i', '--input-file',
-                                default='wine.csv',
+                                default='datasets/olive_training.csv',
                                 dest='input_file',
                                 help='File with comma saved value dataset',
                                 metavar='file',

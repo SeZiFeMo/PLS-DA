@@ -6,11 +6,6 @@ import numpy as np
 import yaml
 
 
-if __name__ == '__main__':
-    PKG.io.Log.warning('Please do not run that script, load it!')
-    exit(1)
-
-
 def mat2str(data, h_bar='-', v_bar='|', join='+'):
     """Return an ascii table."""
     try:
@@ -34,7 +29,7 @@ def mat2str(data, h_bar='-', v_bar='|', join='+'):
             raise Exception('Not supported data type ({}) '
                             'in mat2str()'.format(type(data)))
     except Exception as e:
-        PKG.io.Log.warning(e)
+        Log.warning(e)
         ret = str(data)
     finally:
         return ret
@@ -88,3 +83,8 @@ class Log(object):
 
     def warning(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='warning')
+
+
+if __name__ == '__main__':
+    Log.warning('Please do not run that script, load it!')
+    exit(1)

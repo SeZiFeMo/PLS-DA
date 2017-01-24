@@ -3,13 +3,12 @@
 
 import math
 import numpy as np
-import PKG.io
-import PKG.plot
-import PKG.utility
+import IO
+import utility
 
 
 if __name__ == '__main__':
-    PKG.io.Log.warning('Please do not run that script, load it!')
+    IO.Log.warning('Please do not run that script, load it!')
     exit(1)
 
 
@@ -18,7 +17,7 @@ class PLS_DA(object):
     def __init__(self, csv_file=None):
         """Constructor method"""
         if csv_file is None:
-            csv_file = PKG.utility.CLI.args().input_file
+            csv_file = utility.CLI.args().input_file
 
         self.axis = 0
 
@@ -47,20 +46,17 @@ class PLS_DA(object):
                     line = line.strip('\n').split(';')
                     self._dataset_original.append(list(line))
         except IOError:
-            PKG.io.Log.error('File \'{}\' not existent, '
-                             'not readable or corrupted'.format(filename))
+            IO.Log.error('File \'{}\' not existent, '
+                         'not readable or corrupted'.format(filename))
             exit(1)
 
         for d in self._dataset_original:
-            if d[0].startswith('B'):
-                d[0] = 'B'
-            elif d[0].startswith('E'):
-                d[0] = 'E'
-            elif d[0].startswith('G'):
-                d[0] = 'G'
+            for cat in ('NA', 'SA', 'U', 'WL', 'B', 'E', 'G'):
+                if d[0].startswith(cat):
+                    d[0] = cat
+                    break
             else:
-                PKG.io.Log.warning('Unexpected wine '
-                                   'category ({})'.format(d[0]))
+                IO.Log.warning('Unexpected wine category ({})'.format(d[0]))
 
         # Delete category column from self._dataset_original
         # and save it for future uses
@@ -72,8 +68,8 @@ class PLS_DA(object):
                                    for elem in row]
                                   for row in self._dataset_original]
         self._dataset_original = np.array(self._dataset_original)
-        PKG.io.Log.debug('[PLS_DA::parse_csv] self._dataset_original',
-                         self._dataset_original)
+        IO.Log.debug('[PLS_DA::parse_csv] self._dataset_original',
+                     self._dataset_original)
 
     def preprocess_mean(self, use_original=False):
         """Substitute self.dataset with its centered version."""
@@ -81,8 +77,8 @@ class PLS_DA(object):
         self.mean = dataset.mean(axis=self.axis)
         self.dataset = dataset - self.mean
         self.dummy_Y = self.dummy_Y - self.dummy_Y.mean(axis=self.axis)
-        PKG.io.Log.debug('[PLS_DA::preprocess_mean] Centered matrix',
-                         self.dataset)
+        IO.Log.debug('[PLS_DA::preprocess_mean] Centered matrix',
+                     self.dataset)
         self.centered = True
 
     def preprocess_normalize(self, use_original=False):
@@ -91,17 +87,16 @@ class PLS_DA(object):
         self.sigma = dataset.std(axis=self.axis)
         self.dataset = self.dataset / self.sigma
         self.dummy_Y = self.dummy_Y - self.dummy_Y.std(axis=self.axis)
-        PKG.io.Log.debug('[PLS_DA::preprocess_normalize] Normalized matrix',
-                         self.dataset)
+        IO.Log.debug('[PLS_DA::preprocess_normalize] Normalized matrix',
+                     self.dataset)
         self.normalized = True
 
     def preprocess_autoscale(self, use_original=False):
         """Substitute self.dataset with its autoscaled version."""
-        dataset = self._dataset_original if use_original else self.dataset
         self.preprocess_mean(use_original)  # it initializes self.dataset
         self.preprocess_normalize(use_original)
-        PKG.io.Log.debug('[PLS_DA::preprocess_autoscale] Autoscaled matrix',
-                         self.dataset)
+        IO.Log.debug('[PLS_DA::preprocess_autoscale] Autoscaled matrix',
+                     self.dataset)
         self.autoscaled = True
 
     def get_dummy_variables(self):
@@ -115,8 +110,8 @@ class PLS_DA(object):
         self.dummy_Y = np.array(li)
         self.dummy_Y = self.dummy_Y.T
 
-        PKG.io.Log.debug('[PLS_DA::get_dummy_variables] dummy Y variables',
-                         self.dummy_Y)
+        IO.Log.debug('[PLS_DA::get_dummy_variables] dummy Y variables',
+                     self.dummy_Y)
 
     def nipals_method(self, nr_lv, tol=1e-6, max_iter=10000):
         """Find the Principal Components with the NIPALS algorithm."""
@@ -124,12 +119,11 @@ class PLS_DA(object):
         E_x = self.dataset.copy()  # Residuals of PC0
         E_y = self.dummy_Y.copy()
         n, m = self.dataset.shape
-#       PKG.io.Log.debug('np.ones((n,1)).shape', np.ones((n,1)).shape)
+#       IO.Log.debug('np.ones((n,1)).shape', np.ones((n,1)).shape)
 #       E_x = np.concatenate((np.ones((n,1)), E_x), axis=1)
 
         if self.mean is None:
-            PKG.io.Log.warning(
-                'No pretreatment specified and NIPALS selected')
+            IO.Log.warning('No pretreatment specified and NIPALS selected')
 
         n, m = E_x.shape
         n, p = E_y.shape
@@ -167,18 +161,18 @@ class PLS_DA(object):
                 diff = u_star - u
                 delta_u = np.linalg.norm(diff)
                 u = u_star
-                PKG.io.Log.debug('NIPALS iteration: {}\n'
-                                 '       difference: '
-                                 '{:.5e}'.format(it, delta_u))
+                IO.Log.debug('NIPALS iteration: {}\n'
+                             '       difference: '
+                             '{:.5e}'.format(it, delta_u))
                 # if it > 1 and delta_u < tol * np.linalg.norm(u_star):
                 if it > 1 and delta_u < tol:
                     break
             else:
-                PKG.io.Log.warning('Reached max '
-                                   'iteration number ({})'.format(max_iter))
-                PKG.io.Log.warning('NIPALS iteration: {}\n'
-                                   '       difference: '
-                                   '{:.5e}'.format(it, delta_u))
+                IO.Log.warning('Reached max '
+                               'iteration number ({})'.format(max_iter))
+                IO.Log.warning('NIPALS iteration: {}\n'
+                               '       difference: '
+                               '{:.5e}'.format(it, delta_u))
             # Save the evaluated values
             s_list.append(np.linalg.norm(t))
             T[:, i] = t
@@ -197,9 +191,9 @@ class PLS_DA(object):
         self.eigenvalues = np.power(np.array(s_list), 2) \
             / (self.n_rows - 1)
 
-        PKG.io.Log.info('NIPALS loadings shape', self.loadings.shape)
-        PKG.io.Log.info('NIPALS scores shape', self.scores.shape)
-        PKG.io.Log.info('NIPALS eigenvalues', self.eigenvalues)
+        IO.Log.info('NIPALS loadings shape', self.loadings.shape)
+        IO.Log.info('NIPALS scores shape', self.scores.shape)
+        IO.Log.info('NIPALS eigenvalues', self.eigenvalues)
 
         self.eig = False
         self.nipals = True
@@ -216,5 +210,3 @@ class PLS_DA(object):
         min_y = math.floor(np.min(y_val))
         max_y = math.ceil(np.max(y_val))
         return {'x': (min_x, max_x), 'y': (min_y, max_y)}
-
-

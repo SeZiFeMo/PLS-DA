@@ -1,4 +1,0 @@
-- put in the io module the parsing of csv input file.
-- let's keep updated the tuple in main.py with external used libraries.
-- unittest
-- gui
