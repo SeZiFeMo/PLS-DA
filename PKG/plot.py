@@ -15,8 +15,9 @@ def properties_of(category):
     """Return a dictionary with keys: edge_color, face_color, marker."""
     circle, cross, diamond, triangle = 'o', 'x', 'D', '^'
 
-    blue, dark_red, gold, green, red = '#1F77B4', '#A00000', '#FFD700', \
-                                       '#2CA02C', '#D62728'
+    blue, dark_red, gold, green, red, orange = '#1F77B4', '#A00000', '#FFD700', \
+                                               '#2CA02C', '#D62728', '#FF7F0E'
+
     if category == 'B':
         return {'edge_color': blue, 'face_color': blue, 'marker': circle}
     elif category == 'E':
@@ -25,9 +26,27 @@ def properties_of(category):
         return {'edge_color': red, 'face_color': red, 'marker': triangle}
     elif category == 'N':
         return {'edge_color': gold, 'face_color': dark_red, 'marker': diamond}
+    if category == 'NA':
+        return {'edge_color': blue, 'face_color': blue, 'marker': circle}
+    elif category == 'SA':
+        return {'edge_color': green, 'face_color': green, 'marker': cross}
+    elif category == 'U':
+        return {'edge_color': red, 'face_color': red, 'marker': triangle}
+    elif category == 'WL':
+        return {'edge_color': orange, 'face_color': orange, 'marker': diamond}
     else:
         raise Exception('Unknown category ' + category)
 
+def scatter(x_values, y_values, cat):
+    plt.scatter(x=x_values,
+                y=y_values,
+                edgecolors=properties_of(cat)['edge_color'],
+                marker=properties_of(cat)['marker'],
+                s=40,
+                c=properties_of(cat)['face_color'],
+                alpha=.6,
+#               linewidth=0.10,
+                label=cat)
 
 def scores_plot(model, pc_x, pc_y):
     """Plot the scores on the specified components."""
@@ -39,12 +58,7 @@ def scores_plot(model, pc_x, pc_y):
 
     for n in range(model.scores.shape[0]):
         cat = model.categories[n]
-        plt.scatter(x=model.scores[n, pc_x],
-                    y=model.scores[n, pc_y],
-                    edgecolors=properties_of(cat)['edge_color'],
-                    marker=properties_of(cat)['marker'],
-                    c=properties_of(cat)['face_color'],
-                    label=cat)
+        scatter(model.scores[n, pc_x], model.scores[n, pc_y], cat)
 
     ax = plt.gca()
     plt.title('Scores plot')

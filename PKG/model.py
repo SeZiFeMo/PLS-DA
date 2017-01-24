@@ -60,7 +60,7 @@ class PLS_DA(object):
                 d[0] = 'G'
             else:
                 PKG.io.Log.warning('Unexpected wine '
-                                   'category ({})'.format(d['Category']))
+                                   'category ({})'.format(d[0]))
 
         # Delete category column from self._dataset_original
         # and save it for future uses
