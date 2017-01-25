@@ -29,7 +29,7 @@ class PLS_DA(object):
         self.categories = [row[0] for row in body]
         # Check all values of self.categories are admitted.
         for i, cell in enumerate(self.categories):
-            for cat in ('NA', 'SA', 'U', 'WL', 'B', 'E', 'G'):
+            for cat in self.allowed_categories:
                 if cell.startswith(cat):
                     self.categories[i] = cat
                     break
@@ -49,6 +49,12 @@ class PLS_DA(object):
         self.centered = False
         self.normalized = False
         self.autoscaled = False
+
+        # For each category create a vector
+        self.dummy_Y = np.array([[1.0 if c == cat else 0.0
+                                  for c in self.categories]
+                                 for cat in set(self.categories)]).T
+        IO.Log.debug('[PLS_DA::__init__] dummy Y variables', self.dummy_Y)
 
     def preprocess_mean(self, use_original=False):
         """Substitute self.dataset with its centered version."""
@@ -78,28 +84,14 @@ class PLS_DA(object):
                      self.dataset)
         self.autoscaled = True
 
-    def get_dummy_variables(self):
-
-        categories = set(self.categories)
-
-        li = []
-        for cat in categories:
-            li.append([1.0 if c == cat else 0.0 for c in self.categories])
-
-        self.dummy_Y = np.array(li)
-        self.dummy_Y = self.dummy_Y.T
-
-        IO.Log.debug('[PLS_DA::get_dummy_variables] dummy Y variables',
-                     self.dummy_Y)
-
-    def nipals_method(self, nr_lv, tol=1e-6, max_iter=10000):
+    def nipals_method(self, nr_lv, tol=1e-6, max_iter=1e4):
         """Find the Principal Components with the NIPALS algorithm."""
         # Start with maximal residual (matrix X)
         E_x = self.dataset.copy()  # Residuals of PC0
         E_y = self.dummy_Y.copy()
         n, m = self.dataset.shape
-#       IO.Log.debug('np.ones((n,1)).shape', np.ones((n,1)).shape)
-#       E_x = np.concatenate((np.ones((n,1)), E_x), axis=1)
+        # IO.Log.debug('np.ones((n,1)).shape', np.ones((n,1)).shape)
+        # E_x = np.concatenate((np.ones((n,1)), E_x), axis=1)
 
         if self.mean is None:
             IO.Log.warning('No pretreatment specified and NIPALS selected')
@@ -117,8 +109,7 @@ class PLS_DA(object):
         # Loop for each possible PC
         for i in range(nr_lv):
             # Initialize u as a column of E_x with maximum variance
-            max_var_index = np.argmax(np.sum(np.power(E_y, 2),
-                                             axis=0))
+            max_var_index = np.argmax(np.sum(np.power(E_y, 2), axis=0))
             u = E_y[:, max_var_index].copy()
 
             for it in range(max_iter + 2):
@@ -141,8 +132,7 @@ class PLS_DA(object):
                 delta_u = np.linalg.norm(diff)
                 u = u_star
                 IO.Log.debug('NIPALS iteration: {}\n'
-                             '       difference: '
-                             '{:.5e}'.format(it, delta_u))
+                             '       difference: {:.5e}'.format(it, delta_u))
                 # if it > 1 and delta_u < tol * np.linalg.norm(u_star):
                 if it > 1 and delta_u < tol:
                     break
@@ -150,8 +140,7 @@ class PLS_DA(object):
                 IO.Log.warning('Reached max '
                                'iteration number ({})'.format(max_iter))
                 IO.Log.warning('NIPALS iteration: {}\n'
-                               '       difference: '
-                               '{:.5e}'.format(it, delta_u))
+                               '       difference: {:.5e}'.format(it, delta_u))
             # Save the evaluated values
             s_list.append(np.linalg.norm(t))
             T[:, i] = t
@@ -162,30 +151,24 @@ class PLS_DA(object):
             U[:, i] = u
             Q[:, i] = np.dot(E_y.T, u) / np.dot(u, u)
             E_x -= np.dot(np.row_stack(t), np.column_stack(P[:, i]))
-            E_y -= b[i] * np.dot(np.row_stack(t),
-                                 np.column_stack(q.T))
+            E_y -= b[i] * np.dot(np.row_stack(t), np.column_stack(q.T))
 
         self.scores = T
         self.loadings = P
-        self.eigenvalues = np.power(np.array(s_list), 2) \
-            / (self.n_rows - 1)
+        self.eigenvalues = np.power(np.array(s_list), 2) / (self.n_rows - 1)
 
         IO.Log.info('NIPALS loadings shape', self.loadings.shape)
         IO.Log.info('NIPALS scores shape', self.scores.shape)
         IO.Log.info('NIPALS eigenvalues', self.eigenvalues)
 
-        self.eig = False
-        self.nipals = True
-        self.svd = False
+        # self.eig = False
+        # self.nipals = True
+        # self.svd = False
 
     def get_loadings_scores_xy_limits(self, pc_x, pc_y):
         """Return dict of x and y limits: {'x': (min, max), 'y': (min, max)}"""
-        x_val = np.concatenate((self.loadings[:, pc_x],
-                                self.scores[:, pc_x]))
-        y_val = np.concatenate((self.loadings[:, pc_y],
-                                self.scores[:, pc_y]))
-        min_x = math.floor(np.min(x_val))
-        max_x = math.ceil(np.max(x_val))
-        min_y = math.floor(np.min(y_val))
-        max_y = math.ceil(np.max(y_val))
+        x_val = np.concatenate((self.loadings[:, pc_x], self.scores[:, pc_x]))
+        y_val = np.concatenate((self.loadings[:, pc_y], self.scores[:, pc_y]))
+        min_x, max_x = math.floor(np.min(x_val)), math.ceil(np.max(x_val))
+        min_y, max_y = math.floor(np.min(y_val)), math.ceil(np.max(y_val))
         return {'x': (min_x, max_x), 'y': (min_y, max_y)}

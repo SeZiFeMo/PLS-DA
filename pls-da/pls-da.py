@@ -24,7 +24,6 @@ for lib in ('matplotlib.pyplot as plt', 'numpy as np', 'yaml'):
 
 pls_da = model.PLS_DA()
 
-pls_da.get_dummy_variables()
 pls_da.preprocess_autoscale()
 pls_da.nipals_method(nr_lv=4)
 
