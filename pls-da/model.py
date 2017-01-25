@@ -14,15 +14,33 @@ if __name__ == '__main__':
 
 class PLS_DA(object):
 
+    allowed_categories = ('B', 'E', 'G', 'N', 'NA', 'SA', 'U', 'WL')
+
     def __init__(self, csv_file=None):
         """Constructor method"""
         if csv_file is None:
             csv_file = utility.CLI.args().input_file
 
         self.axis = 0
+        self.keys, body = IO.CSV.parse(csv_file)
+        IO.Log.debug('[PLS_DA::__init__] Using {} as input.'.format(csv_file))
 
-        self._dataset_original = None
-        self.parse_csv(csv_file)
+        # Delete category column from body and save it for future uses
+        self.categories = [row[0] for row in body]
+        # Check all values of self.categories are admitted.
+        for i, cell in enumerate(self.categories):
+            for cat in ('NA', 'SA', 'U', 'WL', 'B', 'E', 'G'):
+                if cell.startswith(cat):
+                    self.categories[i] = cat
+                    break
+            else:
+                IO.Log.warning('Unexpected category ({})'.format(cell))
+
+        # The other columns of body are the dataset (matrix)
+        self._dataset_original = np.array([np.array(row[1:]) for row in body])
+        IO.Log.debug('[PLS_DA::__init__] self._dataset_original',
+                     self._dataset_original)
+
         self.dataset = np.copy(self._dataset_original)
         self.n_rows, self.n_cols = self.dataset.shape
 
@@ -31,45 +49,6 @@ class PLS_DA(object):
         self.centered = False
         self.normalized = False
         self.autoscaled = False
-
-    def parse_csv(self, filename):
-        """self.keys              = first row of labels
-           self.categories        = first column of labels about wine type
-           self._dataset_original = the rest of the matrix
-        """
-
-        self._dataset_original = list()
-        try:
-            with open(filename, 'r', encoding='iso8859') as f:
-                self.keys = f.readline().strip('\n').split(';')
-                for line in f.readlines():
-                    line = line.strip('\n').split(';')
-                    self._dataset_original.append(list(line))
-        except IOError:
-            IO.Log.error('File \'{}\' not existent, '
-                         'not readable or corrupted'.format(filename))
-            exit(1)
-
-        for d in self._dataset_original:
-            for cat in ('NA', 'SA', 'U', 'WL', 'B', 'E', 'G'):
-                if d[0].startswith(cat):
-                    d[0] = cat
-                    break
-            else:
-                IO.Log.warning('Unexpected wine category ({})'.format(d[0]))
-
-        # Delete category column from self._dataset_original
-        # and save it for future uses
-        self.categories = [x[0] for x in self._dataset_original]
-        self._dataset_original = [x[1:] for x in self._dataset_original]
-
-        # Replace commas with dots
-        self._dataset_original = [[float(elem.replace(',', '.'))
-                                   for elem in row]
-                                  for row in self._dataset_original]
-        self._dataset_original = np.array(self._dataset_original)
-        IO.Log.debug('[PLS_DA::parse_csv] self._dataset_original',
-                     self._dataset_original)
 
     def preprocess_mean(self, use_original=False):
         """Substitute self.dataset with its centered version."""

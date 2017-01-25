@@ -3,6 +3,7 @@
 
 import argparse
 import IO
+import model
 import numpy as np
 import plot
 import unittest
@@ -39,6 +40,9 @@ class test_IO_module(unittest.TestCase):
     def test_Log_warning(self):
         self.assertTrue(callable(IO.Log.warning))
 
+    def test_CSV(self):
+        pass
+
 
 class test_model_module(unittest.TestCase):
     pass
@@ -46,12 +50,11 @@ class test_model_module(unittest.TestCase):
 
 class test_plot_module(unittest.TestCase):
 
-    allowed_categories = ('B', 'E', 'G', 'N', 'NA', 'SA', 'U', 'WL')
     x = [-5, -4, 0, 4, 5]
     y = [0, 3, -1, 3, 10]
 
     def test_get_category(self):
-        for cat in self.allowed_categories:
+        for cat in model.PLS_DA.allowed_categories:
             self.assertIsInstance(plot.properties_of(cat), dict)
             d = plot.properties_of(cat)
             for key in ('edge_color', 'face_color', 'marker'):
@@ -62,7 +65,7 @@ class test_plot_module(unittest.TestCase):
         self.assertRaises(Exception, plot.get, None)
 
     def test_scatter_plot(self):
-        for cat in self.allowed_categories:
+        for cat in model.PLS_DA.allowed_categories:
             self.assertIsNone(plot.scatter_plot(self.x, self.y, cat))
         self.assertRaises(ValueError, plot.scatter_plot,
                           self.x, self.y[:-1], 'E')
@@ -88,4 +91,4 @@ class test_utility_module(unittest.TestCase):
         self.assertTrue(hasattr(utility.CLI.args(), 'input_file'))
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(failfast=True)

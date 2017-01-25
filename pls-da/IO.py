@@ -85,6 +85,42 @@ class Log(object):
         return Log.__log(msg=msg, data=data, level='warning')
 
 
+class CSV(object):
+
+    def parse(filename, encoding='iso8859', separator=';'):
+        """Return the header (list) and the body of a table (list of lists)"""
+        header, body = list(), list()
+        try:
+            with open(filename, 'r', encoding=encoding) as f:
+                header = f.readline().strip('\n').split(separator)
+
+                for line in f.readlines():
+                    row = line.strip('\n').split(separator)
+                    body.append(list(row))
+        except IOError:
+            Log.error('File {} not existent, not readable '
+                      'or corrupted.'.format(filename))
+            exit(1)
+        else:
+            if len(header) < 1 or len(body) < 1:
+                Log.error('Too few columns or rows in {}'.format(filename))
+                exit(1)
+            for i, row in enumerate(body):
+                if len(row) != len(header):
+                    Log.error('Bad number of columns in {} body row'.format(i))
+                    exit(1)
+
+            for i, row in enumerate(body):
+                for j, cell in enumerate(row):
+                    try:
+                        val = float(cell.replace(',', '.'))
+                    except ValueError:
+                        continue
+                    else:
+                        body[i][j] = val
+        return header, body
+
+
 if __name__ == '__main__':
     Log.warning('Please do not run that script, load it!')
     exit(1)
