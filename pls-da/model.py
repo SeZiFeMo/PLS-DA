@@ -71,7 +71,7 @@ class PLS_DA(object):
         dataset = self._dataset_original if use_original else self.dataset
         self.sigma = dataset.std(axis=self.axis)
         self.dataset = self.dataset / self.sigma
-        self.dummy_Y = self.dummy_Y - self.dummy_Y.std(axis=self.axis)
+        self.dummy_Y = self.dummy_Y / self.dummy_Y.std(axis=self.axis)
         IO.Log.debug('[PLS_DA::preprocess_normalize] Normalized matrix',
                      self.dataset)
         self.normalized = True
@@ -112,7 +112,7 @@ class PLS_DA(object):
             max_var_index = np.argmax(np.sum(np.power(E_y, 2), axis=0))
             u = E_y[:, max_var_index].copy()
 
-            for it in range(max_iter + 2):
+            for it in range(int(max_iter) + 2):
                 # Evaluate w as projection of u
                 w = np.dot(E_x.T, u) / np.dot(u, u)
                 # Normalize w
@@ -160,10 +160,6 @@ class PLS_DA(object):
         IO.Log.info('NIPALS loadings shape', self.loadings.shape)
         IO.Log.info('NIPALS scores shape', self.scores.shape)
         IO.Log.info('NIPALS eigenvalues', self.eigenvalues)
-
-        # self.eig = False
-        # self.nipals = True
-        # self.svd = False
 
     def get_loadings_scores_xy_limits(self, pc_x, pc_y):
         """Return dict of x and y limits: {'x': (min, max), 'y': (min, max)}"""
