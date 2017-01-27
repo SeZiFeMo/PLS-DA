@@ -4,6 +4,7 @@
 import collections
 import IO
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 if __name__ == '__main__':
@@ -50,7 +51,7 @@ def scatter_plot(x_values, y_values, cat):
                 label=cat)
 
 
-def scores_plot(model, pc_x, pc_y):
+def scores_plot(model, pc_x, pc_y, normalize=False):
     """Plot the scores on the specified components."""
     if pc_x == pc_y:
         IO.Log.warning('Principal components must be different!')
@@ -58,9 +59,16 @@ def scores_plot(model, pc_x, pc_y):
 
     pc_x, pc_y = min(pc_x, pc_y), max(pc_x, pc_y)
 
+    scores_x = model.T[:, pc_x]
+    scores_y = model.T[:, pc_y]
+    if normalize:
+        scores_x = scores_x / max(abs(scores_x))
+        scores_y = scores_y / max(abs(scores_y))
     for n in range(model.T.shape[0]):
+        score_pc_x = scores_x[n]
+        score_pc_y = scores_y[n]
         cat = model.categories[n]
-        scatter_plot(model.T[n, pc_x], model.T[n, pc_y], cat)
+        scatter_plot(score_pc_x, score_pc_y, cat)
 
     ax = plt.gca()
     plt.title('Scores plot')
@@ -68,8 +76,12 @@ def scores_plot(model, pc_x, pc_y):
     plt.ylabel('PC{}'.format(pc_y + 1))
     plt.axvline(0, linestyle='dashed', color='black')
     plt.axhline(0, linestyle='dashed', color='black')
-    ax.set_xlim(model.get_loadings_scores_xy_limits(pc_x, pc_y)['x'])
-    ax.set_ylim(model.get_loadings_scores_xy_limits(pc_x, pc_y)['y'])
+    if normalize:
+        ax.set_xlim(-1.1,1.1)
+        ax.set_ylim(-1.1,1.1)
+    else:
+        ax.set_xlim(model.get_loadings_scores_xy_limits(pc_x, pc_y)['x'])
+        ax.set_ylim(model.get_loadings_scores_xy_limits(pc_x, pc_y)['y'])
 
     handles, labels = ax.get_legend_handles_labels()
     by_label = collections.OrderedDict(zip(labels, handles))
@@ -101,3 +113,7 @@ def loadings_plot(model, pc_x, pc_y):
     plt.ylabel('PC{}'.format(pc_y + 1))
     plt.axvline(0, linestyle='dashed', color='black')
     plt.axhline(0, linestyle='dashed', color='black')
+
+def biplot(model, pc_x, pc_y):
+    scores_plot(model, pc_x, pc_y, normalize=True)
+    loadings_plot(model, pc_x, pc_y)
