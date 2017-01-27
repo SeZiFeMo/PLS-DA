@@ -37,7 +37,7 @@ def mat2str(data, h_bar='-', v_bar='|', join='+'):
 
 class Log(object):
 
-    _default = 'debug'
+    _default = 'info'
     _initialized = False
     _name = 'PLS_DA'
 
