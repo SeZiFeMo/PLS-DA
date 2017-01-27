@@ -58,9 +58,9 @@ def scores_plot(model, pc_x, pc_y):
 
     pc_x, pc_y = min(pc_x, pc_y), max(pc_x, pc_y)
 
-    for n in range(model.scores.shape[0]):
+    for n in range(model.T.shape[0]):
         cat = model.categories[n]
-        scatter_plot(model.scores[n, pc_x], model.scores[n, pc_y], cat)
+        scatter_plot(model.T[n, pc_x], model.T[n, pc_y], cat)
 
     ax = plt.gca()
     plt.title('Scores plot')
@@ -83,13 +83,13 @@ def loadings_plot(model, pc_x, pc_y):
         exit(1)
 
     pc_x, pc_y = min(pc_x, pc_y), max(pc_x, pc_y)
-    plt.scatter(x=model.loadings[:, pc_x],
-                y=model.loadings[:, pc_y])
+    plt.scatter(x=model.P[:, pc_x],
+                y=model.P[:, pc_y])
 
     ax = plt.gca()
-    for n in range(model.loadings.shape[0]):
+    for n in range(model.P.shape[0]):
         ax.annotate(model.keys[n + 1],
-                    xy=(model.loadings[n, pc_x], model.loadings[n, pc_y]),
+                    xy=(model.P[n, pc_x], model.P[n, pc_y]),
                     xycoords='data',
                     xytext=(0, 5),
                     textcoords='offset points',

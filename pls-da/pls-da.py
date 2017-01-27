@@ -27,6 +27,8 @@ pls_da = model.PLS_DA()
 pls_da.preprocess_autoscale()
 pls_da.nipals_method(nr_lv=4)
 
+pls_da.get_modeled_y()
+
 plt.subplot(2, 1, 1)
 plot.scores_plot(pls_da, 0, 1)
 

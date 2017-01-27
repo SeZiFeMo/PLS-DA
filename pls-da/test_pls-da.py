@@ -165,18 +165,30 @@ class test_model_module(unittest.TestCase):
             n_components=j, scale=True, max_iter=1e4, tol=1e-6, copy=True)
         sklearn_pls.fit(X, Y)
 
-        IO.Log.debug('NIPALS scores', self.pls_da.scores)
+        IO.Log.debug('NIPALS scores', self.pls_da.T)
         IO.Log.debug('sklearn scores', sklearn_pls.x_scores_)
-        IO.Log.debug('NIPALS loadings', self.pls_da.loadings)
+        IO.Log.debug('NIPALS loadings', self.pls_da.P)
         IO.Log.debug('sklearn loadings', sklearn_pls.x_loadings_)
 
-        np.testing.assert_almost_equal(np.absolute(self.pls_da.scores),
+        np.testing.assert_almost_equal(np.absolute(self.pls_da.T),
                                        np.absolute(sklearn_pls.x_scores_),
                                        decimal=1)
-        np.testing.assert_almost_equal(np.absolute(self.pls_da.loadings),
+        np.testing.assert_almost_equal(np.absolute(self.pls_da.P),
                                        np.absolute(sklearn_pls.x_loadings_),
                                        decimal=1)
+        np.testing.assert_almost_equal(np.absolute(self.pls_da.W),
+                                       np.absolute(sklearn_pls.x_weights_),
+                                       decimal=1)
 
+#        np.testing.assert_almost_equal(np.absolute(self.pls_da.U),
+#                                       np.absolute(sklearn_pls.y_scores_),
+#                                       decimal=0)
+        np.testing.assert_almost_equal(np.absolute(self.pls_da.Q),
+                                       np.absolute(sklearn_pls.y_loadings_),
+                                       decimal=0)
+#        np.testing.assert_almost_equal(np.absolute(self.pls_da.B),
+#                                       np.absolute(sklearn_pls.coef_),
+#                                       decimal=1)
 
 
 

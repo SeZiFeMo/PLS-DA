@@ -44,6 +44,15 @@ class PLS_DA(object):
         self.dataset = np.copy(self._dataset_original)
         self.n_rows, self.n_cols = self.dataset.shape
 
+        self.T = None
+        self.P = None
+        self.W = None
+        self.U = None
+        self.Q = None
+        self.C = None
+        self.B = None
+        self.Y_modeled = None
+
         self.mean = None
         self.sigma = None
         self.centered = False
@@ -98,11 +107,12 @@ class PLS_DA(object):
 
         n, m = E_x.shape
         n, p = E_y.shape
-        T = np.empty((n, nr_lv))
-        P = np.empty((m, nr_lv))
-        W = np.empty((m, nr_lv))
-        U = np.empty((n, nr_lv))
-        Q = np.empty((p, nr_lv))
+        self.T = np.empty((n, nr_lv))
+        self.P = np.empty((m, nr_lv))
+        self.W = np.empty((m, nr_lv))
+        self.U = np.empty((n, nr_lv))
+        self.Q = np.empty((p, nr_lv))
+        self.C = np.empty((p, nr_lv))
         b = np.empty((nr_lv))
         s_list = []
 
@@ -118,22 +128,19 @@ class PLS_DA(object):
                 # Normalize w
                 w /= np.linalg.norm(w)
                 # Evaluate t as projection of w
-                t = np.dot(E_x, w)  # / np.dot(p, p)
+                t = np.dot(E_x, w)
 
                 # Y part
-                # Evaluate q as projection of t in Y
-                q = np.dot(E_y.T, t) / np.dot(t, t)
-                # Normalize q
-                q /= np.linalg.norm(q)
-                # Evaluate u_star as projection of q in Y
-                u_star = np.dot(E_y, q)  # / np.dot(p, p)
+                # Evaluate c as projection of t in Y
+                c = np.dot(E_y.T, t) / np.dot(t, t)
+                # Normalize c
+                c /= np.linalg.norm(c)
+                # Evaluate u_star as projection of c in Y
+                u_star = np.dot(E_y, c)
 
+                u = u_star
                 diff = u_star - u
                 delta_u = np.linalg.norm(diff)
-                u = u_star
-                IO.Log.debug('NIPALS iteration: {}\n'
-                             '       difference: {:.5e}'.format(it, delta_u))
-                # if it > 1 and delta_u < tol * np.linalg.norm(u_star):
                 if it > 1 and delta_u < tol:
                     break
             else:
@@ -143,28 +150,37 @@ class PLS_DA(object):
                                '       difference: {:.5e}'.format(it, delta_u))
             # Save the evaluated values
             s_list.append(np.linalg.norm(t))
-            T[:, i] = t
-            P[:, i] = np.dot(E_x.T, t) / np.dot(t, t)
+            self.T[:, i] = t
+            self.P[:, i] = np.dot(E_x.T, t) / np.dot(t, t)
+            self.W[:, i] = w
             # regression coefficient for the inner relation
             b[i] = np.dot(u.T, t) / np.dot(t, t)
-            W[:, i] = w
-            U[:, i] = u
-            Q[:, i] = np.dot(E_y.T, u) / np.dot(u, u)
-            E_x -= np.dot(np.row_stack(t), np.column_stack(P[:, i]))
-            E_y -= b[i] * np.dot(np.row_stack(t), np.column_stack(q.T))
+            self.C[:, i] = c
+            self.U[:, i] = u
+            self.Q[:, i] = np.dot(E_y.T, u) / np.dot(u, u)
+            E_x -= np.dot(np.row_stack(t), np.column_stack(self.P[:, i]))
+            E_y -= b[i] * np.dot(np.row_stack(t), np.column_stack(c.T))
 
-        self.scores = T
-        self.loadings = P
-        self.eigenvalues = np.power(np.array(s_list), 2) / (self.n_rows - 1)
+        self.x_eigenvalues = np.power(np.array(s_list), 2) / (self.n_rows - 1)
 
-        IO.Log.info('NIPALS loadings shape', self.loadings.shape)
-        IO.Log.info('NIPALS scores shape', self.scores.shape)
-        IO.Log.info('NIPALS eigenvalues', self.eigenvalues)
+        # Compute regression parameters B
+        # tmp = (P'W)^{-1}
+        tmp = np.linalg.inv(self.P.T.dot(self.W))
+        self.B = self.W.dot(tmp).dot(self.C.T)
+
+        IO.Log.info('NIPALS loadings shape', self.P.shape)
+        IO.Log.info('NIPALS scores shape', self.T.shape)
+        IO.Log.info('NIPALS x_eigenvalues', self.x_eigenvalues)
+
+    def get_modeled_y(self):
+        self.Y_modeled = self.dataset.dot(self.B)
+        IO.Log.info('Modeled Y prior to the discriminant classification',
+                    self.Y_modeled)
 
     def get_loadings_scores_xy_limits(self, pc_x, pc_y):
         """Return dict of x and y limits: {'x': (min, max), 'y': (min, max)}"""
-        x_val = np.concatenate((self.loadings[:, pc_x], self.scores[:, pc_x]))
-        y_val = np.concatenate((self.loadings[:, pc_y], self.scores[:, pc_y]))
+        x_val = np.concatenate((self.P[:, pc_x], self.T[:, pc_x]))
+        y_val = np.concatenate((self.P[:, pc_y], self.T[:, pc_y]))
         min_x, max_x = math.floor(np.min(x_val)), math.ceil(np.max(x_val))
         min_y, max_y = math.floor(np.min(y_val)), math.ceil(np.max(y_val))
         return {'x': (min_x, max_x), 'y': (min_y, max_y)}
