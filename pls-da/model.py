@@ -42,7 +42,7 @@ class PLS_DA(object):
                      self._dataset_original)
 
         self.dataset = np.copy(self._dataset_original)
-        self.n_rows, self.n_cols = self.dataset.shape
+        self.n, self.m = self.dataset.shape
 
         self.T = None
         self.P = None
@@ -52,6 +52,8 @@ class PLS_DA(object):
         self.C = None
         self.B = None
         self.Y_modeled = None
+        self.x_eigenvalues = None
+        self.y_eigenvalues = None
 
         self.mean = None
         self.sigma = None
@@ -64,6 +66,7 @@ class PLS_DA(object):
                                   for c in self.categories]
                                  for cat in set(self.categories)]).T
         IO.Log.debug('[PLS_DA::__init__] dummy Y variables', self.dummy_Y)
+        self.p = self.dummy_Y.shape[1]
 
     def preprocess_mean(self, use_original=False):
         """Substitute self.dataset with its centered version."""
@@ -93,14 +96,16 @@ class PLS_DA(object):
                      self.dataset)
         self.autoscaled = True
 
-    def nipals_method(self, nr_lv, tol=1e-6, max_iter=1e4):
+    def nipals_method(self, nr_lv=None, tol=1e-6, max_iter=1e4):
         """Find the Principal Components with the NIPALS algorithm."""
         # Start with maximal residual (matrix X)
         E_x = self.dataset.copy()  # Residuals of PC0
         E_y = self.dummy_Y.copy()
         n, m = self.dataset.shape
-        # IO.Log.debug('np.ones((n,1)).shape', np.ones((n,1)).shape)
-        # E_x = np.concatenate((np.ones((n,1)), E_x), axis=1)
+
+        if nr_lv is None:
+            nr_lv = min(n,m)
+
 
         if self.mean is None:
             IO.Log.warning('No pretreatment specified and NIPALS selected')
@@ -114,7 +119,8 @@ class PLS_DA(object):
         self.Q = np.empty((p, nr_lv))
         self.C = np.empty((p, nr_lv))
         b = np.empty((nr_lv))
-        s_list = []
+        s_list_x = []
+        s_list_y = []
 
         # Loop for each possible PC
         for i in range(nr_lv):
@@ -123,17 +129,15 @@ class PLS_DA(object):
             u = E_y[:, max_var_index].copy()
 
             for it in range(int(max_iter) + 2):
-                # Evaluate w as projection of u
+                # Evaluate w as projection of u in X and normalize it
                 w = np.dot(E_x.T, u) / np.dot(u, u)
-                # Normalize w
                 w /= np.linalg.norm(w)
-                # Evaluate t as projection of w
+                # Evaluate t as projection of w in X
                 t = np.dot(E_x, w)
 
                 # Y part
-                # Evaluate c as projection of t in Y
+                # Evaluate c as projection of t in Y and normalize it
                 c = np.dot(E_y.T, t) / np.dot(t, t)
-                # Normalize c
                 c /= np.linalg.norm(c)
                 # Evaluate u_star as projection of c in Y
                 u_star = np.dot(E_y, c)
@@ -149,7 +153,8 @@ class PLS_DA(object):
                 IO.Log.warning('NIPALS iteration: {}\n'
                                '       difference: {:.5e}'.format(it, delta_u))
             # Save the evaluated values
-            s_list.append(np.linalg.norm(t))
+            s_list_x.append(np.linalg.norm(t))
+            s_list_y.append(np.linalg.norm(u))
             self.T[:, i] = t
             self.P[:, i] = np.dot(E_x.T, t) / np.dot(t, t)
             self.W[:, i] = w
@@ -161,7 +166,8 @@ class PLS_DA(object):
             E_x -= np.dot(np.row_stack(t), np.column_stack(self.P[:, i]))
             E_y -= b[i] * np.dot(np.row_stack(t), np.column_stack(c.T))
 
-        self.x_eigenvalues = np.power(np.array(s_list), 2) / (self.n_rows - 1)
+        self.x_eigenvalues = np.power(np.array(s_list_x), 2) / (self.n - 1)
+        self.y_eigenvalues = np.power(np.array(s_list_y), 2) / (self.n - 1)
 
         # Compute regression parameters B
         # tmp = (P'W)^{-1}
@@ -174,7 +180,7 @@ class PLS_DA(object):
 
     def get_modeled_y(self):
         self.Y_modeled = self.dataset.dot(self.B)
-        IO.Log.info('Modeled Y prior to the discriminant classification',
+        IO.Log.debug('Modeled Y prior to the discriminant classification',
                     self.Y_modeled)
 
     def get_loadings_scores_xy_limits(self, pc_x, pc_y):
@@ -184,3 +190,19 @@ class PLS_DA(object):
         min_x, max_x = math.floor(np.min(x_val)), math.ceil(np.max(x_val))
         min_y, max_y = math.floor(np.min(y_val)), math.ceil(np.max(y_val))
         return {'x': (min_x, max_x), 'y': (min_y, max_y)}
+
+    def get_explained_variance(self, matrix='x'):
+        """Return the explained variance (computed over self.eigenvalues)."""
+        if matrix == 'x':
+            eigen = self.x_eigenvalues
+        elif matrix == 'y':
+            eigen = self.y_eigenvalues
+        else:
+            IO.Log.error('[PCA::get_explained_variance] '
+                         'Accepted values for matrix are x and y')
+
+            return
+
+        IO.Log.info('[PCA::get_explained_variance] '
+                    'Eigenvalues for {}: \n{}'.format(matrix, eigen))
+        return 100 * eigen / np.sum(eigen)

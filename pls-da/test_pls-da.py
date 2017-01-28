@@ -89,9 +89,9 @@ class test_model_module(unittest.TestCase):
         self.pls_da = None
 
     def test_PLS_DA_init(self):
-        self.assertEqual(len(self.pls_da.keys), self.pls_da.n_cols + 1)
-        self.assertEqual(len(self.pls_da.categories), self.pls_da.n_rows)
-        self.assertEqual(len(self.pls_da.dummy_Y), self.pls_da.n_rows)
+        self.assertEqual(len(self.pls_da.keys), self.pls_da.m + 1)
+        self.assertEqual(len(self.pls_da.categories), self.pls_da.n)
+        self.assertEqual(len(self.pls_da.dummy_Y), self.pls_da.n)
         self.assertEqual(len(self.pls_da.dummy_Y[0]),
                          len(set(self.pls_da.categories)))
         self.assertIsNone(self.pls_da.mean)
