@@ -37,27 +37,27 @@ def mat2str(data, h_bar='-', v_bar='|', join='+'):
 
 class Log(object):
 
-    _default = 'info'
-    _initialized = False
-    _name = 'PLS_DA'
+    __default = 'debug'
+    __initialized = False
+    __name = 'PLS_DA'
 
     def __log(msg='', data=None, level=None):
         """Print log message if above threshold."""
         if level is None:
-            level = Log._default
+            level = Log.__default
 
-        if not Log._initialized:
-            logging_level = getattr(logging, Log._default.upper())
+        if not Log.__initialized:
+            logging_level = getattr(logging, Log.__default.upper())
             logging.basicConfig(format='[%(levelname)s]\t%(message)s',
                                 level=logging_level)
             for l in logging.Logger.manager.loggerDict.keys():
                 logging.getLogger(l).setLevel(logging.INFO)
 
             # current script / package logging
-            logging.getLogger(Log._name).setLevel(logging_level)
-            Log._initialized = True
+            logging.getLogger(Log.__name).setLevel(logging_level)
+            Log.__initialized = True
 
-        logger = getattr(logging.getLogger(Log._name), level)
+        logger = getattr(logging.getLogger(Log.__name), level)
         if data is None:
             logger(msg.replace('\n', '\n    '))
         else:
