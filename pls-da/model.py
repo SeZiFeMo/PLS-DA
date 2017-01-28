@@ -168,6 +168,7 @@ class PLS_DA(object):
 
         self.x_eigenvalues = np.power(np.array(s_list_x), 2) / (self.n - 1)
         self.y_eigenvalues = np.power(np.array(s_list_y), 2) / (self.n - 1)
+        self.y_eigenvalues = self.y_eigenvalues[:min(n,p)]
 
         # Compute regression parameters B
         # tmp = (P'W)^{-1}
