@@ -33,6 +33,6 @@ plt.subplot(2, 1, 1)
 plot.scores_plot(pls_da, 0, 1)
 
 plt.subplot(2, 1, 2)
-plot.loadings_plot(pls_da, 0, 1)
+plot.biplot(pls_da, 0, 1)
 
 plt.show()
