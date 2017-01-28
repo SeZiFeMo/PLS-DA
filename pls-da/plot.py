@@ -5,6 +5,7 @@ import collections
 import IO
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 
 if __name__ == '__main__':
@@ -50,6 +51,14 @@ def scatter_plot(x_values, y_values, cat):
                 # linewidth=0.10,
                 label=cat)
 
+def plot_plot(x_values, y_values):
+    plt.plot(x_values,
+             y_values,
+             color='#1F77B4',         # line color
+             linestyle='solid',
+             marker='D',              # do not set it to
+             markerfacecolor='blue',  # marker color
+             markersize=5)
 
 def scores_plot(model, pc_x, pc_y, normalize=False):
     """Plot the scores on the specified components."""
@@ -117,3 +126,39 @@ def loadings_plot(model, pc_x, pc_y):
 def biplot(model, pc_x, pc_y):
     scores_plot(model, pc_x, pc_y, normalize=True)
     loadings_plot(model, pc_x, pc_y)
+
+def explained_variance_plot(model, matrix='x'):
+    """Plot the cumulative explained variance."""
+    plt.title('Explained variance plot')
+    plt.xlabel('Principal component number')
+    plt.ylabel('Cumulative variance captured (%)')
+
+    explained_variance = model.get_explained_variance(matrix)
+
+    ax = plt.gca()
+    ax.set_xlim(-0.5, len(explained_variance))
+    ax.set_ylim(max(-2, explained_variance[0] - 2), 102)
+    plt.plot(range(len(explained_variance)),
+             np.cumsum(explained_variance))
+
+def scree_plot(model, matrix='x'):
+    """Plot the explained variance of the model."""
+    plt.title('Scree plot')
+    plt.xlabel('Principal component number')
+    plt.ylabel('Eigenvalues')
+
+    if matrix == 'x':
+        eigen = model.x_eigenvalues
+    elif matrix == 'y':
+        eigen = model.y_eigenvalues
+    else:
+        IO.Log.error('[PCA::get_explained_variance] '
+                     'Accepted values for matrix are x and y')
+
+        return
+
+    ax = plt.gca()
+    ax.set_xlim(-0.5, len(eigen))
+    ax.set_ylim(-0.5, math.ceil(eigen[0]) + 0.5)
+    plot_plot(range(len(eigen)),
+             eigen)

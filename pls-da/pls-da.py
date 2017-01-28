@@ -25,14 +25,16 @@ for lib in ('matplotlib.pyplot as plt', 'numpy as np', 'yaml'):
 pls_da = model.PLS_DA()
 
 pls_da.preprocess_autoscale()
-pls_da.nipals_method(nr_lv=4)
+pls_da.nipals_method()
 
 pls_da.get_modeled_y()
 
 plt.subplot(2, 1, 1)
-plot.scores_plot(pls_da, 0, 1)
+# plot.explained_variance_plot(pls_da)
+plot.scree_plot(pls_da)
 
 plt.subplot(2, 1, 2)
-plot.biplot(pls_da, 0, 1)
+# plot.explained_variance_plot(pls_da, 'y')
+plot.scree_plot(pls_da, 'y')
 
 plt.show()
