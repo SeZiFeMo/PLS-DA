@@ -141,10 +141,11 @@ class PLS_DA(object):
                 c /= np.linalg.norm(c)
                 # Evaluate u_star as projection of c in Y
                 u_star = np.dot(E_y, c)
+                #u_star = np.dot(E_y, c) / np.dot(c, c)
 
-                u = u_star
                 diff = u_star - u
                 delta_u = np.linalg.norm(diff)
+                u = u_star
                 if it > 1 and delta_u < tol:
                     break
             else:
