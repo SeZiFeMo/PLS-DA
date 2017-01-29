@@ -151,7 +151,17 @@ class test_model_module(unittest.TestCase):
         np.testing.assert_allclose(self.pls_da.dummy_Y, dummy_Y_autoscaled)
 
 
-    def test_PLS_DA_eigenvectors_explained_variance(self):
+class test_eigen_module(unittest.TestCase):
+
+    matrix_3x3 = np.array([[1.00000000, 2.00000000, 3.00000000],
+                           [1.0 - 1e-8, 2.0 - 1e-8, 3.0 - 1e-8],
+                           [1.0 + 1e-8, 2.0 + 1e-8, 3.0 + 1e-8]])
+    matrix_3x2 = np.array([[0.50000000, 0.50000000],
+                           [0.5 - 1e-8, 0.5 + 1e-8],
+                           [0.5 + 1e-8, 0.5 - 1e-8]])
+
+    def setUp(self):
+        self.pls_da = model.PLS_DA()
         self.pls_da.dataset = self.matrix_3x3.copy()
         self.pls_da.dummy_Y = self.matrix_3x2.copy()
 
@@ -159,20 +169,29 @@ class test_model_module(unittest.TestCase):
         cov_y = np.dot(self.pls_da.dummy_Y.T, self.pls_da.dummy_Y) / (self.pls_da.n - 1)
 
         self.pls_da.nipals_method()
-        wx, vx = scipy.linalg.eig(cov_x)
-        wy, vy = scipy.linalg.eig(cov_y)
-        wx = np.real(wx)
-        wy = np.real(wy)
-        wx[::-1].sort()
-        wy[::-1].sort()
+        self.wx, vx = scipy.linalg.eig(cov_x)
+        self.wy, vy = scipy.linalg.eig(cov_y)
+        self.wx = np.real(self.wx)
+        self.wy = np.real(self.wy)
+        self.wx[::-1].sort()
+        self.wy[::-1].sort()
+        self.x_variance = 100 * self.wx / np.sum(self.wx)
+        self.y_variance = 100 * self.wy / np.sum(self.wy)
 
-#        np.testing.assert_allclose(self.pls_da.x_eigenvalues, wx)
-#        np.testing.assert_allclose(self.pls_da.y_eigenvalues, wy)
+    def tearDown(self):
+        self.pls_da = None
 
-        x_variance = 100 * wx / np.sum(wx)
-        y_variance = 100 * wy / np.sum(wy)
-#        np.testing.assert_allclose(self.pls_da.get_explained_variance(), x_variance)
-#        np.testing.assert_allclose(self.pls_da.get_explained_variance('y'), y_variance)
+    def test_PLS_DA_eigenvectors_x_eigen(self):
+        np.testing.assert_allclose(self.pls_da.x_eigenvalues, self.wx)
+
+    def test_PLS_DA_eigenvectors_y_eigen(self):
+        np.testing.assert_allclose(self.pls_da.y_eigenvalues, self.wy)
+
+    def test_PLS_DA_eigenvectors_x_variance(self):
+        np.testing.assert_allclose(self.pls_da.get_explained_variance(), self.x_variance)
+
+    def test_PLS_DA_eigenvectors_y_variance(self):
+        np.testing.assert_allclose(self.pls_da.get_explained_variance('y'), self.y_variance)
 
 class test_nipals_module(unittest.TestCase):
 
@@ -237,9 +256,11 @@ class test_nipals_module(unittest.TestCase):
         np.testing.assert_allclose(np.absolute(self.pls_da.C),
                                        np.absolute(self.sklearn_pls.y_weights_),
                                        atol=0.1)
-#        np.testing.assert_allclose(np.absolute(self.pls_da.B),
-#                                       np.absolute(self.sklearn_pls.coef_),
-#                                       )
+
+    def test_PLS_DA_coefficient(self):
+        np.testing.assert_allclose(np.absolute(self.pls_da.B),
+                                       np.absolute(self.sklearn_pls.coef_),
+                                       atol=0.1)
 
 
 
@@ -291,4 +312,4 @@ class test_utility_module(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(failfast=True)
+    unittest.main(failfast=False)
