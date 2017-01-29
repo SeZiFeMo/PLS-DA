@@ -1,30 +1,62 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# coding: utf-8
 
-# Form implementation generated from reading ui file 'pls_da.ui'
-#
-# Created by: PyQt5 UI code generator
+import IO
+import PyQt5.QtCore as QtCore
+import PyQt5.QtGui as QtGui
+import PyQt5.QtWidgets as QtWidgets
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+
+def set_size_policy(widget, h_policy='Preferred', v_policy='Preferred',
+                    h_stretch_factor=0, v_stretch_factor=0):
+    """Set the new size policy of widget.
+
+       widget is used to keep the previous hasHeightForWidth value and
+         to set on it the new size policy.
+       set [h|v]_stretch_factor to None to avoid setting it.
+    """
+    addmitted_size_policies = ('Fixed', 'Minimum', 'Maximum', 'Preferred',
+                               'Expanding', 'MinimumExpanding', 'Ignored')
+    if (h_policy not in addmitted_size_policies or
+        v_policy not in addmitted_size_policies):
+        IO.Log.error('Unknown size policy ({}, {})'.format(h_policy, v_policy))
+        exit(1)
+
+    size_policy = QtWidgets.QSizePolicy(getattr(QtWidgets.QSizePolicy,
+                                                h_policy),
+                                        getattr(QtWidgets.QSizePolicy,
+                                                v_policy))
+    if h_stretch_factor is not None:
+        size_policy.setHorizontalStretch(h_stretch_factor)
+    if v_stretch_factor is not None:
+        size_policy.setVerticalStretch(v_stretch_factor)
+
+    """Was the previous widget preferred height depending on its width?
+       Lets keep the same!
+    """
+    size_policy.setHeightForWidth(widget.sizePolicy().hasHeightForWidth())
+    widget.setSizePolicy(size_policy)
+
 
 class Ui_MainWindow(object):
+
+    drop_down_choices = ['Scree', 'LVs - Explained variance Y',
+            'Inner relationships', 'Biplot', 'Scores & Loadings', 'Scores',
+            'Loadings', 'Samples - Y calculated', 'Samples - Y predicted',
+            'T2 - Q', 'Residuals - Leverage', 'Regression coefficients']
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
         MainWindow.resize(800, 600)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
-        MainWindow.setSizePolicy(sizePolicy)
+        set_size_policy(MainWindow, 'Expanding', 'Expanding', 0, 0)
+
         MainWindow.setMinimumSize(QtCore.QSize(800, 600))
         MainWindow.setMaximumSize(QtCore.QSize(7680, 4320))
         MainWindow.setUnifiedTitleAndToolBarOnMac(True)
         self.MainWidget = QtWidgets.QWidget(MainWindow)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.MainWidget.sizePolicy().hasHeightForWidth())
-        self.MainWidget.setSizePolicy(sizePolicy)
+        set_size_policy(self.MainWidget, 'Preferred', 'Preferred', 0, 0)
+
         self.MainWidget.setMinimumSize(QtCore.QSize(800, 600))
         self.MainWidget.setMaximumSize(QtCore.QSize(7680, 4300))
         self.MainWidget.setObjectName("MainWidget")
@@ -33,11 +65,8 @@ class Ui_MainWindow(object):
         self.MainGridLayout.setSpacing(0)
         self.MainGridLayout.setObjectName("MainGridLayout")
         self.MainSplitter = QtWidgets.QSplitter(self.MainWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.MainSplitter.sizePolicy().hasHeightForWidth())
-        self.MainSplitter.setSizePolicy(sizePolicy)
+        set_size_policy(self.MainSplitter, 'Expanding', 'Expanding', 0, 0)
+
         self.MainSplitter.setMaximumSize(QtCore.QSize(7680, 4300))
         self.MainSplitter.setOrientation(QtCore.Qt.Horizontal)
         self.MainSplitter.setHandleWidth(3)
@@ -55,18 +84,9 @@ class Ui_MainWindow(object):
         self.LeftComboBox.setMinimumSize(QtCore.QSize(194, 22))
         self.LeftComboBox.setMaximumSize(QtCore.QSize(3631, 22))
         self.LeftComboBox.setObjectName("LeftComboBox")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
-        self.LeftComboBox.addItem("")
+        for entry in self.drop_down_choices:
+            self.LeftComboBox.addItem("")
+
         self.LeftGridLayout.addWidget(self.LeftComboBox, 0, 0, 1, 1)
         self.LeftScrollArea = QtWidgets.QScrollArea(self.LeftWidget)
         self.LeftScrollArea.setMinimumSize(QtCore.QSize(194, 547))
@@ -95,22 +115,16 @@ class Ui_MainWindow(object):
         self.LeftLVsLabel.setObjectName("LeftLVsLabel")
         self.PlotFormLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.LeftLVsLabel)
         self.LeftLVsSpinBox = QtWidgets.QSpinBox(self.LeftScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.LeftLVsSpinBox.sizePolicy().hasHeightForWidth())
-        self.LeftLVsSpinBox.setSizePolicy(sizePolicy)
+        set_size_policy(self.LeftLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
+
         self.LeftLVsSpinBox.setMinimumSize(QtCore.QSize(70, 22))
         self.LeftLVsSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
         self.LeftLVsSpinBox.setMinimum(1)
         self.LeftLVsSpinBox.setObjectName("LeftLVsSpinBox")
         self.PlotFormLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.LeftLVsSpinBox)
         self.LeftXRadioButton = QtWidgets.QRadioButton(self.LeftScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.LeftXRadioButton.sizePolicy().hasHeightForWidth())
-        self.LeftXRadioButton.setSizePolicy(sizePolicy)
+        set_size_policy(self.LeftXRadioButton, 'Preferred', 'Preferred', 0, 0)
+
         self.LeftXRadioButton.setMinimumSize(QtCore.QSize(70, 22))
         self.LeftXRadioButton.setMaximumSize(QtCore.QSize(1310, 170))
         self.LeftXRadioButton.setAutoExclusive(False)
@@ -120,11 +134,8 @@ class Ui_MainWindow(object):
         self.LeftButtonGroup.addButton(self.LeftXRadioButton)
         self.PlotFormLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.LeftXRadioButton)
         self.LeftYRadioButton = QtWidgets.QRadioButton(self.LeftScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.LeftYRadioButton.sizePolicy().hasHeightForWidth())
-        self.LeftYRadioButton.setSizePolicy(sizePolicy)
+        set_size_policy(self.LeftYRadioButton, 'Preferred', 'Preferred', 0, 0)
+
         self.LeftYRadioButton.setMinimumSize(QtCore.QSize(70, 22))
         self.LeftYRadioButton.setMaximumSize(QtCore.QSize(1310, 170))
         self.LeftYRadioButton.setLayoutDirection(QtCore.Qt.LeftToRight)
@@ -132,43 +143,31 @@ class Ui_MainWindow(object):
         self.LeftButtonGroup.addButton(self.LeftYRadioButton)
         self.PlotFormLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.LeftYRadioButton)
         self.LeftXSpinBox = QtWidgets.QSpinBox(self.LeftScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.LeftXSpinBox.sizePolicy().hasHeightForWidth())
-        self.LeftXSpinBox.setSizePolicy(sizePolicy)
+        set_size_policy)self.LeftXSpinBox, 'Preferred', 'Preferred', 0, 0)
+
         self.LeftXSpinBox.setMinimumSize(QtCore.QSize(70, 22))
         self.LeftXSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
         self.LeftXSpinBox.setMinimum(1)
         self.LeftXSpinBox.setObjectName("LeftXSpinBox")
         self.PlotFormLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.LeftXSpinBox)
         self.LeftYSpinBox = QtWidgets.QSpinBox(self.LeftScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.LeftYSpinBox.sizePolicy().hasHeightForWidth())
-        self.LeftYSpinBox.setSizePolicy(sizePolicy)
+        set_size_policy(self.LeftYSpinBox, 'Preferred', 'Preferred', 0, 0)
+
         self.LeftYSpinBox.setMinimumSize(QtCore.QSize(70, 22))
         self.LeftYSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
         self.LeftYSpinBox.setMinimum(1)
         self.LeftYSpinBox.setObjectName("LeftYSpinBox")
         self.PlotFormLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.LeftYSpinBox)
         self.LeftPlotPushButton = QtWidgets.QPushButton(self.LeftScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.LeftPlotPushButton.sizePolicy().hasHeightForWidth())
-        self.LeftPlotPushButton.setSizePolicy(sizePolicy)
+        set_size_policy(self.LeftPlotPushButton, 'Preferred', 'Preferred', 0, 0)
+
         self.LeftPlotPushButton.setMinimumSize(QtCore.QSize(70, 22))
         self.LeftPlotPushButton.setMaximumSize(QtCore.QSize(1310, 170))
         self.LeftPlotPushButton.setObjectName("LeftPlotPushButton")
         self.PlotFormLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.LeftPlotPushButton)
         self.LeftBackPushButton = QtWidgets.QPushButton(self.LeftScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.LeftBackPushButton.sizePolicy().hasHeightForWidth())
-        self.LeftBackPushButton.setSizePolicy(sizePolicy)
+        set_size_policy(self.LeftBackPushButton, 'Preferred', 'Preferred', 0, 0)
+
         self.LeftBackPushButton.setMinimumSize(QtCore.QSize(70, 22))
         self.LeftBackPushButton.setMaximumSize(QtCore.QSize(1310, 170))
         self.LeftBackPushButton.setObjectName("LeftBackPushButton")
@@ -184,26 +183,14 @@ class Ui_MainWindow(object):
         self.CentralGridLayout.setSpacing(5)
         self.CentralGridLayout.setObjectName("CentralGridLayout")
         self.CentralComboBox = QtWidgets.QComboBox(self.CentralWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralComboBox.sizePolicy().hasHeightForWidth())
-        self.CentralComboBox.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralComboBox, 'Expanding', 'Expanding', 0, 0)
+
         self.CentralComboBox.setMinimumSize(QtCore.QSize(194, 22))
         self.CentralComboBox.setMaximumSize(QtCore.QSize(3631, 22))
         self.CentralComboBox.setObjectName("CentralComboBox")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
-        self.CentralComboBox.addItem("")
+        for entry in self.drop_down_choices:
+            self.CentralComboBox.addItem("")
+
         self.CentralGridLayout.addWidget(self.CentralComboBox, 0, 0, 1, 1)
         self.CentralScrollArea = QtWidgets.QScrollArea(self.CentralWidget)
         self.CentralScrollArea.setMinimumSize(QtCore.QSize(194, 547))
@@ -212,11 +199,8 @@ class Ui_MainWindow(object):
         self.CentralScrollArea.setObjectName("CentralScrollArea")
         self.CentralScrollAreaWidgetContents = QtWidgets.QWidget()
         self.CentralScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 290, 565))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralScrollAreaWidgetContents.sizePolicy().hasHeightForWidth())
-        self.CentralScrollAreaWidgetContents.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralScrollAreaWidgetContents, 'Expanding', 'Expanding', 0, 0)
+
         self.CentralScrollAreaWidgetContents.setMinimumSize(QtCore.QSize(174, 427))
         self.CentralScrollAreaWidgetContents.setMaximumSize(QtCore.QSize(3611, 4147))
         self.CentralScrollAreaWidgetContents.setLayoutDirection(QtCore.Qt.LeftToRight)
@@ -230,11 +214,8 @@ class Ui_MainWindow(object):
         self.PlotFormLayout1.setSpacing(10)
         self.PlotFormLayout1.setObjectName("PlotFormLayout1")
         self.CentralLVsLabel = QtWidgets.QLabel(self.CentralScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralLVsLabel.sizePolicy().hasHeightForWidth())
-        self.CentralLVsLabel.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralLVsLabel, 'Preferred', 'Preferred', 0, 0)
+
         self.CentralLVsLabel.setMinimumSize(QtCore.QSize(70, 22))
         self.CentralLVsLabel.setMaximumSize(QtCore.QSize(1310, 170))
         self.CentralLVsLabel.setTextFormat(QtCore.Qt.AutoText)
@@ -243,22 +224,16 @@ class Ui_MainWindow(object):
         self.CentralLVsLabel.setObjectName("CentralLVsLabel")
         self.PlotFormLayout1.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.CentralLVsLabel)
         self.CentralLVsSpinBox = QtWidgets.QSpinBox(self.CentralScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralLVsSpinBox.sizePolicy().hasHeightForWidth())
-        self.CentralLVsSpinBox.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
+
         self.CentralLVsSpinBox.setMinimumSize(QtCore.QSize(70, 22))
         self.CentralLVsSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
         self.CentralLVsSpinBox.setMinimum(1)
         self.CentralLVsSpinBox.setObjectName("CentralLVsSpinBox")
         self.PlotFormLayout1.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.CentralLVsSpinBox)
         self.CentralXRadioButton = QtWidgets.QRadioButton(self.CentralScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralXRadioButton.sizePolicy().hasHeightForWidth())
-        self.CentralXRadioButton.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralXRadioButton, 'Preferred', 'Preferred', 0, 0)
+
         self.CentralXRadioButton.setMinimumSize(QtCore.QSize(70, 22))
         self.CentralXRadioButton.setMaximumSize(QtCore.QSize(1310, 170))
         self.CentralXRadioButton.setAutoExclusive(False)
@@ -268,53 +243,38 @@ class Ui_MainWindow(object):
         self.CentralButtonGroup.addButton(self.CentralXRadioButton)
         self.PlotFormLayout1.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.CentralXRadioButton)
         self.CentralYRadioButton = QtWidgets.QRadioButton(self.CentralScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralYRadioButton.sizePolicy().hasHeightForWidth())
-        self.CentralYRadioButton.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralYRadioButton, 'Preferred', 'Preferred', 0, 0)
+
         self.CentralYRadioButton.setMinimumSize(QtCore.QSize(70, 22))
         self.CentralYRadioButton.setMaximumSize(QtCore.QSize(1310, 170))
         self.CentralYRadioButton.setObjectName("CentralYRadioButton")
         self.CentralButtonGroup.addButton(self.CentralYRadioButton)
         self.PlotFormLayout1.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.CentralYRadioButton)
         self.CentralBackPushButton = QtWidgets.QPushButton(self.CentralScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralBackPushButton.sizePolicy().hasHeightForWidth())
-        self.CentralBackPushButton.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralBackPushButton, 'Preferred', 'Preferred', 0, 0)
+
         self.CentralBackPushButton.setMinimumSize(QtCore.QSize(70, 22))
         self.CentralBackPushButton.setMaximumSize(QtCore.QSize(1310, 170))
         self.CentralBackPushButton.setObjectName("CentralBackPushButton")
         self.PlotFormLayout1.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.CentralBackPushButton)
         self.CentralPlotPushButton = QtWidgets.QPushButton(self.CentralScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralPlotPushButton.sizePolicy().hasHeightForWidth())
-        self.CentralPlotPushButton.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralPlotPushButton, 'Preferred', 'Preferred', 0, 0)
+
         self.CentralPlotPushButton.setMinimumSize(QtCore.QSize(70, 22))
         self.CentralPlotPushButton.setMaximumSize(QtCore.QSize(1310, 170))
         self.CentralPlotPushButton.setObjectName("CentralPlotPushButton")
         self.PlotFormLayout1.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.CentralPlotPushButton)
         self.CentralXSpinBox = QtWidgets.QSpinBox(self.CentralScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralXSpinBox.sizePolicy().hasHeightForWidth())
-        self.CentralXSpinBox.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralXSpinBox, 'Preferred', 'Preferred', 0, 0)
+
         self.CentralXSpinBox.setMinimumSize(QtCore.QSize(70, 22))
         self.CentralXSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
         self.CentralXSpinBox.setMinimum(1)
         self.CentralXSpinBox.setObjectName("CentralXSpinBox")
         self.PlotFormLayout1.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.CentralXSpinBox)
         self.CentralYSpinBox = QtWidgets.QSpinBox(self.CentralScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CentralYSpinBox.sizePolicy().hasHeightForWidth())
-        self.CentralYSpinBox.setSizePolicy(sizePolicy)
+        set_size_policy(self.CentralYSpinBox, 'Preferred', 'Preferred', 0, 0)
+
         self.CentralYSpinBox.setMinimumSize(QtCore.QSize(70, 22))
         self.CentralYSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
         self.CentralYSpinBox.setMinimum(1)
@@ -323,11 +283,8 @@ class Ui_MainWindow(object):
         self.CentralScrollArea.setWidget(self.CentralScrollAreaWidgetContents)
         self.CentralGridLayout.addWidget(self.CentralScrollArea, 1, 0, 1, 1)
         self.RightWidget = QtWidgets.QWidget(self.MainSplitter)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.RightWidget.sizePolicy().hasHeightForWidth())
-        self.RightWidget.setSizePolicy(sizePolicy)
+        set_size_policy(self.RightWidget, 'Expanding', 'Expanding', 0, 0)
+
         self.RightWidget.setMinimumSize(QtCore.QSize(150, 580))
         self.RightWidget.setMaximumSize(QtCore.QSize(400, 4300))
         self.RightWidget.setObjectName("RightWidget")
@@ -342,11 +299,8 @@ class Ui_MainWindow(object):
         self.RightScrollArea.setObjectName("RightScrollArea")
         self.RightScrollAreaWidgetContents = QtWidgets.QWidget()
         self.RightScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 189, 565))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.RightScrollAreaWidgetContents.sizePolicy().hasHeightForWidth())
-        self.RightScrollAreaWidgetContents.setSizePolicy(sizePolicy)
+        set_size_policy(self.RightScrollAreaWidgetContents, 'Expanding', 'Expanding', 0, 0)
+
         self.RightScrollAreaWidgetContents.setMinimumSize(QtCore.QSize(138, 534))
         self.RightScrollAreaWidgetContents.setMaximumSize(QtCore.QSize(388, 4259))
         self.RightScrollAreaWidgetContents.setObjectName("RightScrollAreaWidgetContents")
@@ -355,11 +309,8 @@ class Ui_MainWindow(object):
         self.gridLayout.setSpacing(5)
         self.gridLayout.setObjectName("gridLayout")
         self.DetailsLabel = QtWidgets.QLabel(self.RightScrollAreaWidgetContents)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.DetailsLabel.sizePolicy().hasHeightForWidth())
-        self.DetailsLabel.setSizePolicy(sizePolicy)
+        set_size_policy(self.DetailsLabel, 'Expanding', 'Expanding', 0, 0)
+
         self.DetailsLabel.setMinimumSize(QtCore.QSize(138, 534))
         self.DetailsLabel.setMaximumSize(QtCore.QSize(388, 4259))
         self.DetailsLabel.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
@@ -370,11 +321,8 @@ class Ui_MainWindow(object):
         self.RightScrollArea.setWidget(self.RightScrollAreaWidgetContents)
         self.RightGridLayout.addWidget(self.RightScrollArea, 1, 0, 1, 1)
         self.CurrentModeLabel = QtWidgets.QLabel(self.RightWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.CurrentModeLabel.sizePolicy().hasHeightForWidth())
-        self.CurrentModeLabel.setSizePolicy(sizePolicy)
+        set_size_policy(self.CurrentModeLabel, 'Expanding', 'Expanding', 0, 0)
+
         self.CurrentModeLabel.setMinimumSize(QtCore.QSize(144, 22))
         self.CurrentModeLabel.setMaximumSize(QtCore.QSize(394, 22))
         self.CurrentModeLabel.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -443,35 +391,17 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "PLS-DA"))
-        self.LeftComboBox.setItemText(0, _translate("MainWindow", "Scree"))
-        self.LeftComboBox.setItemText(1, _translate("MainWindow", "LVs - Explained variance Y"))
-        self.LeftComboBox.setItemText(2, _translate("MainWindow", "Inner relationships"))
-        self.LeftComboBox.setItemText(3, _translate("MainWindow", "Biplot"))
-        self.LeftComboBox.setItemText(4, _translate("MainWindow", "Scores & Loadings"))
-        self.LeftComboBox.setItemText(5, _translate("MainWindow", "Scores"))
-        self.LeftComboBox.setItemText(6, _translate("MainWindow", "Loadings"))
-        self.LeftComboBox.setItemText(7, _translate("MainWindow", "Samples - Y calculated"))
-        self.LeftComboBox.setItemText(8, _translate("MainWindow", "Samples - Y predicted"))
-        self.LeftComboBox.setItemText(9, _translate("MainWindow", "T2 - Q"))
-        self.LeftComboBox.setItemText(10, _translate("MainWindow", "Residuals - Leverage"))
-        self.LeftComboBox.setItemText(11, _translate("MainWindow", "Regression coefficients"))
+        for index, entry in enumerate(self.drop_down_choices):
+            self.LeftComboBox.setItemText(index, _translate("MainWindow", entry))
+
         self.LeftLVsLabel.setText(_translate("MainWindow", "Latent Variables"))
         self.LeftXRadioButton.setText(_translate("MainWindow", "&X"))
         self.LeftYRadioButton.setText(_translate("MainWindow", "&Y"))
         self.LeftPlotPushButton.setText(_translate("MainWindow", "Plot"))
         self.LeftBackPushButton.setText(_translate("MainWindow", "Back"))
-        self.CentralComboBox.setItemText(0, _translate("MainWindow", "Scree"))
-        self.CentralComboBox.setItemText(1, _translate("MainWindow", "LVs - Explained variance Y"))
-        self.CentralComboBox.setItemText(2, _translate("MainWindow", "Inner relationships"))
-        self.CentralComboBox.setItemText(3, _translate("MainWindow", "Biplot"))
-        self.CentralComboBox.setItemText(4, _translate("MainWindow", "Scores & Loadings"))
-        self.CentralComboBox.setItemText(5, _translate("MainWindow", "Scores"))
-        self.CentralComboBox.setItemText(6, _translate("MainWindow", "Loadings"))
-        self.CentralComboBox.setItemText(7, _translate("MainWindow", "Samples - Y calculated"))
-        self.CentralComboBox.setItemText(8, _translate("MainWindow", "Samples - Y predicted"))
-        self.CentralComboBox.setItemText(9, _translate("MainWindow", "T2 - Q"))
-        self.CentralComboBox.setItemText(10, _translate("MainWindow", "Residuals - Leverage"))
-        self.CentralComboBox.setItemText(11, _translate("MainWindow", "Regression coefficients"))
+        for index, entry in enumerate(self.drop_down_choices):
+            self.CentralComboBox.setItemText(index, _translate("MainWindow", entry))
+
         self.CentralLVsLabel.setText(_translate("MainWindow", "Latent Variables"))
         self.CentralXRadioButton.setText(_translate("MainWindow", "&X"))
         self.CentralYRadioButton.setText(_translate("MainWindow", "&Y"))
@@ -497,8 +427,6 @@ class Ui_MainWindow(object):
         self.ActionLoadModel.setText(_translate("MainWindow", "&Load model"))
         self.ActionLoadModel.setShortcut(_translate("MainWindow", "Ctrl+O"))
         self.ActionNewModel.setText(_translate("MainWindow", "&New model"))
-        self.ActionNewModel.setToolTip(_translate("MainWindow", "New model"))
         self.ActionNewModel.setShortcut(_translate("MainWindow", "Ctrl+N"))
         self.ActionAboutThatProject.setText(_translate("MainWindow", "&About this project"))
         self.ActionAboutThatProject.setShortcut(_translate("MainWindow", "F1"))
-
