@@ -118,7 +118,7 @@ class PLS_DA(object):
         self.U = np.empty((n, nr_lv))
         self.Q = np.empty((p, nr_lv))
         self.C = np.empty((p, nr_lv))
-        b = np.empty((nr_lv))
+        self.d = np.empty((nr_lv))
         s_list_x = []
         s_list_y = []
 
@@ -131,22 +131,22 @@ class PLS_DA(object):
             for it in range(int(max_iter) + 2):
                 # Evaluate w as projection of u in X and normalize it
                 w = np.dot(E_x.T, u) / np.dot(u, u)
-                w /= np.linalg.norm(w)
+                w = w / np.linalg.norm(w)
                 # Evaluate t as projection of w in X
                 t = np.dot(E_x, w)
 
                 # Y part
                 # Evaluate c as projection of t in Y and normalize it
                 c = np.dot(E_y.T, t) / np.dot(t, t)
-                c /= np.linalg.norm(c)
+                c = c / np.linalg.norm(c)
                 # Evaluate u_star as projection of c in Y
                 u_star = np.dot(E_y, c)
 
-                u = u_star
                 diff = u_star - u
-                delta_u = np.linalg.norm(diff)
+                delta_u = np.dot(diff, diff)
                 if it > 1 and delta_u < tol:
                     break
+                u = u_star
             else:
                 IO.Log.warning('Reached max '
                                'iteration number ({})'.format(max_iter))
@@ -159,12 +159,12 @@ class PLS_DA(object):
             self.P[:, i] = np.dot(E_x.T, t) / np.dot(t, t)
             self.W[:, i] = w
             # regression coefficient for the inner relation
-            b[i] = np.dot(u.T, t) / np.dot(t, t)
+            self.d[i] = np.dot(u.T, t) / np.dot(t, t)
             self.C[:, i] = c
             self.U[:, i] = u
             self.Q[:, i] = np.dot(E_y.T, u) / np.dot(u, u)
-            E_x -= np.dot(np.row_stack(t), np.column_stack(self.P[:, i]))
-            E_y -= b[i] * np.dot(np.row_stack(t), np.column_stack(c.T))
+            E_x = E_x - np.dot(np.row_stack(t), np.column_stack(self.P[:, i]))
+            E_y = E_y - self.d[i] * np.dot(np.row_stack(t), np.column_stack(c.T))
 
         self.x_eigenvalues = np.power(np.array(s_list_x), 2) / (self.n - 1)
         self.y_eigenvalues = np.power(np.array(s_list_y), 2) / (self.n - 1)
