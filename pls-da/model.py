@@ -17,7 +17,10 @@ class PLS_DA(object):
     allowed_categories = ('B', 'E', 'G', 'N', 'NA', 'SA', 'U', 'WL')
 
     def __init__(self, csv_file=None):
-        """Constructor method"""
+        """Constructor method.
+
+           Raises Exception if file could not be parsed.
+        """
         if csv_file is None:
             csv_file = utility.CLI.args().input_file
 
@@ -34,7 +37,8 @@ class PLS_DA(object):
                     self.categories[i] = cat
                     break
             else:
-                IO.Log.warning('Unexpected category ({})'.format(cell))
+                raise Exception('Unexpected category ({}) '
+                                'in row number {}'.format(cell, i))
 
         # The other columns of body are the dataset (matrix)
         self._dataset_original = np.array([np.array(row[1:]) for row in body])

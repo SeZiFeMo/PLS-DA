@@ -101,7 +101,10 @@ class Log(object):
 class CSV(object):
 
     def parse(filename, encoding='iso8859', separator=';'):
-        """Return the header (list) and the body of a table (list of lists)"""
+        """Return the header (list) and the body of a table (list of lists).
+
+           Raises Exception on input error or on malformed content.
+        """
         header, body = list(), list()
         try:
             with open(filename, 'r', encoding=encoding) as f:
@@ -111,17 +114,16 @@ class CSV(object):
                     row = line.strip('\n').split(separator)
                     body.append(list(row))
         except IOError:
-            Log.error('File {} not existent, not readable '
-                      'or corrupted.'.format(filename))
-            exit(1)
+            raise Exception('File {} not existent, not readable '
+                            'or corrupted.'.format(filename))
         else:
             if len(header) < 1 or len(body) < 1:
-                Log.error('Too few columns or rows in {}'.format(filename))
-                exit(1)
+                raise Exception('Too few columns or rows in '
+                                '{}'.format(filename))
             for i, row in enumerate(body):
                 if len(row) != len(header):
-                    Log.error('Bad number of columns in {} body row'.format(i))
-                    exit(1)
+                    raise Exception('Bad number of columns in '
+                                    '{} body row'.format(i))
 
             for i, row in enumerate(body):
                 for j, cell in enumerate(row):
