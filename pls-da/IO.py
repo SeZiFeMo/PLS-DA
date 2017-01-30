@@ -81,6 +81,16 @@ class Log(object):
     def info(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='info')
 
+    def set_level(level):
+        if not isinstance(level, str):
+            Log.error('Log.set_level() takes a string as argumenent, not a '
+                      '{}'.format(type(level)))
+            return
+        if level not in ('critical', 'debug', 'error', 'info', 'warning'):
+            Log.error('Bad level ({}) in Log.set_level()'.format(level))
+            return
+        Log.__default = level
+
     def warning(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='warning')
 
