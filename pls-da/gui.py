@@ -367,8 +367,8 @@ class UserInterface(object):
         self.ActionModel = QtWidgets.QAction(self.MainWindow)
         self.ActionModel.setObjectName("ActionModel")
 
-        self.ActionCrossvalidation = QtWidgets.QAction(self.MainWindow)
-        self.ActionCrossvalidation.setObjectName("ActionCrossvalidation")
+        self.ActionCV = QtWidgets.QAction(self.MainWindow)
+        self.ActionCV.setObjectName("ActionCV")
 
         self.ActionPrediction = QtWidgets.QAction(self.MainWindow)
         self.ActionPrediction.setObjectName("ActionPrediction")
@@ -397,7 +397,7 @@ class UserInterface(object):
         self.MenuOptions.addAction(self.ActionQuit)
 
         self.MenuChangeMode.addAction(self.ActionModel)
-        self.MenuChangeMode.addAction(self.ActionCrossvalidation)
+        self.MenuChangeMode.addAction(self.ActionCV)
         self.MenuChangeMode.addAction(self.ActionPrediction)
 
         self.MenuAbout.addAction(self.ActionAboutThatProject)
@@ -426,10 +426,10 @@ class UserInterface(object):
         self.CentralPlotPushButton.setText("Plot")
 
         self.DetailsLabel.setText("Details")
-        self.CurrentModeLabel.setText("Current Mode")
+        self.currentMode('start')
 
         self.ActionAboutThatProject.setText("A&bout this project")
-        self.ActionCrossvalidation.setText("Cross&Validation")
+        self.ActionCV.setText("Cross&Validation")
         self.ActionExport.setText("&Export matrices")
         self.ActionLoadModel.setText("&Load model")
         self.ActionModel.setText("&Model")
@@ -439,7 +439,7 @@ class UserInterface(object):
         self.ActionSaveModel.setText("&Save model")
 
         self.ActionAboutThatProject.setShortcut("F1")
-        self.ActionCrossvalidation.setShortcut("Ctrl+V")
+        self.ActionCV.setShortcut("Ctrl+V")
         self.ActionExport.setShortcut("Ctrl+E")
         self.ActionLoadModel.setShortcut("Ctrl+L")
         self.ActionModel.setShortcut("Ctrl+M")
@@ -452,7 +452,36 @@ class UserInterface(object):
         self.MenuChangeMode.setTitle("&Change mode")
         self.MenuOptions.setTitle("&Options")
 
+        self.setupHandlers()
         QtCore.QMetaObject.connectSlotsByName(self.MainWindow)
+
+    def currentMode(self, value=None):
+        """Both getter / setter for current mode"""
+        if value is None:
+            return self.__current_mode
+        if isinstance(value, str):
+            if value.lower() == 'model':
+                self.__current_mode = 'model'
+            elif value.lower() in ('crossvalidation', 'cv'):
+                self.__current_mode = 'crossvalidation'
+            elif value.lower() == 'prediction':
+                self.__current_mode = 'prediction'
+            elif value.lower() == 'start':
+                self.__current_mode = 'start'
+            else:
+                IO.Log.error('Unknown mode ({}) passed to '
+                             'currentMode()'.format(value))
+                return
+            self.CurrentModeLabel.setText(self.__current_mode.capitalize()
+                                          + ' mode')
+        else:
+            IO.Log.error('currentMode() takes a string when used as a setter')
+
+    def setupHandlers(self):
+        self.ActionModel.triggered.connect(lambda: self.currentMode('model'))
+        self.ActionCV.triggered.connect(lambda: self.currentMode('cv'))
+        self.ActionPrediction.triggered.connect(lambda:
+                                                self.currentMode('prediction'))
 
     def show(self):
         self.MainWindow.show()
