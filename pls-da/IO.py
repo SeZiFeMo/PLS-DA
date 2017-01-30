@@ -48,7 +48,7 @@ class Log(object):
 
         if not Log.__initialized:
             logging_level = getattr(logging, Log.__default.upper())
-            logging.basicConfig(format='[%(levelname)s]\t%(message)s',
+            logging.basicConfig(format='[%(levelname)-8s] %(message)s',
                                 level=logging_level)
             for l in logging.Logger.manager.loggerDict.keys():
                 logging.getLogger(l).setLevel(logging.INFO)
@@ -58,8 +58,9 @@ class Log(object):
             Log.__initialized = True
 
         logger = getattr(logging.getLogger(Log.__name), level)
+        my_new_line = '\n[{:<8}]     '.format(Log.__default.upper())
         if data is None:
-            logger(msg.replace('\n', '\n    '))
+            logger(msg.replace('\n', my_new_line))
         else:
             if (isinstance(data, (np.ndarray, np.generic))
                 and data.ndim in (1, 2)) or \
@@ -67,7 +68,8 @@ class Log(object):
                 data = mat2str(data)
             else:
                 data = yaml.dump(data, default_flow_style=False)
-            logger(msg.rstrip('\n') + '\n    ' + data.replace('\n', '\n    '))
+            logger(msg.rstrip('\n') + my_new_line
+                   data.replace('\n', my_new_line))
 
     def critical(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='critical')
@@ -90,6 +92,7 @@ class Log(object):
             Log.error('Bad level ({}) in Log.set_level()'.format(level))
             return
         Log.__default = level
+        Log.__initialized = False
 
     def warning(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='warning')
