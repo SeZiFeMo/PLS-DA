@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import IO
+import model
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import sys
@@ -378,7 +379,10 @@ class UserInterface(object):
         self.CentralPlotPushButton.setText("Plot")
 
         self.DetailsLabel.setText("Details")
-        self.currentMode('start')
+
+        self.MenuAbout.setTitle("&About")
+        self.MenuChangeMode.setTitle("&Change mode")
+        self.MenuOptions.setTitle("&Options")
 
         self.ActionAboutThatProject.setText("A&bout this project")
         self.ActionCV.setText("Cross&Validation")
@@ -399,16 +403,13 @@ class UserInterface(object):
         self.ActionPrediction.setShortcut("Ctrl+P")
         self.ActionQuit.setShortcut("Ctrl+Q")
         self.ActionSaveModel.setShortcut("Ctrl+S")
-
-        self.MenuAbout.setTitle("&About")
-        self.MenuChangeMode.setTitle("&Change mode")
-        self.MenuOptions.setTitle("&Options")
-
-        self.setupHandlers()
         QtCore.QMetaObject.connectSlotsByName(self.MainWindow)
 
+        self.setupHandlers()
+        self.setupStatusAttributes()
+
     def currentMode(self, value=None):
-        """Both getter / setter for current mode"""
+        """Both getter and setter of current mode."""
         if value is None:
             return self.__current_mode
         if isinstance(value, str):
@@ -429,11 +430,46 @@ class UserInterface(object):
         else:
             IO.Log.error('currentMode() takes a string when used as a setter')
 
+    def newModel(self):
+        """Both getter and setter of pls-da model."""
+        if self.__plsda_model is not None:
+            popup = new_qt('QMessageBox', 'popup', parent=self.MainWindow)
+            popup.setWindowTitle('Replace current model')
+            popup.setText('Are you sure to replace the current model? '
+                          '(All data not saved will be lost)')
+            popup.setStandardButtons(QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No)
+            choice = popup.exec()
+            if choice == QtWidgets.QMessageBox.No:
+                return
+
+        popup = new_qt('QFileDialog', 'popup', parent=self.MainWindow)
+        popup.setWindowTitle('Choose an input file')
+        popup.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+        if not popup.exec():
+            return
+
+        input_file = popup.selectedFiles()[0]
+        try:
+            self.__plsda_model = model.PLS_DA(csv_file=input_file)
+        except Exception as e:
+            self.__plsda_model = None
+            popup = new_qt('QMessageBox', 'popup', parent=self.MainWindow)
+            popup.setIcon(QtWidgets.QMessageBox.Critical)
+            popup.setText(str(e))
+            popup.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            popup.exec()
+            return
+
+    def setupStatusAttributes(self):
+        self.__plsda_model = None
+        self.currentMode('start')
+
     def setupHandlers(self):
         self.ActionModel.triggered.connect(lambda: self.currentMode('model'))
         self.ActionCV.triggered.connect(lambda: self.currentMode('cv'))
         self.ActionPrediction.triggered.connect(lambda:
                                                 self.currentMode('prediction'))
+        self.ActionNewModel.triggered.connect(self.newModel)
 
     def show(self):
         self.MainWindow.show()
