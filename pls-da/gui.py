@@ -7,6 +7,27 @@ import PyQt5.QtWidgets as QtWidgets
 import sys
 
 
+def set_size(widget, minimum=None, maximum=None, base=None):
+    """Set the minimum, maximum and base sizes.
+
+       Each one can be a list or tuple which must have two integer values:
+         horizontal and vertical between 0 and the UHDTV size.
+    """
+    for sizes, attr in ((minimum, 'setMinimumSize'),
+                        (maximum, 'setMaximumSize'),
+                        (base, 'setBaseSize')):
+        if sizes is not None and \
+           (isinstance(sizes, tuple) or isinstance(sizes, list)) and \
+           len(sizes) == 2:
+            sizes = tuple(map(int, sizes))
+            if sizes[0] in range(0, 7681) and sizes[1] in range(0, 4321):
+                getattr(widget, attr)(QtCore.QSize(*sizes))
+            else:
+                func = '.'.join(widget.objectName(), attr).lstrip('.')
+                IO.Log.warning('{}({},{}) failed! Width not in [0; 7680] or '
+                               'height not in [0; 4320]'.format(func, *sizes))
+
+
 def set_size_policy(widget, h_policy='Preferred', v_policy='Preferred',
                     h_stretch_factor=0, v_stretch_factor=0):
     """Set the new size policy of widget.
@@ -17,8 +38,8 @@ def set_size_policy(widget, h_policy='Preferred', v_policy='Preferred',
     """
     addmitted_size_policies = ('Fixed', 'Minimum', 'Maximum', 'Preferred',
                                'Expanding', 'MinimumExpanding', 'Ignored')
-    if (h_policy not in addmitted_size_policies or
-        v_policy not in addmitted_size_policies):
+    if h_policy not in addmitted_size_policies or \
+       v_policy not in addmitted_size_policies:
         IO.Log.error('Unknown size policy ({}, {})'.format(h_policy, v_policy))
         exit(1)
 
@@ -41,23 +62,22 @@ def set_size_policy(widget, h_policy='Preferred', v_policy='Preferred',
 class Ui_MainWindow(object):
 
     drop_down_choices = ['Scree', 'LVs - Explained variance Y',
-            'Inner relationships', 'Biplot', 'Scores & Loadings', 'Scores',
-            'Loadings', 'Samples - Y calculated', 'Samples - Y predicted',
-            'T2 - Q', 'Residuals - Leverage', 'Regression coefficients']
+                         'Inner relationships', 'Biplot', 'Scores & Loadings',
+                         'Scores', 'Loadings', 'Samples - Y calculated',
+                         'Samples - Y predicted', 'T2 - Q',
+                         'Residuals - Leverage', 'Regression coefficients']
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
         MainWindow.resize(800, 600)
         set_size_policy(MainWindow, 'Expanding', 'Expanding', 0, 0)
-        MainWindow.setMinimumSize(QtCore.QSize(800, 600))
-        MainWindow.setMaximumSize(QtCore.QSize(7680, 4320))
+        set_size(MainWindow, minimum=(800, 600), maximum=(7680, 4320))
         MainWindow.setUnifiedTitleAndToolBarOnMac(True)
 
         self.MainWidget = QtWidgets.QWidget(MainWindow)
         set_size_policy(self.MainWidget, 'Preferred', 'Preferred', 0, 0)
-        self.MainWidget.setMinimumSize(QtCore.QSize(800, 600))
-        self.MainWidget.setMaximumSize(QtCore.QSize(7680, 4300))
+        set_size(self.MainWidget, minimum=(800, 600), maximum=(7680, 4300))
         self.MainWidget.setObjectName("MainWidget")
 
         self.MainGridLayout = QtWidgets.QGridLayout(self.MainWidget)
@@ -67,15 +87,13 @@ class Ui_MainWindow(object):
 
         self.MainSplitter = QtWidgets.QSplitter(self.MainWidget)
         set_size_policy(self.MainSplitter, 'Expanding', 'Expanding', 0, 0)
-        self.MainSplitter.setMaximumSize(QtCore.QSize(7680, 4300))
+        set_size(self.MainSplitter, minimum=(800, 600), maximum=(7680, 4300))
         self.MainSplitter.setOrientation(QtCore.Qt.Horizontal)
         self.MainSplitter.setHandleWidth(3)
         self.MainSplitter.setObjectName("MainSplitter")
 
         self.LeftWidget = QtWidgets.QWidget(self.MainSplitter)
-        self.LeftWidget.setMinimumSize(QtCore.QSize(200, 580))
-        self.LeftWidget.setMaximumSize(QtCore.QSize(3637, 4300))
-        self.LeftWidget.setBaseSize(QtCore.QSize(0, 4300))
+        set_size(self.LeftWidget, minimum=(200, 580), maximum=(3637, 4300))
         self.LeftWidget.setObjectName("LeftWidget")
 
         self.LeftGridLayout = QtWidgets.QGridLayout(self.LeftWidget)
@@ -84,8 +102,7 @@ class Ui_MainWindow(object):
         self.LeftGridLayout.setObjectName("LeftGridLayout")
 
         self.LeftComboBox = QtWidgets.QComboBox(self.LeftWidget)
-        self.LeftComboBox.setMinimumSize(QtCore.QSize(194, 22))
-        self.LeftComboBox.setMaximumSize(QtCore.QSize(3631, 22))
+        set_size(self.LeftComboBox, minimum=(194, 22), maximum=(3631, 22))
         self.LeftComboBox.setObjectName("LeftComboBox")
         for entry in self.drop_down_choices:
             self.LeftComboBox.addItem("")
@@ -93,15 +110,13 @@ class Ui_MainWindow(object):
         self.LeftGridLayout.addWidget(self.LeftComboBox, 0, 0, 1, 1)
 
         self.LeftScrollArea = QtWidgets.QScrollArea(self.LeftWidget)
-        self.LeftScrollArea.setMinimumSize(QtCore.QSize(194, 547))
-        self.LeftScrollArea.setMaximumSize(QtCore.QSize(3631, 4267))
+        set_size(self.LeftScrollArea, minimum=(194, 547), maximum=(3631, 4267))
         self.LeftScrollArea.setWidgetResizable(True)
         self.LeftScrollArea.setObjectName("LeftScrollArea")
 
         self.LeftScrollAreaWidgetContents = QtWidgets.QWidget()
         self.LeftScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 291, 565))
-        self.LeftScrollAreaWidgetContents.setMinimumSize(QtCore.QSize(174, 427))
-        self.LeftScrollAreaWidgetContents.setMaximumSize(QtCore.QSize(3611, 4147))
+        set_size(self.LeftScrollAreaWidgetContents, minimum=(174, 427), maximum=(3611, 4147))
         self.LeftScrollAreaWidgetContents.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.LeftScrollAreaWidgetContents.setObjectName("LeftScrollAreaWidgetContents")
 
@@ -115,8 +130,7 @@ class Ui_MainWindow(object):
         self.PlotFormLayout.setObjectName("PlotFormLayout")
 
         self.LeftLVsLabel = QtWidgets.QLabel(self.LeftScrollAreaWidgetContents)
-        self.LeftLVsLabel.setMinimumSize(QtCore.QSize(70, 22))
-        self.LeftLVsLabel.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.LeftLVsLabel, minimum=(70, 22), maximum=(1310, 170))
         self.LeftLVsLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.LeftLVsLabel.setWordWrap(True)
         self.LeftLVsLabel.setObjectName("LeftLVsLabel")
@@ -125,8 +139,7 @@ class Ui_MainWindow(object):
 
         self.LeftLVsSpinBox = QtWidgets.QSpinBox(self.LeftScrollAreaWidgetContents)
         set_size_policy(self.LeftLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
-        self.LeftLVsSpinBox.setMinimumSize(QtCore.QSize(70, 22))
-        self.LeftLVsSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.LeftLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.LeftLVsSpinBox.setMinimum(1)
         self.LeftLVsSpinBox.setObjectName("LeftLVsSpinBox")
 
@@ -134,8 +147,7 @@ class Ui_MainWindow(object):
 
         self.LeftXRadioButton = QtWidgets.QRadioButton(self.LeftScrollAreaWidgetContents)
         set_size_policy(self.LeftXRadioButton, 'Preferred', 'Preferred', 0, 0)
-        self.LeftXRadioButton.setMinimumSize(QtCore.QSize(70, 22))
-        self.LeftXRadioButton.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.LeftXRadioButton, minimum=(70, 22), maximum=(1310, 170))
         self.LeftXRadioButton.setAutoExclusive(False)
         self.LeftXRadioButton.setObjectName("LeftXRadioButton")
 
@@ -147,8 +159,7 @@ class Ui_MainWindow(object):
 
         self.LeftYRadioButton = QtWidgets.QRadioButton(self.LeftScrollAreaWidgetContents)
         set_size_policy(self.LeftYRadioButton, 'Preferred', 'Preferred', 0, 0)
-        self.LeftYRadioButton.setMinimumSize(QtCore.QSize(70, 22))
-        self.LeftYRadioButton.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.LeftYRadioButton, minimum=(70, 22), maximum=(1310, 170))
         self.LeftYRadioButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.LeftYRadioButton.setObjectName("LeftYRadioButton")
 
@@ -157,8 +168,7 @@ class Ui_MainWindow(object):
 
         self.LeftXSpinBox = QtWidgets.QSpinBox(self.LeftScrollAreaWidgetContents)
         set_size_policy(self.LeftXSpinBox, 'Preferred', 'Preferred', 0, 0)
-        self.LeftXSpinBox.setMinimumSize(QtCore.QSize(70, 22))
-        self.LeftXSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.LeftXSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.LeftXSpinBox.setMinimum(1)
         self.LeftXSpinBox.setObjectName("LeftXSpinBox")
 
@@ -166,8 +176,7 @@ class Ui_MainWindow(object):
 
         self.LeftYSpinBox = QtWidgets.QSpinBox(self.LeftScrollAreaWidgetContents)
         set_size_policy(self.LeftYSpinBox, 'Preferred', 'Preferred', 0, 0)
-        self.LeftYSpinBox.setMinimumSize(QtCore.QSize(70, 22))
-        self.LeftYSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.LeftYSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.LeftYSpinBox.setMinimum(1)
         self.LeftYSpinBox.setObjectName("LeftYSpinBox")
 
@@ -175,16 +184,14 @@ class Ui_MainWindow(object):
 
         self.LeftPlotPushButton = QtWidgets.QPushButton(self.LeftScrollAreaWidgetContents)
         set_size_policy(self.LeftPlotPushButton, 'Preferred', 'Preferred', 0, 0)
-        self.LeftPlotPushButton.setMinimumSize(QtCore.QSize(70, 22))
-        self.LeftPlotPushButton.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.LeftPlotPushButton, minimum=(70, 22), maximum=(1310, 170))
         self.LeftPlotPushButton.setObjectName("LeftPlotPushButton")
 
         self.PlotFormLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.LeftPlotPushButton)
 
         self.LeftBackPushButton = QtWidgets.QPushButton(self.LeftScrollAreaWidgetContents)
         set_size_policy(self.LeftBackPushButton, 'Preferred', 'Preferred', 0, 0)
-        self.LeftBackPushButton.setMinimumSize(QtCore.QSize(70, 22))
-        self.LeftBackPushButton.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.LeftBackPushButton, minimum=(70, 22), maximum=(1310, 170))
         self.LeftBackPushButton.setObjectName("LeftBackPushButton")
 
         self.PlotFormLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.LeftBackPushButton)
@@ -192,8 +199,7 @@ class Ui_MainWindow(object):
         self.LeftGridLayout.addWidget(self.LeftScrollArea, 1, 0, 1, 1)
 
         self.CentralWidget = QtWidgets.QWidget(self.MainSplitter)
-        self.CentralWidget.setMinimumSize(QtCore.QSize(200, 580))
-        self.CentralWidget.setMaximumSize(QtCore.QSize(3637, 4300))
+        set_size(self.CentralWidget, minimum=(200, 580), maximum=(3637, 4300))
         self.CentralWidget.setObjectName("CentralWidget")
 
         self.CentralGridLayout = QtWidgets.QGridLayout(self.CentralWidget)
@@ -203,8 +209,7 @@ class Ui_MainWindow(object):
 
         self.CentralComboBox = QtWidgets.QComboBox(self.CentralWidget)
         set_size_policy(self.CentralComboBox, 'Expanding', 'Expanding', 0, 0)
-        self.CentralComboBox.setMinimumSize(QtCore.QSize(194, 22))
-        self.CentralComboBox.setMaximumSize(QtCore.QSize(3631, 22))
+        set_size(self.CentralComboBox, minimum=(194, 22), maximum=(3631, 22))
         self.CentralComboBox.setObjectName("CentralComboBox")
         for entry in self.drop_down_choices:
             self.CentralComboBox.addItem("")
@@ -212,16 +217,14 @@ class Ui_MainWindow(object):
         self.CentralGridLayout.addWidget(self.CentralComboBox, 0, 0, 1, 1)
 
         self.CentralScrollArea = QtWidgets.QScrollArea(self.CentralWidget)
-        self.CentralScrollArea.setMinimumSize(QtCore.QSize(194, 547))
-        self.CentralScrollArea.setMaximumSize(QtCore.QSize(3631, 4267))
+        set_size(self.CentralScrollArea, minimum=(194, 547), maximum=(3631, 4267))
         self.CentralScrollArea.setWidgetResizable(True)
         self.CentralScrollArea.setObjectName("CentralScrollArea")
 
         self.CentralScrollAreaWidgetContents = QtWidgets.QWidget()
         self.CentralScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 290, 565))
         set_size_policy(self.CentralScrollAreaWidgetContents, 'Expanding', 'Expanding', 0, 0)
-        self.CentralScrollAreaWidgetContents.setMinimumSize(QtCore.QSize(174, 427))
-        self.CentralScrollAreaWidgetContents.setMaximumSize(QtCore.QSize(3611, 4147))
+        set_size(self.CentralScrollAreaWidgetContents, minimum=(174, 427), maximum=(3611, 4147))
         self.CentralScrollAreaWidgetContents.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.CentralScrollAreaWidgetContents.setObjectName("CentralScrollAreaWidgetContents")
 
@@ -236,8 +239,7 @@ class Ui_MainWindow(object):
 
         self.CentralLVsLabel = QtWidgets.QLabel(self.CentralScrollAreaWidgetContents)
         set_size_policy(self.CentralLVsLabel, 'Preferred', 'Preferred', 0, 0)
-        self.CentralLVsLabel.setMinimumSize(QtCore.QSize(70, 22))
-        self.CentralLVsLabel.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.CentralLVsLabel, minimum=(70, 22), maximum=(1310, 170))
         self.CentralLVsLabel.setTextFormat(QtCore.Qt.AutoText)
         self.CentralLVsLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.CentralLVsLabel.setWordWrap(True)
@@ -247,8 +249,7 @@ class Ui_MainWindow(object):
 
         self.CentralLVsSpinBox = QtWidgets.QSpinBox(self.CentralScrollAreaWidgetContents)
         set_size_policy(self.CentralLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
-        self.CentralLVsSpinBox.setMinimumSize(QtCore.QSize(70, 22))
-        self.CentralLVsSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.CentralLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.CentralLVsSpinBox.setMinimum(1)
         self.CentralLVsSpinBox.setObjectName("CentralLVsSpinBox")
 
@@ -256,8 +257,7 @@ class Ui_MainWindow(object):
 
         self.CentralXRadioButton = QtWidgets.QRadioButton(self.CentralScrollAreaWidgetContents)
         set_size_policy(self.CentralXRadioButton, 'Preferred', 'Preferred', 0, 0)
-        self.CentralXRadioButton.setMinimumSize(QtCore.QSize(70, 22))
-        self.CentralXRadioButton.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.CentralXRadioButton, minimum=(70, 22), maximum=(1310, 170))
         self.CentralXRadioButton.setAutoExclusive(False)
         self.CentralXRadioButton.setObjectName("CentralXRadioButton")
 
@@ -269,8 +269,7 @@ class Ui_MainWindow(object):
 
         self.CentralYRadioButton = QtWidgets.QRadioButton(self.CentralScrollAreaWidgetContents)
         set_size_policy(self.CentralYRadioButton, 'Preferred', 'Preferred', 0, 0)
-        self.CentralYRadioButton.setMinimumSize(QtCore.QSize(70, 22))
-        self.CentralYRadioButton.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.CentralYRadioButton, minimum=(70, 22), maximum=(1310, 170))
         self.CentralYRadioButton.setObjectName("CentralYRadioButton")
 
         self.CentralButtonGroup.addButton(self.CentralYRadioButton)
@@ -278,23 +277,20 @@ class Ui_MainWindow(object):
 
         self.CentralBackPushButton = QtWidgets.QPushButton(self.CentralScrollAreaWidgetContents)
         set_size_policy(self.CentralBackPushButton, 'Preferred', 'Preferred', 0, 0)
-        self.CentralBackPushButton.setMinimumSize(QtCore.QSize(70, 22))
-        self.CentralBackPushButton.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.CentralBackPushButton, minimum=(70, 22), maximum=(1310, 170))
         self.CentralBackPushButton.setObjectName("CentralBackPushButton")
         self.PlotFormLayout1.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.CentralBackPushButton)
 
         self.CentralPlotPushButton = QtWidgets.QPushButton(self.CentralScrollAreaWidgetContents)
         set_size_policy(self.CentralPlotPushButton, 'Preferred', 'Preferred', 0, 0)
-        self.CentralPlotPushButton.setMinimumSize(QtCore.QSize(70, 22))
-        self.CentralPlotPushButton.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.CentralPlotPushButton, minimum=(70, 22), maximum=(1310, 170))
         self.CentralPlotPushButton.setObjectName("CentralPlotPushButton")
 
         self.PlotFormLayout1.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.CentralPlotPushButton)
 
         self.CentralXSpinBox = QtWidgets.QSpinBox(self.CentralScrollAreaWidgetContents)
         set_size_policy(self.CentralXSpinBox, 'Preferred', 'Preferred', 0, 0)
-        self.CentralXSpinBox.setMinimumSize(QtCore.QSize(70, 22))
-        self.CentralXSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.CentralXSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.CentralXSpinBox.setMinimum(1)
         self.CentralXSpinBox.setObjectName("CentralXSpinBox")
 
@@ -302,8 +298,7 @@ class Ui_MainWindow(object):
 
         self.CentralYSpinBox = QtWidgets.QSpinBox(self.CentralScrollAreaWidgetContents)
         set_size_policy(self.CentralYSpinBox, 'Preferred', 'Preferred', 0, 0)
-        self.CentralYSpinBox.setMinimumSize(QtCore.QSize(70, 22))
-        self.CentralYSpinBox.setMaximumSize(QtCore.QSize(1310, 170))
+        set_size(self.CentralYSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.CentralYSpinBox.setMinimum(1)
         self.CentralYSpinBox.setObjectName("CentralYSpinBox")
 
@@ -313,8 +308,7 @@ class Ui_MainWindow(object):
 
         self.RightWidget = QtWidgets.QWidget(self.MainSplitter)
         set_size_policy(self.RightWidget, 'Expanding', 'Expanding', 0, 0)
-        self.RightWidget.setMinimumSize(QtCore.QSize(150, 580))
-        self.RightWidget.setMaximumSize(QtCore.QSize(400, 4300))
+        set_size(self.RightWidget, minimum=(150, 580), maximum=(400, 4300))
         self.RightWidget.setObjectName("RightWidget")
 
         self.RightGridLayout = QtWidgets.QGridLayout(self.RightWidget)
@@ -323,16 +317,14 @@ class Ui_MainWindow(object):
         self.RightGridLayout.setObjectName("RightGridLayout")
 
         self.RightScrollArea = QtWidgets.QScrollArea(self.RightWidget)
-        self.RightScrollArea.setMinimumSize(QtCore.QSize(144, 547))
-        self.RightScrollArea.setMaximumSize(QtCore.QSize(394, 4272))
+        set_size(self.RightScrollArea, minimum=(144, 547), maximum=(394, 4272))
         self.RightScrollArea.setWidgetResizable(True)
         self.RightScrollArea.setObjectName("RightScrollArea")
 
         self.RightScrollAreaWidgetContents = QtWidgets.QWidget()
         self.RightScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 189, 565))
         set_size_policy(self.RightScrollAreaWidgetContents, 'Expanding', 'Expanding', 0, 0)
-        self.RightScrollAreaWidgetContents.setMinimumSize(QtCore.QSize(138, 534))
-        self.RightScrollAreaWidgetContents.setMaximumSize(QtCore.QSize(388, 4259))
+        set_size(self.RightScrollAreaWidgetContents, minimum=(138, 534), maximum=(388, 4259))
         self.RightScrollAreaWidgetContents.setObjectName("RightScrollAreaWidgetContents")
 
         self.gridLayout = QtWidgets.QGridLayout(self.RightScrollAreaWidgetContents)
@@ -342,8 +334,7 @@ class Ui_MainWindow(object):
 
         self.DetailsLabel = QtWidgets.QLabel(self.RightScrollAreaWidgetContents)
         set_size_policy(self.DetailsLabel, 'Expanding', 'Expanding', 0, 0)
-        self.DetailsLabel.setMinimumSize(QtCore.QSize(138, 534))
-        self.DetailsLabel.setMaximumSize(QtCore.QSize(388, 4259))
+        set_size(self.DetailsLabel, minimum=(138, 534), maximum=(388, 4259))
         self.DetailsLabel.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.DetailsLabel.setWordWrap(True)
         self.DetailsLabel.setTextInteractionFlags(QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
@@ -355,8 +346,7 @@ class Ui_MainWindow(object):
 
         self.CurrentModeLabel = QtWidgets.QLabel(self.RightWidget)
         set_size_policy(self.CurrentModeLabel, 'Expanding', 'Expanding', 0, 0)
-        self.CurrentModeLabel.setMinimumSize(QtCore.QSize(144, 22))
-        self.CurrentModeLabel.setMaximumSize(QtCore.QSize(394, 22))
+        set_size(self.CurrentModeLabel, minimum=(144, 22), maximum=(394, 22))
         self.CurrentModeLabel.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.CurrentModeLabel.setFrameShadow(QtWidgets.QFrame.Plain)
         self.CurrentModeLabel.setLineWidth(1)
@@ -370,23 +360,19 @@ class Ui_MainWindow(object):
 
         self.TopMenuBar = QtWidgets.QMenuBar(MainWindow)
         self.TopMenuBar.setGeometry(QtCore.QRect(0, 0, 800, 20))
-        self.TopMenuBar.setMinimumSize(QtCore.QSize(800, 20))
-        self.TopMenuBar.setMaximumSize(QtCore.QSize(7680, 20))
+        set_size(self.TopMenuBar, minimum=(800, 20), maximum=(7680, 20))
         self.TopMenuBar.setObjectName("TopMenuBar")
 
         self.MenuOptions = QtWidgets.QMenu(self.TopMenuBar)
-        self.MenuOptions.setMinimumSize(QtCore.QSize(100, 20))
-        self.MenuOptions.setMaximumSize(QtCore.QSize(960, 4300))
+        set_size(self.MenuOptions, minimum=(100, 20), maximum=(960, 4300))
         self.MenuOptions.setObjectName("MenuOptions")
 
         self.MenuChangeMode = QtWidgets.QMenu(self.TopMenuBar)
-        self.MenuChangeMode.setMinimumSize(QtCore.QSize(100, 20))
-        self.MenuChangeMode.setMaximumSize(QtCore.QSize(960, 4300))
+        set_size(self.MenuChangeMode, minimum=(100, 20), maximum=(960, 4300))
         self.MenuChangeMode.setObjectName("MenuChangeMode")
 
         self.MenuAbout = QtWidgets.QMenu(self.TopMenuBar)
-        self.MenuAbout.setMinimumSize(QtCore.QSize(100, 20))
-        self.MenuAbout.setMaximumSize(QtCore.QSize(960, 4300))
+        set_size(self.MenuAbout, minimum=(100, 20), maximum=(960, 4300))
         self.MenuAbout.setObjectName("MenuAbout")
 
         MainWindow.setMenuBar(self.TopMenuBar)
