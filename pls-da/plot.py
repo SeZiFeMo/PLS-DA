@@ -63,7 +63,7 @@ def plot_plot(x_values, y_values):
 def scores_plot(model, pc_x, pc_y, normalize=False):
     """Plot the scores on the specified components."""
     if pc_x == pc_y:
-        IO.Log.warning('Principal components must be different!')
+        IO.Log.error('Principal components must be different!')
         exit(1)
 
     pc_x, pc_y = min(pc_x, pc_y), max(pc_x, pc_y)
@@ -100,7 +100,7 @@ def scores_plot(model, pc_x, pc_y, normalize=False):
 def loadings_plot(model, pc_x, pc_y):
     """Plot the loadings."""
     if pc_x == pc_y:
-        IO.Log.warning('Principal components must be different!')
+        IO.Log.error('Principal components must be different!')
         exit(1)
 
     pc_x, pc_y = min(pc_x, pc_y), max(pc_x, pc_y)

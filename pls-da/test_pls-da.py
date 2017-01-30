@@ -265,4 +265,5 @@ class test_utility_module(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    IO.Log.set_level('critical')
     unittest.main(failfast=True)
