@@ -182,16 +182,16 @@ class test_eigen_module(unittest.TestCase):
         self.pls_da = None
 
     def test_PLS_DA_eigenvectors_x_eigen(self):
-        np.testing.assert_allclose(self.pls_da.x_eigenvalues, self.wx)
+        np.testing.assert_allclose(self.pls_da.x_eigenvalues, self.wx, atol=0.1)
 
     def test_PLS_DA_eigenvectors_y_eigen(self):
-        np.testing.assert_allclose(self.pls_da.y_eigenvalues, self.wy)
+        np.testing.assert_allclose(self.pls_da.y_eigenvalues, self.wy, atol=0.1)
 
     def test_PLS_DA_eigenvectors_x_variance(self):
-        np.testing.assert_allclose(self.pls_da.get_explained_variance(), self.x_variance)
+        np.testing.assert_allclose(self.pls_da.get_explained_variance(), self.x_variance, atol=0.1)
 
     def test_PLS_DA_eigenvectors_y_variance(self):
-        np.testing.assert_allclose(self.pls_da.get_explained_variance('y'), self.y_variance)
+        np.testing.assert_allclose(self.pls_da.get_explained_variance('y'), self.y_variance, atol=0.1)
 
 class test_nipals_module(unittest.TestCase):
 
@@ -203,8 +203,11 @@ class test_nipals_module(unittest.TestCase):
         Y = np.array([[1, 0], [1, 0], [0, 1], [0, 1]])
         self.pls_da.dataset = X.copy()
         self.pls_da.dummy_Y = Y.copy()
-
         self.pls_da.preprocess_autoscale()
+        # autoscale also matrices for sklearn
+        X = self.pls_da.dataset.copy()
+        Y = self.pls_da.dummy_Y.copy()
+
         self.pls_da.nipals_method(nr_lv=j)
 
         self.sklearn_pls = sklearn.cross_decomposition.PLSRegression(
@@ -262,6 +265,22 @@ class test_nipals_module(unittest.TestCase):
                                        np.absolute(self.sklearn_pls.coef_),
                                        atol=0.1)
 
+    def test_x_component(self):
+        np.testing.assert_allclose(self.pls_da.dataset,
+                np.dot(self.pls_da.T, self.pls_da.P.T), err_msg="X != TP'", atol=0.1)
+
+    def test_y_component(self):
+        np.testing.assert_allclose(self.pls_da.dummy_Y,
+                np.dot(self.pls_da.U, self.pls_da.Q.T), err_msg="Y != UQ'", atol=0.1)
+
+    def test_coef(self):
+        # You have to check the dummy Y with the corresponding "normalized" Y
+        calc_Y = np.dot(self.pls_da.dataset, self.pls_da.B)
+        calc_Y = [[1 if elem == max(row) else -1 for elem in row] for row in calc_Y]
+        np.testing.assert_allclose(self.pls_da.dummy_Y, calc_Y, atol=0.1)
+
+#    def test_inner_relation(self):
+#        np.testing.assert_allclose(self.pls_da.U, np.dot(self.pls_da.B, self.pls_da.T.T).T, atol=0.1)
 
 
 class test_plot_module(unittest.TestCase):
