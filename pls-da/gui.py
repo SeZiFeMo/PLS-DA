@@ -59,23 +59,69 @@ def set_size_policy(widget, h_policy='Preferred', v_policy='Preferred',
     widget.setSizePolicy(size_policy)
 
 
-class Ui_MainWindow(object):
+class UserInterface(object):
 
     drop_down_choices = ['Scree', 'LVs - Explained variance Y',
                          'Inner relationships', 'Biplot', 'Scores & Loadings',
                          'Scores', 'Loadings', 'Samples - Y calculated',
                          'Samples - Y predicted', 'T2 - Q',
                          'Residuals - Leverage', 'Regression coefficients']
+    def __init__(self):
+        self.main_window = QtWidgets.QMainWindow()
+        self.main_window.setObjectName("MainWindow")
+        self.main_window.setEnabled(True)
+        self.main_window.resize(800, 600)
+        set_size_policy(self.main_window, 'Expanding', 'Expanding', 0, 0)
+        set_size(self.main_window, minimum=(800, 600), maximum=(7680, 4320))
+        self.main_window.setUnifiedTitleAndToolBarOnMac(True)
+        self.setup()
 
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.setEnabled(True)
-        MainWindow.resize(800, 600)
-        set_size_policy(MainWindow, 'Expanding', 'Expanding', 0, 0)
-        set_size(MainWindow, minimum=(800, 600), maximum=(7680, 4320))
-        MainWindow.setUnifiedTitleAndToolBarOnMac(True)
 
-        self.MainWidget = QtWidgets.QWidget(MainWindow)
+    def retranslate(self):
+        _translate = QtCore.QCoreApplication.translate
+        self.main_window.setWindowTitle(_translate("MainWindow", "PLS-DA"))
+        for index, entry in enumerate(self.drop_down_choices):
+            self.LeftComboBox.setItemText(index, _translate("MainWindow", entry))
+
+        self.LeftLVsLabel.setText(_translate("MainWindow", "Latent Variables"))
+        self.LeftXRadioButton.setText(_translate("MainWindow", "&X"))
+        self.LeftYRadioButton.setText(_translate("MainWindow", "&Y"))
+        self.LeftPlotPushButton.setText(_translate("MainWindow", "Plot"))
+        self.LeftBackPushButton.setText(_translate("MainWindow", "Back"))
+        for index, entry in enumerate(self.drop_down_choices):
+            self.CentralComboBox.setItemText(index, _translate("MainWindow", entry))
+
+        self.CentralLVsLabel.setText(_translate("MainWindow", "Latent Variables"))
+        self.CentralXRadioButton.setText(_translate("MainWindow", "&X"))
+        self.CentralYRadioButton.setText(_translate("MainWindow", "&Y"))
+        self.CentralBackPushButton.setText(_translate("MainWindow", "Back"))
+        self.CentralPlotPushButton.setText(_translate("MainWindow", "Plot"))
+        self.DetailsLabel.setText(_translate("MainWindow", "Details"))
+        self.CurrentModeLabel.setText(_translate("MainWindow", "Current Mode"))
+        self.MenuOptions.setTitle(_translate("MainWindow", "Opt&ions"))
+        self.MenuChangeMode.setTitle(_translate("MainWindow", "&Change mode"))
+        self.MenuAbout.setTitle(_translate("MainWindow", "&About"))
+        self.ActionExport.setText(_translate("MainWindow", "&Export matrices"))
+        self.ActionExport.setShortcut(_translate("MainWindow", "Ctrl+E"))
+        self.ActionModel.setText(_translate("MainWindow", "&Model"))
+        self.ActionModel.setShortcut(_translate("MainWindow", "Alt+M"))
+        self.ActionCrossvalidation.setText(_translate("MainWindow", "&Crossvalidation"))
+        self.ActionCrossvalidation.setShortcut(_translate("MainWindow", "Alt+V"))
+        self.ActionPrediction.setText(_translate("MainWindow", "&Prediction"))
+        self.ActionPrediction.setShortcut(_translate("MainWindow", "Alt+P"))
+        self.ActionQuit.setText(_translate("MainWindow", "&Quit"))
+        self.ActionQuit.setShortcut(_translate("MainWindow", "Ctrl+Q"))
+        self.ActionSaveModel.setText(_translate("MainWindow", "&Save model"))
+        self.ActionSaveModel.setShortcut(_translate("MainWindow", "Ctrl+S"))
+        self.ActionLoadModel.setText(_translate("MainWindow", "&Load model"))
+        self.ActionLoadModel.setShortcut(_translate("MainWindow", "Ctrl+O"))
+        self.ActionNewModel.setText(_translate("MainWindow", "&New model"))
+        self.ActionNewModel.setShortcut(_translate("MainWindow", "Ctrl+N"))
+        self.ActionAboutThatProject.setText(_translate("MainWindow", "&About this project"))
+        self.ActionAboutThatProject.setShortcut(_translate("MainWindow", "F1"))
+
+    def setup(self):
+        self.MainWidget = QtWidgets.QWidget(self.main_window)
         set_size_policy(self.MainWidget, 'Preferred', 'Preferred', 0, 0)
         set_size(self.MainWidget, minimum=(800, 600), maximum=(7680, 4300))
         self.MainWidget.setObjectName("MainWidget")
@@ -130,7 +176,7 @@ class Ui_MainWindow(object):
         self.LeftYRadioButton.setObjectName("LeftYRadioButton")
         self.PlotFormLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.LeftYRadioButton)
 
-        self.LeftButtonGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.LeftButtonGroup = QtWidgets.QButtonGroup(self.main_window)
         self.LeftButtonGroup.setObjectName("LeftButtonGroup")
         self.LeftButtonGroup.addButton(self.LeftXRadioButton)
         self.LeftButtonGroup.addButton(self.LeftYRadioButton)
@@ -229,7 +275,7 @@ class Ui_MainWindow(object):
         self.CentralYRadioButton.setObjectName("CentralYRadioButton")
         self.PlotFormLayout1.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.CentralYRadioButton)
 
-        self.CentralButtonGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.CentralButtonGroup = QtWidgets.QButtonGroup(self.main_window)
         self.CentralButtonGroup.setObjectName("CentralButtonGroup")
         self.CentralButtonGroup.addButton(self.CentralXRadioButton)
         self.CentralButtonGroup.addButton(self.CentralYRadioButton)
@@ -338,9 +384,9 @@ class Ui_MainWindow(object):
         self.MainGridLayout.setSpacing(0)
         self.MainGridLayout.setObjectName("MainGridLayout")
         self.MainGridLayout.addWidget(self.MainSplitter, 0, 0, 1, 1)
-        MainWindow.setCentralWidget(self.MainWidget)
+        self.main_window.setCentralWidget(self.MainWidget)
 
-        self.TopMenuBar = QtWidgets.QMenuBar(MainWindow)
+        self.TopMenuBar = QtWidgets.QMenuBar(self.main_window)
         self.TopMenuBar.setGeometry(QtCore.QRect(0, 0, 800, 20))
         set_size(self.TopMenuBar, minimum=(800, 20), maximum=(7680, 20))
         self.TopMenuBar.setObjectName("TopMenuBar")
@@ -357,33 +403,33 @@ class Ui_MainWindow(object):
         set_size(self.MenuAbout, minimum=(100, 20), maximum=(960, 4300))
         self.MenuAbout.setObjectName("MenuAbout")
 
-        MainWindow.setMenuBar(self.TopMenuBar)
+        self.main_window.setMenuBar(self.TopMenuBar)
 
-        self.ActionExport = QtWidgets.QAction(MainWindow)
+        self.ActionExport = QtWidgets.QAction(self.main_window)
         self.ActionExport.setObjectName("ActionExport")
 
-        self.ActionModel = QtWidgets.QAction(MainWindow)
+        self.ActionModel = QtWidgets.QAction(self.main_window)
         self.ActionModel.setObjectName("ActionModel")
 
-        self.ActionCrossvalidation = QtWidgets.QAction(MainWindow)
+        self.ActionCrossvalidation = QtWidgets.QAction(self.main_window)
         self.ActionCrossvalidation.setObjectName("ActionCrossvalidation")
 
-        self.ActionPrediction = QtWidgets.QAction(MainWindow)
+        self.ActionPrediction = QtWidgets.QAction(self.main_window)
         self.ActionPrediction.setObjectName("ActionPrediction")
 
-        self.ActionQuit = QtWidgets.QAction(MainWindow)
+        self.ActionQuit = QtWidgets.QAction(self.main_window)
         self.ActionQuit.setObjectName("ActionQuit")
 
-        self.ActionSaveModel = QtWidgets.QAction(MainWindow)
+        self.ActionSaveModel = QtWidgets.QAction(self.main_window)
         self.ActionSaveModel.setObjectName("ActionSaveModel")
 
-        self.ActionLoadModel = QtWidgets.QAction(MainWindow)
+        self.ActionLoadModel = QtWidgets.QAction(self.main_window)
         self.ActionLoadModel.setObjectName("ActionLoadModel")
 
-        self.ActionNewModel = QtWidgets.QAction(MainWindow)
+        self.ActionNewModel = QtWidgets.QAction(self.main_window)
         self.ActionNewModel.setObjectName("ActionNewModel")
 
-        self.ActionAboutThatProject = QtWidgets.QAction(MainWindow)
+        self.ActionAboutThatProject = QtWidgets.QAction(self.main_window)
         self.ActionAboutThatProject.setObjectName("ActionAboutThatProject")
 
         self.MenuOptions.addAction(self.ActionNewModel)
@@ -404,57 +450,15 @@ class Ui_MainWindow(object):
         self.TopMenuBar.addAction(self.MenuChangeMode.menuAction())
         self.TopMenuBar.addAction(self.MenuAbout.menuAction())
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.retranslate()
+        QtCore.QMetaObject.connectSlotsByName(self.main_window)
 
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "PLS-DA"))
-        for index, entry in enumerate(self.drop_down_choices):
-            self.LeftComboBox.setItemText(index, _translate("MainWindow", entry))
-
-        self.LeftLVsLabel.setText(_translate("MainWindow", "Latent Variables"))
-        self.LeftXRadioButton.setText(_translate("MainWindow", "&X"))
-        self.LeftYRadioButton.setText(_translate("MainWindow", "&Y"))
-        self.LeftPlotPushButton.setText(_translate("MainWindow", "Plot"))
-        self.LeftBackPushButton.setText(_translate("MainWindow", "Back"))
-        for index, entry in enumerate(self.drop_down_choices):
-            self.CentralComboBox.setItemText(index, _translate("MainWindow", entry))
-
-        self.CentralLVsLabel.setText(_translate("MainWindow", "Latent Variables"))
-        self.CentralXRadioButton.setText(_translate("MainWindow", "&X"))
-        self.CentralYRadioButton.setText(_translate("MainWindow", "&Y"))
-        self.CentralBackPushButton.setText(_translate("MainWindow", "Back"))
-        self.CentralPlotPushButton.setText(_translate("MainWindow", "Plot"))
-        self.DetailsLabel.setText(_translate("MainWindow", "Details"))
-        self.CurrentModeLabel.setText(_translate("MainWindow", "Current Mode"))
-        self.MenuOptions.setTitle(_translate("MainWindow", "Opt&ions"))
-        self.MenuChangeMode.setTitle(_translate("MainWindow", "&Change mode"))
-        self.MenuAbout.setTitle(_translate("MainWindow", "&About"))
-        self.ActionExport.setText(_translate("MainWindow", "&Export matrices"))
-        self.ActionExport.setShortcut(_translate("MainWindow", "Ctrl+E"))
-        self.ActionModel.setText(_translate("MainWindow", "&Model"))
-        self.ActionModel.setShortcut(_translate("MainWindow", "Alt+M"))
-        self.ActionCrossvalidation.setText(_translate("MainWindow", "&Crossvalidation"))
-        self.ActionCrossvalidation.setShortcut(_translate("MainWindow", "Alt+V"))
-        self.ActionPrediction.setText(_translate("MainWindow", "&Prediction"))
-        self.ActionPrediction.setShortcut(_translate("MainWindow", "Alt+P"))
-        self.ActionQuit.setText(_translate("MainWindow", "&Quit"))
-        self.ActionQuit.setShortcut(_translate("MainWindow", "Ctrl+Q"))
-        self.ActionSaveModel.setText(_translate("MainWindow", "&Save model"))
-        self.ActionSaveModel.setShortcut(_translate("MainWindow", "Ctrl+S"))
-        self.ActionLoadModel.setText(_translate("MainWindow", "&Load model"))
-        self.ActionLoadModel.setShortcut(_translate("MainWindow", "Ctrl+O"))
-        self.ActionNewModel.setText(_translate("MainWindow", "&New model"))
-        self.ActionNewModel.setShortcut(_translate("MainWindow", "Ctrl+N"))
-        self.ActionAboutThatProject.setText(_translate("MainWindow", "&About this project"))
-        self.ActionAboutThatProject.setShortcut(_translate("MainWindow", "F1"))
+    def show(self):
+        self.main_window.show()
 
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    main_window = QtWidgets.QMainWindow()
-    my_ui_main_window = Ui_MainWindow()
-    my_ui_main_window.setupUi(main_window)
-    main_window.show()
+    ui = UserInterface()
+    ui.show()
     sys.exit(app.exec_())
