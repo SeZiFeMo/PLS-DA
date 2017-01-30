@@ -459,6 +459,24 @@ class UserInterface(object):
             popup.setStandardButtons(QtWidgets.QMessageBox.Ok)
             popup.exec()
             return
+        else:
+            popup = new_qt('QInputDialog', 'popup', parent=self.MainWindow)
+            popup.setWindowTitle('Choose preprocessing')
+            popup.setLabelText('Please choose the desired preprocessing: ')
+            popup.setInputMode(QtWidgets.QInputDialog.TextInput) #UseListViewForComboBoxItems)
+            popup.setComboBoxItems(('autoscaling', 'centering',
+                                    'normalizing', 'none'))
+            ok_choice = bool(popup.exec() == QtWidgets.QDialog.Accepted)
+            if ok_choice and popup.textValue() == 'autoscaling':
+                self.__plsda_model.preprocess_autoscale(use_original=True)
+            elif ok_choice and popup.textValue() == 'centering':
+                self.__plsda_model.preprocess_mean(use_original=True)
+            elif ok_choice and popup.textValue() == 'normalizing':
+                self.__plsda_model.preprocess_normalize(use_original=True)
+            else:
+                IO.Log.debug('No preprocessing done in newModel()')
+            self.__plsda_model.nipals_method()
+            self.currentMode('model')
 
     def setupStatusAttributes(self):
         self.__plsda_model = None

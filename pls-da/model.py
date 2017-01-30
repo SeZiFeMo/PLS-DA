@@ -26,7 +26,7 @@ class PLS_DA(object):
 
         self.axis = 0
         self.keys, body = IO.CSV.parse(csv_file)
-        IO.Log.debug('[PLS_DA::__init__] Using {} as input.'.format(csv_file))
+        IO.Log.debug('[PLS_DA::__init__] Using {} as input'.format(csv_file))
 
         # Delete category column from body and save it for future uses
         self.categories = [row[0] for row in body]
