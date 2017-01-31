@@ -194,7 +194,10 @@ class test_eigen_module(unittest.TestCase):
     def test_PLS_DA_eigenvectors_y_variance(self):
         np.testing.assert_allclose(self.pls_da.get_explained_variance('y'), self.y_variance, atol=absolute_tolerance)
 
-class test_nipals_module(unittest.TestCase):
+class nipals_abstract(object):
+
+    def calculate_nipals(self):
+        pass
 
     def setUp(self):
         n, j, k = 4, 2, 2
@@ -209,7 +212,7 @@ class test_nipals_module(unittest.TestCase):
         X = self.pls_da.dataset.copy()
         Y = self.pls_da.dummy_Y.copy()
 
-        self.pls_da.nipals_method(nr_lv=j)
+        self.calculate_nipals(j)
 
         self.sklearn_pls = sklearn.cross_decomposition.PLSRegression(
             n_components=j, scale=True, max_iter=1e4, tol=1e-6, copy=True)
@@ -259,16 +262,10 @@ class test_nipals_module(unittest.TestCase):
                                        np.absolute(self.sklearn_pls.y_loadings_),
                                        atol=absolute_tolerance)
 
-    @unittest.skip("Different algorithm")
-    def test_PLS_DA_y_weights(self):
-        np.testing.assert_allclose(np.absolute(self.pls_da.C),
-                                       np.absolute(self.sklearn_pls.y_weights_),
-                                       atol=absolute_tolerance)
-
-    @unittest.skip("Different algorithm")
     def test_PLS_DA_coefficient(self):
         np.testing.assert_allclose(np.absolute(self.pls_da.B),
                                        np.absolute(self.sklearn_pls.coef_),
+                                       err_msg="From class {}".format(type(self).__name__),
                                        atol=absolute_tolerance)
 
     def test_PLS_DA_inner_relation(self):
@@ -288,6 +285,23 @@ class test_nipals_module(unittest.TestCase):
     def test_coef(self):
         np.testing.assert_allclose(self.pls_da.dummy_Y, self.pls_da.Y_modeled, atol=absolute_tolerance)
 
+
+class test_nipals_method(nipals_abstract, unittest.TestCase):
+    def calculate_nipals(self, j):
+        self.pls_da.nipals_method(nr_lv=j)
+
+    @unittest.skip("Different algorithm")
+    def test_PLS_DA_y_weights(self):
+        np.testing.assert_allclose(np.absolute(self.pls_da.C),
+                                       np.absolute(self.sklearn_pls.y_weights_),
+                                       atol=absolute_tolerance)
+
+    def test_PLS_DA_y_weights_loadings(self):
+        np.testing.assert_allclose(self.pls_da.C, self.pls_da.Q)
+
+class test_nipals_2(nipals_abstract, unittest.TestCase):
+    def calculate_nipals(self, j):
+        self.pls_da.nipals_2(nr_lv=j)
 
 class test_plot_module(unittest.TestCase):
 
