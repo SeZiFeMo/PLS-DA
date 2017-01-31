@@ -368,5 +368,4 @@ class test_utility_module(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    IO.Log.set_level('info')
     unittest.main(failfast=False)

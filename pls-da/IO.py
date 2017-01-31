@@ -3,6 +3,7 @@
 
 import logging
 import numpy as np
+import utility
 import yaml
 
 
@@ -37,7 +38,11 @@ def mat2str(data, h_bar='-', v_bar='|', join='+'):
 
 class Log(object):
 
-    __default = 'debug'
+    __default = 'critical' if utility.CLI.args().quiet >= 3 else \
+                'error' if utility.CLI.args().quiet == 2 else \
+                'warning' if utility.CLI.args().quiet == 1 else \
+                'debug' if utility.CLI.args().verbose else \
+                'info'
     __initialized = False
     __name = 'PLS_DA'
 

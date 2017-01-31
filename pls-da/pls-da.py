@@ -23,7 +23,6 @@ for lib in ('matplotlib.pyplot as plt', 'numpy as np',
                    'please install it!'.format(lib))
         exit(1)
 
-IO.Log.set_level('info')
 pls_da = model.PLS_DA()
 
 pls_da.preprocess_autoscale()

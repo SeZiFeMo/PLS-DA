@@ -35,11 +35,21 @@ class CLI(object):
                 formatter_class=argparse.RawTextHelpFormatter,
                 description=CLI._description,
                 epilog=CLI._epilog)
+            group = parser.add_mutually_exclusive_group()
             parser.add_argument('-i', '--input-file',
                                 default='datasets/olive_training.csv',
                                 dest='input_file',
                                 help='File with comma saved value dataset',
                                 metavar='file',
                                 type=str)
+            group.add_argument('-q', '--quiet',
+                               action='count',
+                               default=0,
+                               help='Set logging to WARNING, ERROR or '
+                                    'CRITICAL (-q|-qq|-qqq)')
+            group.add_argument('-v', '--verbose',
+                               action='store_true',
+                               help='Set logging to DEBUG '
+                                    '(default level is INFO)')
             CLI._args = parser.parse_args()
         return CLI._args
