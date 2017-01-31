@@ -183,6 +183,7 @@ class PLS_DA(object):
         self.Y_modeled = self.dataset.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
                     self.Y_modeled)
+        self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row] for row in self.Y_modeled]
 
     def get_loadings_scores_xy_limits(self, pc_x, pc_y):
         """Return dict of x and y limits: {'x': (min, max), 'y': (min, max)}"""

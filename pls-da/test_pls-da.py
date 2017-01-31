@@ -286,10 +286,7 @@ class test_nipals_module(unittest.TestCase):
                 np.dot(self.pls_da.U, self.pls_da.Q.T), err_msg="Y != UQ'", atol=absolute_tolerance)
 
     def test_coef(self):
-        # You have to check the dummy Y with the corresponding "normalized" Y
-        calc_Y = np.dot(self.pls_da.dataset, self.pls_da.B)
-        calc_Y = [[1 if elem == max(row) else -1 for elem in row] for row in calc_Y]
-        np.testing.assert_allclose(self.pls_da.dummy_Y, calc_Y, atol=absolute_tolerance)
+        np.testing.assert_allclose(self.pls_da.dummy_Y, self.Y_modeled, atol=absolute_tolerance)
 
 
 class test_plot_module(unittest.TestCase):
