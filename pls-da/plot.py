@@ -6,6 +6,7 @@ import IO
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import sklearn.cross_decomposition
 
 
 if __name__ == '__main__':
@@ -162,3 +163,45 @@ def scree_plot(model, matrix='x'):
     ax.set_ylim(-0.5, math.ceil(eigen[0]) + 0.5)
     plot_plot(range(len(eigen)),
              eigen)
+
+def inner_relation_plot(model, nr):
+    if nr > model.nr_lv:
+        Io.Log.error('[inner_relation_plot] '
+                     'chosen LV must be in [0-{}]'.format(model.nr_lv))
+
+    plt.title('Inner relation for LV {}'.format(nr))
+    plt.xlabel('t{}'.format(nr))
+    plt.ylabel('u{}'.format(nr))
+
+    for i in range(model.T.shape[0]):
+        cat = model.categories[i]
+        scatter_plot(model.T[i, nr], model.U[i, nr], cat)
+
+def d_plot(model):
+    plt.title('Inner relation (variable b)')
+    plt.xlabel('LV number')
+    plt.ylabel('inner relation variable')
+
+    for i in range(model.d.shape[0]):
+        cat = model.categories[i]
+        scatter_plot(i, model.d[i], cat)
+
+def inner_relation_sklearn(model, nr):
+    if nr > model.nr_lv:
+        Io.Log.error('[inner_relation_plot] '
+                     'chosen LV must be in [0-{}]'.format(model.nr_lv))
+
+    X = model.dataset.copy()
+    Y = model.dummy_Y.copy()
+
+    sklearn_pls = sklearn.cross_decomposition.PLSRegression(
+                  n_components=min(model.n, model.m), scale=True, max_iter=1e4, tol=1e-6, copy=True)
+    sklearn_pls.fit(X, Y)
+
+    plt.title('Inner relation for LV {} (sklearn)'.format(nr))
+    plt.xlabel('t{}'.format(nr))
+    plt.ylabel('u{}'.format(nr))
+
+    for i in range(model.T.shape[0]):
+        cat = model.categories[i]
+        scatter_plot(sklearn_pls.x_scores_[i, nr], sklearn_pls.y_scores_[i, nr], cat)
