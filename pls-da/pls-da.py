@@ -27,8 +27,6 @@ pls_da = model.PLS_DA()
 pls_da.preprocess_autoscale()
 pls_da.nipals_method()
 
-pls_da.get_modeled_y()
-
 plt.subplot(2, 1, 1)
 # plot.explained_variance_plot(pls_da)
 plot.scree_plot(pls_da)
