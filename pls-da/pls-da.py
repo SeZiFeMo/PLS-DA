@@ -29,15 +29,20 @@ pls_da.nipals_method()
 
 pls_da.get_modeled_y()
 
-plt.subplot(2, 1, 1)
+plt.subplot(2, 2, 1)
 # plot.explained_variance_plot(pls_da)
 # plot.inner_relation_plot(pls_da, 2)
 plot.scores_plot(pls_da, 0, 1)
 
-plt.subplot(2, 1, 2)
+plt.subplot(2, 2, 2)
 # plot.explained_variance_plot(pls_da, 'y')
-# plot.inner_relation_plot(pls_da, 3)
 # plot.scree_plot(pls_da, 'y')
-plot.scores_plot(pls_da, 1, 2)
+plot.d_plot(pls_da)
+
+plt.subplot(2, 2, 3)
+plot.inner_relation_plot(pls_da, 0)
+
+plt.subplot(2, 2, 4)
+plot.inner_relation_sklearn(pls_da, 0)
 
 plt.show()
