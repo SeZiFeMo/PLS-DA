@@ -17,7 +17,7 @@ def mat2str(data, h_bar='-', v_bar='|', join='+'):
                 for col in row:
                     ret += '{: < 10.3e} '.format(col)
                 ret += v_bar + '\n'
-            ret += join + h_bar + h_bar * 11 * len(data[0]) + join + '\n'
+            ret += join + h_bar + h_bar * 11 * len(data[0]) + join
         elif (isinstance(data, (np.ndarray, np.generic))
               and data.ndim == 1) or isinstance(data, (list, tuple)):
             ret = join + h_bar + h_bar * 11 * len(data) + join + '\n'
@@ -25,7 +25,7 @@ def mat2str(data, h_bar='-', v_bar='|', join='+'):
             for cell in data:
                 ret += '{: < 10.3e} '.format(cell)
             ret += v_bar + '\n'
-            ret += join + h_bar + h_bar * 11 * len(data) + join + '\n'
+            ret += join + h_bar + h_bar * 11 * len(data) + join
         else:
             raise Exception('Not supported data type ({}) '
                             'in mat2str()'.format(type(data)))
@@ -73,6 +73,7 @@ class Log(object):
                 data = mat2str(data)
             else:
                 data = yaml.dump(data, default_flow_style=False)
+                data = data.replace('\n...', '').rstrip('\n')
             logger(msg.rstrip('\n') + my_new_line
                    data.replace('\n', my_new_line))
 

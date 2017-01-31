@@ -3,6 +3,7 @@
 
 import IO
 import model
+import pickle
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import sys
@@ -415,12 +416,16 @@ class UserInterface(object):
         if isinstance(value, str):
             if value.lower() == 'model':
                 self.__current_mode = 'model'
+                IO.Log.debug('Current mode changed into "MODEL"')
             elif value.lower() in ('crossvalidation', 'cv'):
                 self.__current_mode = 'crossvalidation'
+                IO.Log.debug('Current mode changed into "CROSSVALIDATION"')
             elif value.lower() == 'prediction':
                 self.__current_mode = 'prediction'
+                IO.Log.debug('Current mode changed into "PREDICTION"')
             elif value.lower() == 'start':
                 self.__current_mode = 'start'
+                IO.Log.debug('Current mode changed into "START"')
             else:
                 IO.Log.error('Unknown mode ({}) passed to '
                              'currentMode()'.format(value))
@@ -430,53 +435,109 @@ class UserInterface(object):
         else:
             IO.Log.error('currentMode() takes a string when used as a setter')
 
-    def newModel(self):
+    def newModel(self, load=False):
         """Both getter and setter of pls-da model."""
         if self.__plsda_model is not None:
+            IO.Log.debug('Replace current model?')
             popup = new_qt('QMessageBox', 'popup', parent=self.MainWindow)
-            popup.setWindowTitle('Replace current model')
+            popup.setWindowTitle('Replace current model?')
             popup.setText('Are you sure to replace the current model? '
                           '(All data not saved will be lost)')
             popup.setStandardButtons(QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No)
             choice = popup.exec()
             if choice == QtWidgets.QMessageBox.No:
+                IO.Log.debug('NO (not replacing current model)')
                 return
+            IO.Log.debug('YES (replacing current model)')
 
+        IO.Log.debug('Choose an input file')
         popup = new_qt('QFileDialog', 'popup', parent=self.MainWindow)
         popup.setWindowTitle('Choose an input file')
         popup.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+        if load:
+            popup.setNameFilter("Python pickle files (*.p *.pkl *.pickle)")
         if not popup.exec():
+            IO.Log.debug('CANCEL (not chosen input file)')
             return
-
         input_file = popup.selectedFiles()[0]
+        IO.Log.debug('OK (chosen input file)', input_file)
+
         try:
-            self.__plsda_model = model.PLS_DA(csv_file=input_file)
+            if load:
+                with open(input_file, 'br') as f:
+                    self.__plsda_model = pickle.load(f)
+            else:
+                self.__plsda_model = model.PLS_DA(csv_file=input_file)
         except Exception as e:
             self.__plsda_model = None
+            IO.Log.debug(str(e))
             popup = new_qt('QMessageBox', 'popup', parent=self.MainWindow)
             popup.setIcon(QtWidgets.QMessageBox.Critical)
             popup.setText(str(e))
             popup.setStandardButtons(QtWidgets.QMessageBox.Ok)
             popup.exec()
             return
-        else:
+        if not load:
+            IO.Log.debug('Choose preprocessing')
             popup = new_qt('QInputDialog', 'popup', parent=self.MainWindow)
             popup.setWindowTitle('Choose preprocessing')
             popup.setLabelText('Please choose the desired preprocessing: ')
-            popup.setInputMode(QtWidgets.QInputDialog.TextInput) #UseListViewForComboBoxItems)
+            popup.setInputMode(QtWidgets.QInputDialog.TextInput)
             popup.setComboBoxItems(('autoscaling', 'centering',
                                     'normalizing', 'none'))
             ok_choice = bool(popup.exec() == QtWidgets.QDialog.Accepted)
             if ok_choice and popup.textValue() == 'autoscaling':
                 self.__plsda_model.preprocess_autoscale(use_original=True)
+                IO.Log.debug('OK (chosen preprocessing: autoscaling)')
             elif ok_choice and popup.textValue() == 'centering':
                 self.__plsda_model.preprocess_mean(use_original=True)
+                IO.Log.debug('OK (chosen preprocessing: centering)')
             elif ok_choice and popup.textValue() == 'normalizing':
                 self.__plsda_model.preprocess_normalize(use_original=True)
+                IO.Log.debug('OK (chosen preprocessing: normalizing)')
             else:
-                IO.Log.debug('No preprocessing done in newModel()')
+                IO.Log.debug('CANCEL (or chosen preprocessing: none)')
             self.__plsda_model.nipals_method()
-            self.currentMode('model')
+            IO.Log.debug('Model created correctly')
+        else:
+            IO.Log.debug('Model loaded correctly')
+        self.currentMode('model')
+
+    def saveModel(self):
+        if self.__plsda_model is None:
+            IO.Log.debug('Please load or create a model!')
+            popup = new_qt('QMessageBox', 'popup', parent=self.MainWindow)
+            popup.setIcon(QtWidgets.QMessageBox.Critical)
+            popup.setText('Please load or create a model!')
+            popup.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            popup.exec()
+            return
+
+        IO.Log.debug('Choose an output file')
+        popup = new_qt('QFileDialog', 'popup', parent=self.MainWindow)
+        popup.setWindowTitle('Choose an output file')
+        popup.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        popup.setNameFilter("Python pickle files (*.p *.pkl *.pickle)")
+        if not popup.exec():
+            IO.Log.debug('CANCEL (not chosen output file)')
+            return
+        output_file = popup.selectedFiles()[0]
+        IO.Log.debug('OK (chosen output file)', output_file)
+
+        try:
+            with open(output_file, 'bw') as f:
+                pickle.dump(self.__plsda_model, f,
+                            protocol=pickle.HIGHEST_PROTOCOL)
+        except Exception as e:
+            self.__plsda_model = None
+            IO.Log.debug(str(e))
+            popup = new_qt('QMessageBox', 'popup', parent=self.MainWindow)
+            popup.setIcon(QtWidgets.QMessageBox.Critical)
+            popup.setText(str(e))
+            popup.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            popup.exec()
+            return
+        IO.Log.debug('Model saved correctly')
 
     def setupStatusAttributes(self):
         self.__plsda_model = None
@@ -487,7 +548,12 @@ class UserInterface(object):
         self.ActionCV.triggered.connect(lambda: self.currentMode('cv'))
         self.ActionPrediction.triggered.connect(lambda:
                                                 self.currentMode('prediction'))
-        self.ActionNewModel.triggered.connect(self.newModel)
+        self.ActionNewModel.triggered.connect(lambda:
+                                              self.newModel(load=False))
+        self.ActionSaveModel.triggered.connect(self.saveModel)
+        self.ActionLoadModel.triggered.connect(lambda:
+                                               self.newModel(load=True))
+
 
     def show(self):
         self.MainWindow.show()
