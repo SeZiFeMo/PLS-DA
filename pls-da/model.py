@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
 class PLS_DA(object):
 
-    allowed_categories = ('NA', 'SA', 'U', 'WL', 'B', 'E', 'G', 'N')
+    allowed_categories = ('NA', 'SA', 'U', 'WL')
 
     def __init__(self, csv_file=None):
         """Constructor method.
@@ -30,15 +30,7 @@ class PLS_DA(object):
 
         # Delete category column from body and save it for future uses
         self.categories = [row[0] for row in body]
-        # Check all values of self.categories are admitted.
-        for i, cell in enumerate(self.categories):
-            for cat in self.allowed_categories:
-                if cell.startswith(cat):
-                    self.categories[i] = cat
-                    break
-            else:
-                raise Exception('Unexpected category ({}) '
-                                'in row number {}'.format(cell, i))
+        PLS_DA.allowed_categories = set(self.categories)
 
         # The other columns of body are the dataset (matrix)
         self._dataset_original = np.array([np.array(row[1:]) for row in body])
@@ -110,12 +102,10 @@ class PLS_DA(object):
         if nr_lv is None:
             nr_lv = min(n, m)
         if nr_lv > min(n, m):
-            IO.Log.warning('Too many latent variables specified. Will use {}'.format(min(n, m)))
+            IO.Log.warning('Too many latent variables specified. '
+                           'Will use {}'.format(min(n, m)))
             nr_lv = min(n, m)
         self.nr_lv = nr_lv
-
-        if self.mean is None:
-            IO.Log.warning('No pretreatment specified and NIPALS selected')
 
         n, m = E_x.shape
         n, p = E_y.shape
@@ -171,11 +161,12 @@ class PLS_DA(object):
             self.U[:, i] = u
             self.Q[:, i] = np.dot(E_y.T, u) / np.dot(u, u)
             E_x = E_x - np.dot(np.row_stack(t), np.column_stack(self.P[:, i]))
-            E_y = E_y - self.d[i] * np.dot(np.row_stack(t), np.column_stack(c.T))
+            E_y = E_y - self.d[i] * np.dot(np.row_stack(t),
+                                           np.column_stack(c.T))
 
         self.x_eigenvalues = np.power(np.array(s_list_x), 2) / (self.n - 1)
         self.y_eigenvalues = np.power(np.array(s_list_y), 2) / (self.n - 1)
-        self.y_eigenvalues = self.y_eigenvalues[:min(n,p)]
+        self.y_eigenvalues = self.y_eigenvalues[:min(n, p)]
 
         # Compute regression parameters B
         # tmp = (P'W)^{-1}
@@ -183,8 +174,9 @@ class PLS_DA(object):
         self.B = self.W.dot(tmp).dot(self.C.T)
         self.Y_modeled = self.dataset.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
-                    self.Y_modeled)
-        self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row] for row in self.Y_modeled]
+                     self.Y_modeled)
+        self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row]
+                          for row in self.Y_modeled]
 
         IO.Log.info('NIPALS loadings shape', self.P.shape)
         IO.Log.info('NIPALS scores shape', self.T.shape)
@@ -202,7 +194,8 @@ class PLS_DA(object):
         if nr_lv is None:
             nr_lv = min(n, m)
         if nr_lv > min(n, m):
-            IO.Log.warning('Too many latent variables specified. Will use {}'.format(min(n, m)))
+            IO.Log.warning('Too many latent variables specified. '
+                           'Will use {}'.format(min(n, m)))
             nr_lv = min(n, m)
         self.nr_lv = nr_lv
 
@@ -226,7 +219,7 @@ class PLS_DA(object):
                 w = np.dot(E_x.T, u) / np.dot(u, u)
                 w = w / np.linalg.norm(w)
                 # Evaluate t as projection of w in X
-                t = np.dot(E_x, w)/ np.dot(w, w)
+                t = np.dot(E_x, w) / np.dot(w, w)
 
                 # Y part
                 # Evaluate q as projection of t in Y and normalize it
@@ -258,11 +251,12 @@ class PLS_DA(object):
             self.U[:, i] = u
             self.Q[:, i] = q
             E_x = E_x - np.dot(np.row_stack(t), np.column_stack(self.P[:, i]))
-            E_y = E_y - self.d[i] * np.dot(np.row_stack(t), np.column_stack(q.T))
+            E_y = E_y - self.d[i] * np.dot(np.row_stack(t),
+                                           np.column_stack(q.T))
 
         self.x_eigenvalues = np.power(np.array(s_list_x), 2) / (self.n - 1)
         self.y_eigenvalues = np.power(np.array(s_list_y), 2) / (self.n - 1)
-#        self.y_eigenvalues = self.y_eigenvalues[:, 0:min(n,p)]
+        # self.y_eigenvalues = self.y_eigenvalues[:, 0:min(n,p)]
 
         # Compute regression parameters B
         # tmp = (P'W)^{-1}
@@ -270,12 +264,14 @@ class PLS_DA(object):
         self.B = self.W.dot(tmp).dot(np.diag(self.d)).dot(self.Q.T)
         self.Y_modeled = self.dataset.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
-                    self.Y_modeled)
-        self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row] for row in self.Y_modeled]
+                     self.Y_modeled)
+        self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row]
+                          for row in self.Y_modeled]
 
         IO.Log.info('NIPALS loadings shape', self.P.shape)
         IO.Log.info('NIPALS scores shape', self.T.shape)
         IO.Log.info('NIPALS x_eigenvalues', self.x_eigenvalues)
+
     def get_loadings_scores_xy_limits(self, pc_x, pc_y):
         """Return dict of x and y limits: {'x': (min, max), 'y': (min, max)}"""
         x_val = np.concatenate((self.P[:, pc_x], self.T[:, pc_x]))
@@ -285,16 +281,20 @@ class PLS_DA(object):
         return {'x': (min_x, max_x), 'y': (min_y, max_y)}
 
     def get_explained_variance(self, matrix='x'):
-        """Return the explained variance (computed over self.eigenvalues)."""
+        """Return the explained variance (computed over self.eigenvalues)
+
+           Raises Exception if matrix is not 'x' or 'y'
+        """
         if matrix == 'x':
             eigen = self.x_eigenvalues
         elif matrix == 'y':
             eigen = self.y_eigenvalues
         else:
             IO.Log.error('[PCA::get_explained_variance] '
-                         'Accepted values for matrix are x and y')
-
-            return
+                         'Accepted values for matrix are x and y '
+                         '(got {} instead)'.format(repr(matrix)))
+            raise Exception('Bad matrix parameter ({}) in '
+                            'get_explained_variance() '.format(repr(matrix)))
 
         IO.Log.info('[PCA::get_explained_variance] '
                     'Eigenvalues for {}: \n{}'.format(matrix, eigen))

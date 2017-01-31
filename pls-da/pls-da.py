@@ -13,7 +13,9 @@ if __name__ != '__main__':
 utility.check_python_version()
 
 # Add to the following loop every external library used!
-for lib in ('matplotlib.pyplot as plt', 'numpy as np', 'yaml'):
+for lib in ('matplotlib.pyplot as plt', 'numpy as np',
+            'PyQt5.QtCore as QtCore', 'PyQt5.QtWidgets as QtWidgets', 'scipy',
+            'sklearn.cross_decomposition', 'yaml'):
     try:
         exec('import ' + str(lib))
     except ImportError:

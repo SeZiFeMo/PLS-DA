@@ -6,7 +6,7 @@ import IO
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-import sklearn.cross_decomposition
+import sklearn.cross_decomposition as sklCD
 
 
 if __name__ == '__main__':
@@ -14,43 +14,47 @@ if __name__ == '__main__':
     exit(1)
 
 
-def properties_of(category):
-    """Return a dictionary with keys: edge_color, face_color, marker."""
-    circle, cross, diamond, triangle = 'o', 'x', 'D', '^'
+def properties_of(category, all_categories):
+    """Return a dictionary with keys: edge_color, face_color, marker
 
-    blue, dark_red, gold, = '#1F77B4', '#A00000', '#FFD700'
-    green, red, orange = '#2CA02C', '#D62728', '#FF7F0E'
+       category is a unique string in all_categories (list, set or tuple)
+       Raises Exception if category is not in all_categories
+    """
+    all_categories = sorted(list(set(all_categories)))
 
-    if category == 'B':
-        return {'edge_color': blue, 'face_color': blue, 'marker': circle}
-    elif category == 'E':
-        return {'edge_color': green, 'face_color': green, 'marker': cross}
-    elif category == 'G':
-        return {'edge_color': red, 'face_color': red, 'marker': triangle}
-    elif category == 'N':
-        return {'edge_color': gold, 'face_color': dark_red, 'marker': diamond}
-    elif category == 'NA':
-        return {'edge_color': blue, 'face_color': blue, 'marker': circle}
-    elif category == 'SA':
-        return {'edge_color': green, 'face_color': green, 'marker': cross}
-    elif category == 'U':
-        return {'edge_color': red, 'face_color': red, 'marker': triangle}
-    elif category == 'WL':
-        return {'edge_color': orange, 'face_color': orange, 'marker': diamond}
-    else:
-        raise Exception('Unknown category ' + category)
+    if len(all_categories) < 2:
+        IO.Log.warning('Too few categories to choose different colors/markers')
+
+    if category not in all_categories:
+        raise Exception('Could not choose a color/marker for {} since it '
+                        'does not compare in all categories '
+                        '({})'.format(category, all_categories))
+    matches = (('#1F77B4', 'o'),  # blue,     circle
+               ('#2CA02C', 'x'),  # green,    cross
+               ('#D62728', '^'),  # red,      triangle_up
+               ('#FF7F0E', 'D'),  # orange,   diamond
+               ('#A00000', 's'),  # dark_red, square
+               ('#FFD700', '*'),  # gold,     star
+               ('#000000', '+'),  #           plus
+               ('#000000', 'h'),  #           hexagon
+               ('#000000', 'p'),  #           pentagon
+               )
+    index = all_categories.index(category) % len(matches)
+    color, marker = matches[index]
+    return {'edge_color': color, 'face_color': color, 'marker': marker}
 
 
-def scatter_plot(x_values, y_values, cat):
+def scatter_plot(x_values, y_values, cat, all_cat):
     plt.scatter(x=x_values,
                 y=y_values,
-                edgecolors=properties_of(cat)['edge_color'],
-                marker=properties_of(cat)['marker'],
+                edgecolors=properties_of(cat, all_cat)['edge_color'],
+                marker=properties_of(cat, all_cat)['marker'],
                 s=40,
-                c=properties_of(cat)['face_color'],
+                c=properties_of(cat, all_cat)['face_color'],
                 alpha=.6,
                 # linewidth=0.10,
                 label=cat)
+
 
 def plot_plot(x_values, y_values):
     plt.plot(x_values,
@@ -60,6 +64,7 @@ def plot_plot(x_values, y_values):
              marker='D',              # do not set it to
              markerfacecolor='blue',  # marker color
              markersize=5)
+
 
 def scores_plot(model, pc_x, pc_y, normalize=False):
     """Plot the scores on the specified components."""
@@ -78,7 +83,7 @@ def scores_plot(model, pc_x, pc_y, normalize=False):
         score_pc_x = scores_x[n]
         score_pc_y = scores_y[n]
         cat = model.categories[n]
-        scatter_plot(score_pc_x, score_pc_y, cat)
+        scatter_plot(score_pc_x, score_pc_y, cat, model.categories)
 
     ax = plt.gca()
     plt.title('Scores plot')
@@ -87,8 +92,8 @@ def scores_plot(model, pc_x, pc_y, normalize=False):
     plt.axvline(0, linestyle='dashed', color='black')
     plt.axhline(0, linestyle='dashed', color='black')
     if normalize:
-        ax.set_xlim(-1.1,1.1)
-        ax.set_ylim(-1.1,1.1)
+        ax.set_xlim(-1.1, 1.1)
+        ax.set_ylim(-1.1, 1.1)
     else:
         ax.set_xlim(model.get_loadings_scores_xy_limits(pc_x, pc_y)['x'])
         ax.set_ylim(model.get_loadings_scores_xy_limits(pc_x, pc_y)['y'])
@@ -124,9 +129,11 @@ def loadings_plot(model, pc_x, pc_y):
     plt.axvline(0, linestyle='dashed', color='black')
     plt.axhline(0, linestyle='dashed', color='black')
 
+
 def biplot(model, pc_x, pc_y):
     scores_plot(model, pc_x, pc_y, normalize=True)
     loadings_plot(model, pc_x, pc_y)
+
 
 def explained_variance_plot(model, matrix='x'):
     """Plot the cumulative explained variance."""
@@ -142,6 +149,7 @@ def explained_variance_plot(model, matrix='x'):
     plt.plot(range(len(explained_variance)),
              np.cumsum(explained_variance))
 
+
 def scree_plot(model, matrix='x'):
     """Plot the explained variance of the model."""
     plt.title('Scree plot')
@@ -153,20 +161,20 @@ def scree_plot(model, matrix='x'):
     elif matrix == 'y':
         eigen = model.y_eigenvalues
     else:
-        IO.Log.error('[scree_plot] '
-                     'Accepted values for matrix are x and y')
-
-        return
+        IO.Log.error('[scree_plot] Accepted values for matrix are x and y '
+                     '(got {} instead)'.format(repr(matrix)))
+        raise Exception('Bad matrix parameter ({}) in '
+                        'scree_plot() '.format(repr(matrix)))
 
     ax = plt.gca()
     ax.set_xlim(-0.5, len(eigen))
     ax.set_ylim(-0.5, math.ceil(eigen[0]) + 0.5)
-    plot_plot(range(len(eigen)),
-             eigen)
+    plot_plot(range(len(eigen)), eigen)
+
 
 def inner_relation_plot(model, nr):
     if nr > model.nr_lv:
-        Io.Log.error('[inner_relation_plot] '
+        IO.Log.error('[inner_relation_plot] '
                      'chosen LV must be in [0-{}]'.format(model.nr_lv))
 
     plt.title('Inner relation for LV {}'.format(nr))
@@ -175,7 +183,8 @@ def inner_relation_plot(model, nr):
 
     for i in range(model.T.shape[0]):
         cat = model.categories[i]
-        scatter_plot(model.T[i, nr], model.U[i, nr], cat)
+        scatter_plot(model.T[i, nr], model.U[i, nr], cat, model.categories)
+
 
 def d_plot(model):
     plt.title('Inner relation (variable b)')
@@ -184,18 +193,20 @@ def d_plot(model):
 
     for i in range(model.d.shape[0]):
         cat = model.categories[i]
-        scatter_plot(i, model.d[i], cat)
+        scatter_plot(i, model.d[i], cat, model.categories)
+
 
 def inner_relation_sklearn(model, nr):
     if nr > model.nr_lv:
-        Io.Log.error('[inner_relation_plot] '
+        IO.Log.error('[inner_relation_plot] '
                      'chosen LV must be in [0-{}]'.format(model.nr_lv))
 
     X = model.dataset.copy()
     Y = model.dummy_Y.copy()
 
-    sklearn_pls = sklearn.cross_decomposition.PLSRegression(
-                  n_components=min(model.n, model.m), scale=True, max_iter=1e4, tol=1e-6, copy=True)
+    sklearn_pls = sklCD.PLSRegression(n_components=min(model.n, model.m),
+                                      scale=True, max_iter=1e4, tol=1e-6,
+                                      copy=True)
     sklearn_pls.fit(X, Y)
 
     plt.title('Inner relation for LV {} (sklearn)'.format(nr))
@@ -204,4 +215,6 @@ def inner_relation_sklearn(model, nr):
 
     for i in range(model.T.shape[0]):
         cat = model.categories[i]
-        scatter_plot(sklearn_pls.x_scores_[i, nr], sklearn_pls.y_scores_[i, nr], cat)
+        scatter_plot(sklearn_pls.x_scores_[i, nr],
+                     sklearn_pls.y_scores_[i, nr],
+                     cat, model.categories)
