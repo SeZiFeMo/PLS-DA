@@ -31,10 +31,13 @@ pls_da.get_modeled_y()
 
 plt.subplot(2, 1, 1)
 # plot.explained_variance_plot(pls_da)
-plot.scree_plot(pls_da)
+# plot.inner_relation_plot(pls_da, 2)
+plot.scores_plot(pls_da, 0, 1)
 
 plt.subplot(2, 1, 2)
 # plot.explained_variance_plot(pls_da, 'y')
-plot.scree_plot(pls_da, 'y')
+# plot.inner_relation_plot(pls_da, 3)
+# plot.scree_plot(pls_da, 'y')
+plot.scores_plot(pls_da, 1, 2)
 
 plt.show()

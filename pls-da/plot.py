@@ -162,3 +162,19 @@ def scree_plot(model, matrix='x'):
     ax.set_ylim(-0.5, math.ceil(eigen[0]) + 0.5)
     plot_plot(range(len(eigen)),
              eigen)
+
+def inner_relation_plot(model,  nr):
+    if nr > model.nr_lv:
+        Io.Log.error('[inner_relation_plot] '
+                     'chosen LV must be in [0-{}]'.format(model.nr_lv))
+
+    plt.title('Inner relation for LV {}'.format(nr))
+    plt.xlabel('t{}'.format(nr))
+    plt.ylabel('u{}'.format(nr))
+
+    for i in range(model.T.shape[0]):
+        cat = model.categories[i]
+        scatter_plot(model.T[i, nr], model.U[i, nr], cat)
+    #for i in range(model.d.shape[0]):
+    #    cat = model.categories[i]
+    #    scatter_plot(i, model.d[i], cat)
