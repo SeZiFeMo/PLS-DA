@@ -152,7 +152,7 @@ def scree_plot(model, matrix='x'):
     elif matrix == 'y':
         eigen = model.y_eigenvalues
     else:
-        IO.Log.error('[PCA::get_explained_variance] '
+        IO.Log.error('[scree_plot] '
                      'Accepted values for matrix are x and y')
 
         return

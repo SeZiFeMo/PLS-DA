@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
 class PLS_DA(object):
 
-    allowed_categories = ('B', 'E', 'G', 'N', 'NA', 'SA', 'U', 'WL')
+    allowed_categories = ('NA', 'SA', 'U', 'WL', 'B', 'E', 'G', 'N')
 
     def __init__(self, csv_file=None):
         """Constructor method"""
@@ -104,8 +104,11 @@ class PLS_DA(object):
         n, m = self.dataset.shape
 
         if nr_lv is None:
-            nr_lv = min(n,m)
-
+            nr_lv = min(n, m)
+        if nr_lv > min(n, m):
+            IO.Log.warning('Too many latent variables specified. Will use {}'.format(min(n, m)))
+            nr_lv = min(n, m)
+        self.nr_lv = nr_lv
 
         if self.mean is None:
             IO.Log.warning('No pretreatment specified and NIPALS selected')
