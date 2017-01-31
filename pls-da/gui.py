@@ -3,6 +3,7 @@
 
 import IO
 import model
+import os
 import pickle
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
@@ -454,8 +455,11 @@ class UserInterface(object):
         popup = new_qt('QFileDialog', 'popup', parent=self.MainWindow)
         popup.setWindowTitle('Choose an input file')
         popup.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+        popup.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
         if load:
             popup.setNameFilter("Python pickle files (*.p *.pkl *.pickle)")
+        else:
+            popup.setNameFilter("Comma-separated values files (*.csv *.txt)")
         if not popup.exec():
             IO.Log.debug('CANCEL (not chosen input file)')
             return
@@ -505,10 +509,12 @@ class UserInterface(object):
 
     def saveModel(self):
         if self.__plsda_model is None:
-            IO.Log.debug('Please load or create a model!')
+            IO.Log.debug('To save a model '
+                         'you have to create or load it before')
             popup = new_qt('QMessageBox', 'popup', parent=self.MainWindow)
             popup.setIcon(QtWidgets.QMessageBox.Critical)
-            popup.setText('Please load or create a model!')
+            popup.setText('To save a model '
+                          'you have to create or load it before')
             popup.setStandardButtons(QtWidgets.QMessageBox.Ok)
             popup.exec()
             return
@@ -517,12 +523,25 @@ class UserInterface(object):
         popup = new_qt('QFileDialog', 'popup', parent=self.MainWindow)
         popup.setWindowTitle('Choose an output file')
         popup.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        popup.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
         popup.setNameFilter("Python pickle files (*.p *.pkl *.pickle)")
         if not popup.exec():
             IO.Log.debug('CANCEL (not chosen output file)')
             return
         output_file = popup.selectedFiles()[0]
         IO.Log.debug('OK (chosen output file)', output_file)
+        if not output_file.endswith('.p') and \
+           not output_file.endswith('.pkl') and \
+           not output_file.endswith('.pickle'):
+            dirname, basename = os.path.split(output_file)
+            if '.' in basename:
+                basename = '.'.join(basename.split('.')[:-1])
+            basename += '.p'
+            output_file = os.path.join(dirname, basename)
+            IO.Log.debug('Adapted output file', output_file)
+            if os.path.isfile(output_file):
+                IO.Log.debug('Output file already exists, '
+                             'it will be overwritten!')
 
         try:
             with open(output_file, 'bw') as f:
