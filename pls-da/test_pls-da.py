@@ -286,7 +286,7 @@ class test_nipals_module(unittest.TestCase):
                 np.dot(self.pls_da.U, self.pls_da.Q.T), err_msg="Y != UQ'", atol=absolute_tolerance)
 
     def test_coef(self):
-        np.testing.assert_allclose(self.pls_da.dummy_Y, self.Y_modeled, atol=absolute_tolerance)
+        np.testing.assert_allclose(self.pls_da.dummy_Y, self.pls_da.Y_modeled, atol=absolute_tolerance)
 
 
 class test_plot_module(unittest.TestCase):

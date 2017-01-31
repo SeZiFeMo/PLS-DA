@@ -17,13 +17,16 @@ class PLS_DA(object):
     allowed_categories = ('NA', 'SA', 'U', 'WL', 'B', 'E', 'G', 'N')
 
     def __init__(self, csv_file=None):
-        """Constructor method"""
+        """Constructor method.
+
+           Raises Exception if file could not be parsed.
+        """
         if csv_file is None:
             csv_file = utility.CLI.args().input_file
 
         self.axis = 0
         self.keys, body = IO.CSV.parse(csv_file)
-        IO.Log.debug('[PLS_DA::__init__] Using {} as input.'.format(csv_file))
+        IO.Log.debug('[PLS_DA::__init__] Using {} as input'.format(csv_file))
 
         # Delete category column from body and save it for future uses
         self.categories = [row[0] for row in body]
@@ -34,7 +37,8 @@ class PLS_DA(object):
                     self.categories[i] = cat
                     break
             else:
-                IO.Log.warning('Unexpected category ({})'.format(cell))
+                raise Exception('Unexpected category ({}) '
+                                'in row number {}'.format(cell, i))
 
         # The other columns of body are the dataset (matrix)
         self._dataset_original = np.array([np.array(row[1:]) for row in body])
@@ -177,16 +181,14 @@ class PLS_DA(object):
         # tmp = (P'W)^{-1}
         tmp = np.linalg.inv(self.P.T.dot(self.W))
         self.B = self.W.dot(tmp).dot(self.C.T)
-
-        IO.Log.info('NIPALS loadings shape', self.P.shape)
-        IO.Log.info('NIPALS scores shape', self.T.shape)
-        IO.Log.info('NIPALS x_eigenvalues', self.x_eigenvalues)
-
-    def get_modeled_y(self):
         self.Y_modeled = self.dataset.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
                     self.Y_modeled)
         self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row] for row in self.Y_modeled]
+
+        IO.Log.info('NIPALS loadings shape', self.P.shape)
+        IO.Log.info('NIPALS scores shape', self.T.shape)
+        IO.Log.info('NIPALS x_eigenvalues', self.x_eigenvalues)
 
     def get_loadings_scores_xy_limits(self, pc_x, pc_y):
         """Return dict of x and y limits: {'x': (min, max), 'y': (min, max)}"""
