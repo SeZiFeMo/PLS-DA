@@ -63,7 +63,7 @@ class Log(object):
             Log.__initialized = True
 
         logger = getattr(logging.getLogger(Log.__name), level)
-        my_new_line = '\n[{:<8}]     '.format(Log.__default.upper())
+        my_new_line = '\n[{:<8}]     '.format(level.upper())
         if data is None:
             logger(msg.replace('\n', my_new_line))
         else:

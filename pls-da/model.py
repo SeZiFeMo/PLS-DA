@@ -64,6 +64,14 @@ class PLS_DA(object):
         IO.Log.debug('[PLS_DA::__init__] dummy Y variables', self.dummy_Y)
         self.p = self.dummy_Y.shape[1]
 
+    def no_preprocessing(self, use_original=False):
+        """Simply do nothing.
+
+           Do not remove this method or the preprocessing choice in the GUI
+           will fail on 'none' choice.
+        """
+        pass
+
     def preprocess_mean(self, use_original=False):
         """Substitute self.dataset with its centered version."""
         dataset = self._dataset_original if use_original else self.dataset
