@@ -30,17 +30,17 @@ pls_da.nipals_method()
 plt.subplot(2, 2, 1)
 # plot.explained_variance_plot(pls_da)
 # plot.inner_relation_plot(pls_da, 2)
-plot.scores_plot(pls_da, 0, 1)
+plot.y_leverage_plot(pls_da)
 
 plt.subplot(2, 2, 2)
-# plot.explained_variance_plot(pls_da, 'y')
 # plot.scree_plot(pls_da, 'y')
-plot.d_plot(pls_da)
+plot.modeled_Y_plot(pls_da)
 
 plt.subplot(2, 2, 3)
-plot.inner_relation_plot(pls_da, 0)
+plot.data_plot(pls_da)
 
 plt.subplot(2, 2, 4)
-plot.inner_relation_sklearn(pls_da, 0)
+plot.scree_plot(pls_da, 'y')
 
+plt.tight_layout()
 plt.show()

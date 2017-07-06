@@ -56,6 +56,7 @@ class PLS_DA(object):
         self.C = None
         self.B = None
         self.Y_modeled = None
+        self.Y_modeled_dummy = None
         self.x_eigenvalues = None
         self.y_eigenvalues = None
 
@@ -131,7 +132,7 @@ class PLS_DA(object):
 
         # Loop for each possible PC
         for i in range(nr_lv):
-            # Initialize u as a column of E_x with maximum variance
+            # Initialize u as a column of E_y with maximum variance
             max_var_index = np.argmax(np.sum(np.power(E_y, 2), axis=0))
             u = E_y[:, max_var_index].copy()
 
@@ -184,7 +185,8 @@ class PLS_DA(object):
         self.Y_modeled = self.dataset.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
                     self.Y_modeled)
-        self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row] for row in self.Y_modeled]
+        Y_dummy = [[1 if elem == max(row) else -1 for elem in row] for row in self.Y_modeled]
+        self.Y_modeled_dummy = np.array(Y_dummy)
 
         IO.Log.info('NIPALS loadings shape', self.P.shape)
         IO.Log.info('NIPALS scores shape', self.T.shape)
@@ -276,6 +278,7 @@ class PLS_DA(object):
         IO.Log.info('NIPALS loadings shape', self.P.shape)
         IO.Log.info('NIPALS scores shape', self.T.shape)
         IO.Log.info('NIPALS x_eigenvalues', self.x_eigenvalues)
+
     def get_loadings_scores_xy_limits(self, pc_x, pc_y):
         """Return dict of x and y limits: {'x': (min, max), 'y': (min, max)}"""
         x_val = np.concatenate((self.P[:, pc_x], self.T[:, pc_x]))
