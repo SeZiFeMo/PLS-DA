@@ -48,6 +48,7 @@ class PLS_DA(object):
         self.C = None
         self.B = None
         self.Y_modeled = None
+        self.Y_modeled_dummy = None
         self.x_eigenvalues = None
         self.y_eigenvalues = None
 
@@ -129,7 +130,7 @@ class PLS_DA(object):
 
         # Loop for each possible PC
         for i in range(nr_lv):
-            # Initialize u as a column of E_x with maximum variance
+            # Initialize u as a column of E_y with maximum variance
             max_var_index = np.argmax(np.sum(np.power(E_y, 2), axis=0))
             u = E_y[:, max_var_index].copy()
 
@@ -182,9 +183,10 @@ class PLS_DA(object):
         self.B = self.W.dot(tmp).dot(self.C.T)
         self.Y_modeled = self.dataset.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
-                     self.Y_modeled)
-        self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row]
-                          for row in self.Y_modeled]
+                    self.Y_modeled)
+        Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
+                for row in self.Y_modeled]
+        self.Y_modeled_dummy = np.array(Y_dummy)
 
         IO.Log.info('NIPALS loadings shape', self.P.shape)
         IO.Log.info('NIPALS scores shape', self.T.shape)

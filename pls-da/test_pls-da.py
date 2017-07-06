@@ -202,8 +202,6 @@ class test_eigen_module(unittest.TestCase):
 
 class nipals_abstract(object):
 
-    def calculate_nipals(self):
-        pass
 
     def setUp(self):
         n, j, k = 4, 2, 2
@@ -214,11 +212,11 @@ class nipals_abstract(object):
         self.pls_da.dataset = X.copy()
         self.pls_da.dummy_Y = Y.copy()
         self.pls_da.preprocess_autoscale()
+        self.pls_da.nipals_method(nr_lv=j)
         # autoscale also matrices for sklearn
         X = self.pls_da.dataset.copy()
         Y = self.pls_da.dummy_Y.copy()
 
-        self.calculate_nipals(j)
 
         self.sklearn_pls = sklCD.PLSRegression(n_components=j, scale=True,
                                                max_iter=1e4, tol=1e-6,
@@ -294,8 +292,8 @@ class nipals_abstract(object):
                                    err_msg="Y != UQ'", atol=absolute_tolerance)
 
     def test_coef(self):
-        np.testing.assert_allclose(self.pls_da.dummy_Y, self.pls_da.Y_modeled,
-                                   atol=absolute_tolerance)
+        np.testing.assert_allclose(self.pls_da.dummy_Y,
+                self.pls_da.Y_modeled_dummy, atol=absolute_tolerance)
 
 
 class test_nipals_method(nipals_abstract, unittest.TestCase):
@@ -348,12 +346,12 @@ class test_plot_module(unittest.TestCase):
 
     def test_scores_plot(self):
         with self.assertRaises(SystemExit) as cm:
-            plot.scores_plot(model=None, pc_x=1, pc_y=1)
+            plot.scores_plot(model=None, pc_a=1, pc_b=1)
         self.assertEqual(cm.exception.code, 1)
 
     def test_loadings_plot(self):
         with self.assertRaises(SystemExit) as cm:
-            plot.loadings_plot(model=None, pc_x=1, pc_y=1)
+            plot.loadings_plot(model=None, pc_a=1, pc_b=1)
         self.assertEqual(cm.exception.code, 1)
 
 
