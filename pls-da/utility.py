@@ -2,8 +2,8 @@
 # coding: utf-8
 
 import argparse
-import IO
 import sys
+import IO
 
 if __name__ == '__main__':
     IO.Log.warning('Please do not run that script, load it!')

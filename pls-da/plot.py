@@ -2,11 +2,11 @@
 # coding: utf-8
 
 import collections
-import IO
+import math
 import matplotlib.pyplot as plt
 import numpy as np
-import math
 import sklearn.cross_decomposition as sklCD
+import IO
 
 
 if __name__ == '__main__':
@@ -38,16 +38,13 @@ def properties_of(category, all_categories):
                ('#000000', '+'),  #           plus
                ('#000000', 'h'),  #           hexagon
                ('#000000', 'p'),  #           pentagon
-               )
+              )
     index = all_categories.index(category) % len(matches)
     color, marker = matches[index]
     return {'edge_color': color, 'face_color': color, 'marker': marker}
 
 def check_matrix(matrix):
-    if matrix == 'x' or matrix == 'y':
-        return True
-    else:
-        return False
+    return matrix == 'x' or matrix == 'y'
 
 def scatter_plot(x_values, y_values, cat, all_cat):
     plt.scatter(x=x_values,
@@ -173,13 +170,6 @@ def biplot(model, pc_a, pc_b, matrix='x'):
 
     pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
 
-    if matrix == 'x':
-        scores = model.T.copy()
-        loadings = model.P.copy()
-    else:
-        scores = model.U.copy()
-        loadings = model.Q.copy()
-
     scores_plot(model, pc_a, pc_b, normalize=True, matrix=matrix)
     loadings_plot(model, pc_a, pc_b, matrix=matrix)
 
@@ -254,13 +244,13 @@ def data_plot(model, all_cat):
     for i in range(model.dataset.shape[0]):
         cat = model.categories[i]
         plt.plot(range(model.dataset.shape[1]),
-                model.dataset[i],
-                color=properties_of(cat, all_cat)['face_color'],         # line color
-                linestyle='solid',
-                alpha=.5,
-                marker=properties_of(cat, all_cat)['marker'],              # do not set it to
-                markerfacecolor=properties_of(cat, all_cat)['face_color'],  # marker color
-                markeredgecolor=properties_of(cat, all_cat)['edge_color'])
+                 model.dataset[i],
+                 color=properties_of(cat, all_cat)['face_color'],         # line color
+                 linestyle='solid',
+                 alpha=.5,
+                 marker=properties_of(cat, all_cat)['marker'],              # do not set it to
+                 markerfacecolor=properties_of(cat, all_cat)['face_color'],  # marker color
+                 markeredgecolor=properties_of(cat, all_cat)['edge_color'])
 
 def modeled_Y_plot(model):
     plt.title('Y calculated')

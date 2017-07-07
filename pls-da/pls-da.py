@@ -6,22 +6,25 @@ import model
 import plot
 import utility
 
+# Add here every external library used!
+try:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import PyQt5.QtCore as QtCore
+    import PyQt5.QtWidgets as QtWidgets
+    import scipy
+    import sklearn.cross_decomposition
+    import yaml
+except ImportError as e:
+    IO.Log.warning(f'Could not import {e.name} library, '
+                   'please install it!')
+    exit(1)
+
 if __name__ != '__main__':
     IO.Log.warning('Please do not load that script, run it!')
     exit(1)
 
 utility.check_python_version()
-
-# Add to the following loop every external library used!
-for lib in ('matplotlib.pyplot as plt', 'numpy as np',
-            'PyQt5.QtCore as QtCore', 'PyQt5.QtWidgets as QtWidgets', 'scipy',
-            'sklearn.cross_decomposition', 'yaml'):
-    try:
-        exec('import ' + str(lib))
-    except ImportError:
-        IO.warning('Could not import {} library, '
-                   'please install it!'.format(lib))
-        exit(1)
 
 pls_da = model.PLS_DA()
 

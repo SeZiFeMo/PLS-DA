@@ -2,16 +2,18 @@
 # coding: utf-8
 
 import argparse
-import IO
 import math
-import model
-import numpy as np
 import os
-import plot
-import sklearn.cross_decomposition as sklCD
 import unittest
-import utility
 import scipy
+
+import numpy as np
+import sklearn.cross_decomposition as sklCD
+
+import IO
+import model
+import plot
+import utility
 
 absolute_tolerance = 0.1
 
@@ -293,7 +295,8 @@ class nipals_abstract(object):
 
     def test_coef(self):
         np.testing.assert_allclose(self.pls_da.dummy_Y,
-                self.pls_da.Y_modeled_dummy, atol=absolute_tolerance)
+                                   self.pls_da.Y_modeled_dummy,
+                                   atol=absolute_tolerance)
 
 
 class test_nipals_method(nipals_abstract, unittest.TestCase):

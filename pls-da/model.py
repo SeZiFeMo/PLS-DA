@@ -183,9 +183,9 @@ class PLS_DA(object):
         self.B = self.W.dot(tmp).dot(self.C.T)
         self.Y_modeled = self.dataset.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
-                    self.Y_modeled)
+                     self.Y_modeled)
         Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
-                for row in self.Y_modeled]
+                   for row in self.Y_modeled]
         self.Y_modeled_dummy = np.array(Y_dummy)
 
         IO.Log.info('NIPALS loadings shape', self.P.shape)
