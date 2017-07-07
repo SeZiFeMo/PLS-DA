@@ -206,7 +206,7 @@ class nipals_abstract(object):
 
 
     def setUp(self):
-        n, j, k = 4, 2, 2
+        j = 2
         self.pls_da = model.PLS_DA()
 
         X = np.array([[1, 1.9], [1.9, 1], [3.8, 4.2], [4, 3.6]])
@@ -235,7 +235,6 @@ class nipals_abstract(object):
         IO.Log.debug('sklearn y scores', self.sklearn_pls.y_scores_)
         IO.Log.debug('NIPALS y loadings', self.pls_da.Q)
         IO.Log.debug('sklearn y loadings', self.sklearn_pls.y_loadings_)
-        IO.Log.debug('NIPALS y weights', self.pls_da.C)
         IO.Log.debug('sklearn y weights', self.sklearn_pls.y_weights_)
 
     def tearDown(self):
@@ -306,18 +305,9 @@ class test_nipals_method(nipals_abstract, unittest.TestCase):
 
     @unittest.skip("Different algorithm")
     def test_PLS_DA_y_weights(self):
-        np.testing.assert_allclose(np.absolute(self.pls_da.C),
+        np.testing.assert_allclose(np.absolute(self.pls_da.W),
                                    np.absolute(self.sklearn_pls.y_weights_),
                                    atol=absolute_tolerance)
-
-    def test_PLS_DA_y_weights_loadings(self):
-        np.testing.assert_allclose(self.pls_da.C, self.pls_da.Q)
-
-
-class test_nipals_2(nipals_abstract, unittest.TestCase):
-
-    def calculate_nipals(self, j):
-        self.pls_da.nipals_2(nr_lv=j)
 
 
 class test_plot_module(unittest.TestCase):
