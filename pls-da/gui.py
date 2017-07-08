@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import IO
 import model
 import os
 import pickle
@@ -9,6 +8,7 @@ import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import sys
 
+import IO
 
 def new_qt(widget, name, parent=None):
     """Return a widget of type specified with 1st argument (a string).

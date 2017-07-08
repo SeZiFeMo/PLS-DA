@@ -46,6 +46,7 @@ class Log(object):
     __initialized = False
     __name = 'PLS_DA'
 
+    @staticmethod
     def __log(msg='', data=None, level=None):
         """Print log message if above threshold."""
         if level is None:
@@ -68,8 +69,8 @@ class Log(object):
             logger(msg.replace('\n', my_new_line))
         else:
             if (isinstance(data, (np.ndarray, np.generic))
-                and data.ndim in (1, 2)) or \
-               isinstance(data, (list, tuple)):
+                    and data.ndim in (1, 2)) or \
+                    isinstance(data, (list, tuple)):
                 data = mat2str(data)
             else:
                 data = yaml.dump(data, default_flow_style=False)
@@ -77,18 +78,23 @@ class Log(object):
             logger(msg.rstrip('\n') + my_new_line
                    data.replace('\n', my_new_line))
 
+    @staticmethod
     def critical(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='critical')
 
+    @staticmethod
     def debug(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='debug')
 
+    @staticmethod
     def error(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='error')
 
+    @staticmethod
     def info(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='info')
 
+    @staticmethod
     def set_level(level):
         if not isinstance(level, str):
             Log.error('Log.set_level() takes a string as argumenent, not a '
@@ -100,12 +106,14 @@ class Log(object):
         Log.__default = level
         Log.__initialized = False
 
+    @staticmethod
     def warning(msg='', data=None):
         return Log.__log(msg=msg, data=data, level='warning')
 
 
 class CSV(object):
 
+    @staticmethod
     def parse(filename, encoding='iso8859', separator=';'):
         """Return the header (list) and the body of a table (list of lists).
 

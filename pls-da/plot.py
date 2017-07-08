@@ -2,11 +2,11 @@
 # coding: utf-8
 
 import collections
-import IO
+import math
 import matplotlib.pyplot as plt
 import numpy as np
-import math
 import sklearn.cross_decomposition as sklCD
+import IO
 
 
 if __name__ == '__main__':
@@ -38,106 +38,154 @@ def properties_of(category, all_categories):
                ('#000000', '+'),  #           plus
                ('#000000', 'h'),  #           hexagon
                ('#000000', 'p'),  #           pentagon
-               )
+              )
     index = all_categories.index(category) % len(matches)
     color, marker = matches[index]
     return {'edge_color': color, 'face_color': color, 'marker': marker}
 
+def check_matrix(matrix):
+    return matrix == 'x' or matrix == 'y'
 
 def scatter_plot(x_values, y_values, cat, all_cat):
     plt.scatter(x=x_values,
                 y=y_values,
                 edgecolors=properties_of(cat, all_cat)['edge_color'],
                 marker=properties_of(cat, all_cat)['marker'],
-                s=40,
+                s=30,
                 c=properties_of(cat, all_cat)['face_color'],
                 alpha=.6,
                 # linewidth=0.10,
                 label=cat)
 
+def plot_plot(x_values, y_values, cat=None, all_cat=None):
 
-def plot_plot(x_values, y_values):
+    if cat is None:
+        color = 'blue'
+        linecolor = '#1F77B4'
+    else:
+        color = properties_of(cat, all_cat)['face_color']
+        linecolor = color
+
     plt.plot(x_values,
              y_values,
-             color='#1F77B4',         # line color
+             color=linecolor,         # line color
              linestyle='solid',
              marker='D',              # do not set it to
-             markerfacecolor='blue',  # marker color
+             markerfacecolor=color,  # marker color
              markersize=5)
 
-
-def scores_plot(model, pc_x, pc_y, normalize=False):
+def scores_plot(model, pc_a, pc_b, matrix='x', normalize=False):
     """Plot the scores on the specified components."""
-    if pc_x == pc_y:
+    if pc_a == pc_b:
         IO.Log.error('Principal components must be different!')
         exit(1)
+    if not check_matrix(matrix):
+        IO.Log.error('[scores_plot] '
+                     'Accepted values for matrix are x and y')
+        return
 
-    pc_x, pc_y = min(pc_x, pc_y), max(pc_x, pc_y)
+    pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
 
-    scores_x = model.T[:, pc_x]
-    scores_y = model.T[:, pc_y]
+    if matrix == 'x':
+        scores = model.T.copy()
+    else:
+        scores = model.U.copy()
+
+    scores_a = scores[:, pc_a]
+    scores_b = scores[:, pc_b]
     if normalize:
-        scores_x = scores_x / max(abs(scores_x))
-        scores_y = scores_y / max(abs(scores_y))
-    for n in range(model.T.shape[0]):
-        score_pc_x = scores_x[n]
-        score_pc_y = scores_y[n]
+        scores_a = scores_a / max(abs(scores_a))
+        scores_b = scores_b / max(abs(scores_b))
+    for n in range(scores.shape[0]):
+        score_pc_a = scores_a[n]
+        score_pc_b = scores_b[n]
         cat = model.categories[n]
-        scatter_plot(score_pc_x, score_pc_y, cat, model.categories)
+        scatter_plot(score_pc_a, score_pc_b, cat, model.categories)
 
     ax = plt.gca()
-    plt.title('Scores plot')
-    plt.xlabel('PC{}'.format(pc_x + 1))
-    plt.ylabel('PC{}'.format(pc_y + 1))
+    plt.title('Scores plot for {}'.format(matrix))
+    plt.xlabel('LV{}'.format(pc_a + 1))
+    plt.ylabel('LV{}'.format(pc_b + 1))
     plt.axvline(0, linestyle='dashed', color='black')
     plt.axhline(0, linestyle='dashed', color='black')
     if normalize:
         ax.set_xlim(-1.1, 1.1)
         ax.set_ylim(-1.1, 1.1)
     else:
-        ax.set_xlim(model.get_loadings_scores_xy_limits(pc_x, pc_y)['x'])
-        ax.set_ylim(model.get_loadings_scores_xy_limits(pc_x, pc_y)['y'])
+        ax.set_xlim(model.get_loadings_scores_xy_limits(pc_a, pc_b)['x'])
+        ax.set_ylim(model.get_loadings_scores_xy_limits(pc_a, pc_b)['y'])
 
     handles, labels = ax.get_legend_handles_labels()
     by_label = collections.OrderedDict(zip(labels, handles))
     plt.legend(by_label.values(), by_label.keys())
 
 
-def loadings_plot(model, pc_x, pc_y):
+def loadings_plot(model, pc_a, pc_b, matrix='x'):
     """Plot the loadings."""
-    if pc_x == pc_y:
+    if pc_a == pc_b:
         IO.Log.error('Principal components must be different!')
         exit(1)
 
-    pc_x, pc_y = min(pc_x, pc_y), max(pc_x, pc_y)
-    plt.scatter(x=model.P[:, pc_x],
-                y=model.P[:, pc_y])
+    if not check_matrix(matrix):
+        IO.Log.error('[loadings_plot] '
+                     'Accepted values for matrix are x and y')
+        return
+
+    pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
+
+    if matrix == 'x':
+        loadings = model.P.copy()
+    else:
+        loadings = model.Q.copy()
+
+    plt.scatter(x=loadings[:, pc_a],
+                y=loadings[:, pc_b])
 
     ax = plt.gca()
-    for n in range(model.P.shape[0]):
+    for n in range(loadings.shape[0]):
         ax.annotate(model.keys[n + 1],
-                    xy=(model.P[n, pc_x], model.P[n, pc_y]),
+                    xy=(loadings[n, pc_a], loadings[n, pc_b]),
                     xycoords='data',
                     xytext=(0, 5),
                     textcoords='offset points',
                     horizontalalignment='center',
                     verticalalignment='bottom')
 
-    plt.title('Loadings plot')
-    plt.xlabel('PC{}'.format(pc_x + 1))
-    plt.ylabel('PC{}'.format(pc_y + 1))
+    plt.title('Loadings plot for {}'.format(matrix))
+    plt.xlabel('LV{}'.format(pc_a + 1))
+    plt.ylabel('LV{}'.format(pc_b + 1))
     plt.axvline(0, linestyle='dashed', color='black')
     plt.axhline(0, linestyle='dashed', color='black')
 
+def biplot(model, pc_a, pc_b, matrix='x'):
+    """Plot both loadings and scores on the same graph."""
+    if pc_a == pc_b:
+        IO.Log.error('Principal components must be different!')
+        exit(1)
 
-def biplot(model, pc_x, pc_y):
-    scores_plot(model, pc_x, pc_y, normalize=True)
-    loadings_plot(model, pc_x, pc_y)
+    if not check_matrix(matrix):
+        IO.Log.error('[biplot] '
+                     'Accepted values for matrix are x and y')
+        return
 
+    pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
+
+    scores_plot(model, pc_a, pc_b, normalize=True, matrix=matrix)
+    loadings_plot(model, pc_a, pc_b, matrix=matrix)
+
+    plt.title('Biplot for {}'.format(matrix))
+    plt.xlabel('LV{}'.format(pc_a + 1))
+    plt.ylabel('LV{}'.format(pc_b + 1))
 
 def explained_variance_plot(model, matrix='x'):
     """Plot the cumulative explained variance."""
-    plt.title('Explained variance plot')
+
+    if not check_matrix(matrix):
+        IO.Log.error('[explained_variance_plot] '
+                     'Accepted values for matrix are x and y')
+        return
+
+    plt.title('Explained variance plot for {}'.format(matrix))
     plt.xlabel('Principal component number')
     plt.ylabel('Cumulative variance captured (%)')
 
@@ -152,19 +200,20 @@ def explained_variance_plot(model, matrix='x'):
 
 def scree_plot(model, matrix='x'):
     """Plot the explained variance of the model."""
-    plt.title('Scree plot')
+    plt.title('Scree plot for {}'.format(matrix))
     plt.xlabel('Principal component number')
     plt.ylabel('Eigenvalues')
 
-    if matrix == 'x':
-        eigen = model.x_eigenvalues
-    elif matrix == 'y':
-        eigen = model.y_eigenvalues
-    else:
+    if not check_matrix(matrix):
         IO.Log.error('[scree_plot] Accepted values for matrix are x and y '
                      '(got {} instead)'.format(repr(matrix)))
         raise Exception('Bad matrix parameter ({}) in '
                         'scree_plot() '.format(repr(matrix)))
+
+    if matrix == 'x':
+        eigen = model.x_eigenvalues
+    else:
+        eigen = model.y_eigenvalues
 
     ax = plt.gca()
     ax.set_xlim(-0.5, len(eigen))
@@ -185,6 +234,44 @@ def inner_relation_plot(model, nr):
         cat = model.categories[i]
         scatter_plot(model.T[i, nr], model.U[i, nr], cat, model.categories)
 
+
+def data_plot(model, all_cat):
+
+    plt.title('Data by category')
+    plt.xlabel('sample')
+    plt.ylabel('Value')
+
+    for i in range(model.dataset.shape[0]):
+        cat = model.categories[i]
+        plt.plot(range(model.dataset.shape[1]),
+                 model.dataset[i],
+                 color=properties_of(cat, all_cat)['face_color'],         # line color
+                 linestyle='solid',
+                 alpha=.5,
+                 marker=properties_of(cat, all_cat)['marker'],              # do not set it to
+                 markerfacecolor=properties_of(cat, all_cat)['face_color'],  # marker color
+                 markeredgecolor=properties_of(cat, all_cat)['edge_color'])
+
+def modeled_Y_plot(model):
+    plt.title('Y calculated')
+    plt.xlabel('sample')
+    plt.ylabel('modeled Y')
+    for j in range(model.p):
+        for i in range(model.n):
+            cat = model.categories[i]
+            scatter_plot(i, model.Y_modeled[i, j], cat, model.categories)
+
+def y_leverage_plot(model):
+    plt.title('Leverage')
+    plt.xlabel('sample')
+    plt.ylabel('leverage')
+    tmp = np.linalg.inv(np.dot(model.U.T, model.U))
+    leverage = np.empty(model.n)
+
+    for i in range(model.n):
+        leverage[i] = model.U[i].dot(tmp).dot(model.U[i].T)
+        cat = model.categories[i]
+        scatter_plot(i, leverage[i], cat, model.categories)
 
 def d_plot(model):
     plt.title('Inner relation (variable b)')

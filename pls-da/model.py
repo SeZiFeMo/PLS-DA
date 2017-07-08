@@ -40,14 +40,16 @@ class PLS_DA(object):
         self.dataset = np.copy(self._dataset_original)
         self.n, self.m = self.dataset.shape
 
+        self.nr_lv = None
+
         self.T = None
         self.P = None
         self.W = None
         self.U = None
         self.Q = None
-        self.C = None
         self.B = None
         self.Y_modeled = None
+        self.Y_modeled_dummy = None
         self.x_eigenvalues = None
         self.y_eigenvalues = None
 
@@ -102,97 +104,8 @@ class PLS_DA(object):
 
     def nipals_method(self, nr_lv=None, tol=1e-6, max_iter=1e4):
         """Find the Principal Components with the NIPALS algorithm."""
-        # Start with maximal residual (matrix X)
-        E_x = self.dataset.copy()  # Residuals of PC0
-        E_y = self.dummy_Y.copy()
-        n, m = self.dataset.shape
 
-        if nr_lv is None:
-            nr_lv = min(n, m)
-        if nr_lv > min(n, m):
-            IO.Log.warning('Too many latent variables specified. '
-                           'Will use {}'.format(min(n, m)))
-            nr_lv = min(n, m)
-        self.nr_lv = nr_lv
-
-        n, m = E_x.shape
-        n, p = E_y.shape
-        self.T = np.empty((n, nr_lv))
-        self.P = np.empty((m, nr_lv))
-        self.W = np.empty((m, nr_lv))
-        self.U = np.empty((n, nr_lv))
-        self.Q = np.empty((p, nr_lv))
-        self.C = np.empty((p, nr_lv))
-        self.d = np.empty((nr_lv))
-        s_list_x = []
-        s_list_y = []
-
-        # Loop for each possible PC
-        for i in range(nr_lv):
-            # Initialize u as a column of E_x with maximum variance
-            max_var_index = np.argmax(np.sum(np.power(E_y, 2), axis=0))
-            u = E_y[:, max_var_index].copy()
-
-            for it in range(int(max_iter) + 2):
-                # Evaluate w as projection of u in X and normalize it
-                w = np.dot(E_x.T, u) / np.dot(u, u)
-                w = w / np.linalg.norm(w)
-                # Evaluate t as projection of w in X
-                t = np.dot(E_x, w)
-
-                # Y part
-                # Evaluate c as projection of t in Y and normalize it
-                c = np.dot(E_y.T, t) / np.dot(t, t)
-                c = c / np.linalg.norm(c)
-                # Evaluate u_star as projection of c in Y
-                u_star = np.dot(E_y, c)
-
-                diff = u_star - u
-                delta_u = np.dot(diff, diff)
-                if it > 1 and delta_u < tol:
-                    break
-                u = u_star
-            else:
-                IO.Log.warning('Reached max '
-                               'iteration number ({})'.format(max_iter))
-                IO.Log.warning('NIPALS iteration: {}\n'
-                               '       difference: {:.5e}'.format(it, delta_u))
-            # Save the evaluated values
-            s_list_x.append(np.linalg.norm(t))
-            s_list_y.append(np.linalg.norm(u))
-            self.T[:, i] = t
-            self.P[:, i] = np.dot(E_x.T, t) / np.dot(t, t)
-            self.W[:, i] = w
-            # regression coefficient for the inner relation
-            self.d[i] = np.dot(u.T, t) / np.dot(t, t)
-            self.C[:, i] = c
-            self.U[:, i] = u
-            self.Q[:, i] = np.dot(E_y.T, u) / np.dot(u, u)
-            E_x = E_x - np.dot(np.row_stack(t), np.column_stack(self.P[:, i]))
-            E_y = E_y - self.d[i] * np.dot(np.row_stack(t),
-                                           np.column_stack(c.T))
-
-        self.x_eigenvalues = np.power(np.array(s_list_x), 2) / (self.n - 1)
-        self.y_eigenvalues = np.power(np.array(s_list_y), 2) / (self.n - 1)
-        self.y_eigenvalues = self.y_eigenvalues[:min(n, p)]
-
-        # Compute regression parameters B
-        # tmp = (P'W)^{-1}
-        tmp = np.linalg.inv(self.P.T.dot(self.W))
-        self.B = self.W.dot(tmp).dot(self.C.T)
-        self.Y_modeled = self.dataset.dot(self.B)
-        IO.Log.debug('Modeled Y prior to the discriminant classification',
-                     self.Y_modeled)
-        self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row]
-                          for row in self.Y_modeled]
-
-        IO.Log.info('NIPALS loadings shape', self.P.shape)
-        IO.Log.info('NIPALS scores shape', self.T.shape)
-        IO.Log.info('NIPALS x_eigenvalues', self.x_eigenvalues)
-
-    def nipals_2(self, nr_lv=None, tol=1e-6, max_iter=1e4):
-        """Find the Principal Components with the NIPALS algorithm."""
-
+        # Start with maximal residual (matrix X, matrix Y)
         E_x = self.dataset.copy()
         E_y = self.dummy_Y.copy()
 
@@ -246,25 +159,28 @@ class PLS_DA(object):
                                'iteration number ({})'.format(max_iter))
                 IO.Log.warning('NIPALS iteration: {}\n'
                                '       difference: {:.5e}'.format(it, delta_u))
+
             # Save the evaluated values
-            s_list_x.append(np.linalg.norm(t))
-            s_list_y.append(np.linalg.norm(u))
             p = np.dot(E_x.T, t) / np.dot(t, t)
             p_norm = np.linalg.norm(p)
-            self.T[:, i] = t * p_norm
             self.P[:, i] = p / p_norm
+            self.T[:, i] = t * p_norm
             self.W[:, i] = w * p_norm
-            # regression coefficient for the inner relation
-            self.d[i] = np.dot(u.T, t) / np.dot(t, t)
             self.U[:, i] = u
             self.Q[:, i] = q
+
+            s_list_x.append(np.linalg.norm(t))
+            s_list_y.append(np.linalg.norm(u))
+            # regression coefficient for the inner relation
+            self.d[i] = np.dot(u.T, t) / np.dot(t, t)
+
+            # Calculate residuals
             E_x = E_x - np.dot(np.row_stack(t), np.column_stack(self.P[:, i]))
             E_y = E_y - self.d[i] * np.dot(np.row_stack(t),
                                            np.column_stack(q.T))
 
         self.x_eigenvalues = np.power(np.array(s_list_x), 2) / (self.n - 1)
         self.y_eigenvalues = np.power(np.array(s_list_y), 2) / (self.n - 1)
-        # self.y_eigenvalues = self.y_eigenvalues[:, 0:min(n,p)]
 
         # Compute regression parameters B
         # tmp = (P'W)^{-1}
@@ -273,8 +189,9 @@ class PLS_DA(object):
         self.Y_modeled = self.dataset.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
                      self.Y_modeled)
-        self.Y_modeled = [[1 if elem == max(row) else -1 for elem in row]
-                          for row in self.Y_modeled]
+        Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
+                   for row in self.Y_modeled]
+        self.Y_modeled_dummy = np.array(Y_dummy)
 
         IO.Log.info('NIPALS loadings shape', self.P.shape)
         IO.Log.info('NIPALS scores shape', self.T.shape)
