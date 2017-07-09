@@ -204,7 +204,6 @@ class test_eigen_module(unittest.TestCase):
 
 class nipals_abstract(object):
 
-
     def setUp(self):
         j = 2
         self.pls_da = model.PLS_DA()
@@ -218,7 +217,6 @@ class nipals_abstract(object):
         # autoscale also matrices for sklearn
         X = self.pls_da.dataset.copy()
         Y = self.pls_da.dummy_Y.copy()
-
 
         self.sklearn_pls = sklCD.PLSRegression(n_components=j, scale=True,
                                                max_iter=1e4, tol=1e-6,

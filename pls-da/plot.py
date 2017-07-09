@@ -38,13 +38,15 @@ def properties_of(category, all_categories):
                ('#000000', '+'),  #           plus
                ('#000000', 'h'),  #           hexagon
                ('#000000', 'p'),  #           pentagon
-              )
+               )
     index = all_categories.index(category) % len(matches)
     color, marker = matches[index]
     return {'edge_color': color, 'face_color': color, 'marker': marker}
 
+
 def check_matrix(matrix):
     return matrix == 'x' or matrix == 'y'
+
 
 def scatter_plot(x_values, y_values, cat, all_cat):
     plt.scatter(x=x_values,
@@ -56,6 +58,7 @@ def scatter_plot(x_values, y_values, cat, all_cat):
                 alpha=.6,
                 # linewidth=0.10,
                 label=cat)
+
 
 def plot_plot(x_values, y_values, cat=None, all_cat=None):
 
@@ -73,6 +76,7 @@ def plot_plot(x_values, y_values, cat=None, all_cat=None):
              marker='D',              # do not set it to
              markerfacecolor=color,  # marker color
              markersize=5)
+
 
 def scores_plot(model, pc_a, pc_b, matrix='x', normalize=False):
     """Plot the scores on the specified components."""
@@ -157,6 +161,7 @@ def loadings_plot(model, pc_a, pc_b, matrix='x'):
     plt.axvline(0, linestyle='dashed', color='black')
     plt.axhline(0, linestyle='dashed', color='black')
 
+
 def biplot(model, pc_a, pc_b, matrix='x'):
     """Plot both loadings and scores on the same graph."""
     if pc_a == pc_b:
@@ -176,6 +181,7 @@ def biplot(model, pc_a, pc_b, matrix='x'):
     plt.title('Biplot for {}'.format(matrix))
     plt.xlabel('LV{}'.format(pc_a + 1))
     plt.ylabel('LV{}'.format(pc_b + 1))
+
 
 def explained_variance_plot(model, matrix='x'):
     """Plot the cumulative explained variance."""
@@ -245,12 +251,13 @@ def data_plot(model, all_cat):
         cat = model.categories[i]
         plt.plot(range(model.dataset.shape[1]),
                  model.dataset[i],
-                 color=properties_of(cat, all_cat)['face_color'],         # line color
+                 color=properties_of(cat, all_cat)['face_color'],  # line color
                  linestyle='solid',
                  alpha=.5,
-                 marker=properties_of(cat, all_cat)['marker'],              # do not set it to
-                 markerfacecolor=properties_of(cat, all_cat)['face_color'],  # marker color
+                 marker=properties_of(cat, all_cat)['marker'],  # do not set it to
+                 markerfacecolor=properties_of(cat, all_cat)['face_color'],  # face color
                  markeredgecolor=properties_of(cat, all_cat)['edge_color'])
+
 
 def modeled_Y_plot(model):
     plt.title('Y calculated')
@@ -260,6 +267,7 @@ def modeled_Y_plot(model):
         for i in range(model.n):
             cat = model.categories[i]
             scatter_plot(i, model.Y_modeled[i, j], cat, model.categories)
+
 
 def y_leverage_plot(model):
     plt.title('Leverage')
@@ -272,6 +280,7 @@ def y_leverage_plot(model):
         leverage[i] = model.U[i].dot(tmp).dot(model.U[i].T)
         cat = model.categories[i]
         scatter_plot(i, leverage[i], cat, model.categories)
+
 
 def d_plot(model):
     plt.title('Inner relation (variable b)')
