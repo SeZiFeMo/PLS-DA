@@ -48,20 +48,31 @@ def check_matrix(matrix):
     return matrix == 'x' or matrix == 'y'
 
 
-def scatter_plot(x_values, y_values, cat, all_cat):
+def scatter_plot(x_values, y_values, cat=None, all_cat=None):
+    """Draw a scatter plot using a custom color determined by the category."""
+
+    if cat is None:
+        color = 'blue'
+        linecolor = '#1F77B4'
+        marker = 'o'
+    else:
+        color = properties_of(cat, all_cat)['face_color']
+        linecolor = color
+        marker = properties_of(cat, all_cat)['marker']
+
     plt.scatter(x=x_values,
                 y=y_values,
-                edgecolors=properties_of(cat, all_cat)['edge_color'],
-                marker=properties_of(cat, all_cat)['marker'],
+                edgecolors=linecolor,
+                marker=marker,
                 s=30,
-                c=properties_of(cat, all_cat)['face_color'],
+                c=color,
                 alpha=.6,
                 # linewidth=0.10,
                 label=cat)
 
 
 def plot_plot(x_values, y_values, cat=None, all_cat=None):
-
+    """Draw a plot using a custom color determined by the given category."""
     if cat is None:
         color = 'blue'
         linecolor = '#1F77B4'
@@ -79,7 +90,12 @@ def plot_plot(x_values, y_values, cat=None, all_cat=None):
 
 
 def scores_plot(model, pc_a, pc_b, matrix='x', normalize=False):
-    """Plot the scores on the specified components."""
+    """Plot the scores on the specified components for the chosen matrix.
+
+    Each point is plotted using a custom color determined by its category.
+
+    If normalize is True the plot will be between -1 and 1.
+    """
     if pc_a == pc_b:
         IO.Log.error('Principal components must be different!')
         exit(1)
@@ -125,7 +141,7 @@ def scores_plot(model, pc_a, pc_b, matrix='x', normalize=False):
 
 
 def loadings_plot(model, pc_a, pc_b, matrix='x'):
-    """Plot the loadings."""
+    """Plot the loadings on the specified components for the chosen matrix."""
     if pc_a == pc_b:
         IO.Log.error('Principal components must be different!')
         exit(1)
@@ -142,8 +158,8 @@ def loadings_plot(model, pc_a, pc_b, matrix='x'):
     else:
         loadings = model.Q.copy()
 
-    plt.scatter(x=loadings[:, pc_a],
-                y=loadings[:, pc_b])
+    scatter_plot(loadings[:, pc_a],
+                 loadings[:, pc_b])
 
     ax = plt.gca()
     for n in range(loadings.shape[0]):
@@ -184,7 +200,7 @@ def biplot(model, pc_a, pc_b, matrix='x'):
 
 
 def explained_variance_plot(model, matrix='x'):
-    """Plot the cumulative explained variance."""
+    """Plot the cumulative explained variance for the chosen matrix."""
 
     if not check_matrix(matrix):
         IO.Log.error('[explained_variance_plot] '
@@ -205,7 +221,7 @@ def explained_variance_plot(model, matrix='x'):
 
 
 def scree_plot(model, matrix='x'):
-    """Plot the explained variance of the model."""
+    """Plot the explained variance of the model for the chosen matrix."""
     plt.title('Scree plot for {}'.format(matrix))
     plt.xlabel('Principal component number')
     plt.ylabel('Eigenvalues')
@@ -228,6 +244,7 @@ def scree_plot(model, matrix='x'):
 
 
 def inner_relation_plot(model, nr):
+    """Plot the inner relation for the chosen latent variable."""
     if nr > model.nr_lv:
         IO.Log.error('[inner_relation_plot] '
                      'chosen LV must be in [0-{}]'.format(model.nr_lv))
@@ -242,6 +259,7 @@ def inner_relation_plot(model, nr):
 
 
 def data_plot(model, all_cat):
+    """Plot the dataset distinguishing with colors the categories."""
 
     plt.title('Data by category')
     plt.xlabel('sample')
@@ -254,12 +272,13 @@ def data_plot(model, all_cat):
                  color=properties_of(cat, all_cat)['face_color'],  # line color
                  linestyle='solid',
                  alpha=.5,
-                 marker=properties_of(cat, all_cat)['marker'],  # do not set it to
-                 markerfacecolor=properties_of(cat, all_cat)['face_color'],  # face color
+                 marker=properties_of(cat, all_cat)['marker'],     # do not set it to
+                 markerfacecolor=properties_of(cat, all_cat)['face_color'],
                  markeredgecolor=properties_of(cat, all_cat)['edge_color'])
 
 
 def modeled_Y_plot(model):
+    """Plot the difference between the real categories and the modeled ones."""
     plt.title('Y calculated')
     plt.xlabel('sample')
     plt.ylabel('modeled Y')
@@ -270,16 +289,19 @@ def modeled_Y_plot(model):
 
 
 def y_leverage_plot(model):
+    """Plot Y residuals over the leverage."""
     plt.title('Leverage')
-    plt.xlabel('sample')
-    plt.ylabel('leverage')
+    plt.xlabel('leverage')
+    plt.ylabel('Y residuals')
     tmp = np.linalg.inv(np.dot(model.U.T, model.U))
     leverage = np.empty(model.n)
 
-    for i in range(model.n):
-        leverage[i] = model.U[i].dot(tmp).dot(model.U[i].T)
-        cat = model.categories[i]
-        scatter_plot(i, leverage[i], cat, model.categories)
+    for j in range(model.p):
+        for i in range(model.n):
+            leverage[i] = model.U[i].dot(tmp).dot(model.U[i].T)
+            cat = model.categories[i]
+            scatter_plot(leverage[i], model.E_y[i, j], cat, model.categories)
+
 
 
 def d_plot(model):
