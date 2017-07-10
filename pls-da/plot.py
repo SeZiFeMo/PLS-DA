@@ -45,7 +45,8 @@ def properties_of(category, all_categories):
 
 
 def check_matrix(matrix):
-    return matrix == 'x' or matrix == 'y'
+    """Test whether matrix is 'x' or 'y'."""
+    return matrix in ('x', 'y')
 
 
 def scatter_plot(x_values, y_values, cat=None, all_cat=None):

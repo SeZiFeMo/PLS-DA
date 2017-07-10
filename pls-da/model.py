@@ -6,10 +6,36 @@ import numpy as np
 import IO
 import utility
 
+CATEGORIES = ('NA', 'SA', 'U', 'WL')
 
-if __name__ == '__main__':
-    IO.Log.warning('Please do not run that script, load it!')
-    exit(1)
+
+class Preprocessing(object):
+    """Class to preprocess csv input data."""
+
+    def __init__(self):
+        """Load and parse csv input file.
+
+           self.header      list of samples' properties (text)
+           self.categories  list of samples' labels (text)
+           self.dataset     list of samples' values (float)
+           self.dummy_y     list of samples' cabels (1 or 0)
+        """
+
+        input_file = utility.CLI.args().input_file
+        self.header, body = IO.CSV.parse(input_file)
+        IO.Log.debug('Successfully parsed {} input file.'.format(input_file))
+
+        self.categories = [row[0] for row in body]
+        global CATEGORIES
+        CATEGORIES = set(self.categories)
+
+        self.dataset = np.array([np.array(row[1:]) for row in body])
+        IO.Log.debug('Loaded dataset', self.dataset)
+
+        self.dummy_y = np.array([[1.0 if c == cat else 0.0
+                                  for c in self.categories]
+                                 for cat in CATEGORIES])
+        IO.Log.debug('Dummy y', self.dummy_y)
 
 
 class PLS_DA(object):
@@ -225,3 +251,7 @@ class PLS_DA(object):
         IO.Log.info('[PCA::get_explained_variance] '
                     'Eigenvalues for {}: \n{}'.format(matrix, eigen))
         return 100 * eigen / np.sum(eigen)
+
+
+if __name__ == '__main__':
+    raise SystemExit('Please do not run that script, load it!')
