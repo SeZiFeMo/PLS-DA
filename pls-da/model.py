@@ -193,6 +193,7 @@ class PLS_DA(object):
                    for row in self.Y_modeled]
         self.Y_modeled_dummy = np.array(Y_dummy)
 
+        self.E_y = E_y
         IO.Log.info('NIPALS loadings shape', self.P.shape)
         IO.Log.info('NIPALS scores shape', self.T.shape)
         IO.Log.info('NIPALS x_eigenvalues', self.x_eigenvalues)
