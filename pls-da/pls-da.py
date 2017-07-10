@@ -16,9 +16,8 @@ try:
     import sklearn.cross_decomposition
     import yaml
 except ImportError as e:
-    IO.Log.warning(f'Could not import {e.name} library, '
-                   'please install it!')
-    exit(1)
+    raise SystemExit('Could not import {} library, '.format(e.name)
+                     'please install it!')
 
 if __name__ != '__main__':
     IO.Log.warning('Please do not load that script, run it!')
