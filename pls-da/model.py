@@ -18,7 +18,9 @@ class Preprocessing(object):
            self.header      list of samples' properties (text)
            self.categories  list of samples' labels (text)
            self.dataset     list of samples' values (float)
-           self.dummy_y     list of samples' cabels (1 or 0)
+           self.dummy_y     list of samples' labels (1 or 0)
+
+           self.axis        axis to compute std and mean
         """
 
         input_file = utility.CLI.args().input_file
@@ -36,6 +38,84 @@ class Preprocessing(object):
                                   for c in self.categories]
                                  for cat in CATEGORIES])
         IO.Log.debug('Dummy y', self.dummy_y)
+
+        self.axis = 0
+        self._centered = False
+        self._normalized = False
+
+    @property
+    def centered(self):
+        """Return whether dataset has been centered."""
+        return self._centered
+
+    @property
+    def normalized(self):
+        """Return whether dataset has been normalized"""
+        return self._normalized
+
+    @property
+    def autoscaled(self):
+        """Return wheter dataset has been autoscaled"""
+        return self._centered and self._normalized
+
+    @property
+    def original(self):
+        """Return wheter dataset has been preprocessed"""
+        return not (self._centered or self._normalized)
+
+    def center(self, quiet=False):
+        """Center the dataset and the dummy y to their mean."""
+        if self.centered:
+            IO.Log.warning('Already centered dataset')
+            return
+
+        self.dataset = self.dataset - self.dataset.mean(axis=self.axis)
+        if not quiet:
+            IO.Log.debug('Centered dataset', self.dataset)
+
+        self.dummy_y = self.dummy_y - self.dummy_y.mean(axis=self.axis)
+        self._centered = True
+
+    def normalize(self, quiet=False):
+        """Normalize the dataset and the dummy y."""
+        if self.normalized:
+            IO.Log.warning('Already normalized dataset')
+            return
+
+        self.dataset = self.dataset / self.dataset.std(axis=self.axis)
+        if not quiet:
+            IO.Log.debug('Normalized dataset', self.dataset)
+
+        self.dummy_y = self.dummy_y / self.dummy_y.std(axis=self.axis)
+        self._normalized = True
+
+    def autoscale(self):
+        """Center and normalize the dataset and the dummy y."""
+        if self.normalized:
+            IO.Log.warning('Already autoscaled dataset')
+            return
+
+        self.center(quiet=True)
+        self.normalize(quiet=True)
+        IO.Log.debug('Autoscaled dataset', self.dataset)
+
+
+class Nipals(object):
+    """Class to compute the NIPALS method used in PLS.
+
+       Non-linear Iterative PArtial Least Square
+    """
+
+    def __init__(self, preproc):
+        """Nipals method will be applied to a Preprocessing object.
+
+           Raises TypeError on wrong preproc data type.
+        """
+        if not isinstance(preproc, Preprocessing):
+            raise TypeError('Argument passed to Nipals.__init__() is not a'
+                            'Preprocessing object!')
+
+        self.preproc = preproc
 
 
 class PLS_DA(object):
