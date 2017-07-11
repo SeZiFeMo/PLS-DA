@@ -151,5 +151,4 @@ class CSV(object):
 
 
 if __name__ == '__main__':
-    Log.warning('Please do not run that script, load it!')
-    exit(1)
+    raise SystemExit('Please do not run that script, load it!')

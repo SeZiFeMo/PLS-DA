@@ -6,8 +6,7 @@ import sys
 import IO
 
 if __name__ == '__main__':
-    IO.Log.warning('Please do not run that script, load it!')
-    exit(1)
+    raise SystemExit('Please do not run that script, load it!')
 
 
 def check_python_version():

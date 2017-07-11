@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.cross_decomposition as sklCD
 import IO
+import model
 
 
 if __name__ == '__main__':
-    IO.Log.warning('Please do not run that script, load it!')
-    exit(1)
+    raise SystemExit('Please do not run that script, load it!')
 
 
 def properties_of(category, all_categories):
@@ -90,7 +90,7 @@ def plot_plot(x_values, y_values, cat=None, all_cat=None):
              markersize=5)
 
 
-def scores_plot(model, pc_a, pc_b, matrix='x', normalize=False):
+def scores_plot(nipals, pc_a, pc_b, matrix='x', normalize=False):
     """Plot the scores on the specified components for the chosen matrix.
 
     Each point is plotted using a custom color determined by its category.
@@ -108,9 +108,9 @@ def scores_plot(model, pc_a, pc_b, matrix='x', normalize=False):
     pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
 
     if matrix == 'x':
-        scores = model.T.copy()
+        scores = nipals.T.copy()
     else:
-        scores = model.U.copy()
+        scores = nipals.U.copy()
 
     scores_a = scores[:, pc_a]
     scores_b = scores[:, pc_b]
@@ -120,8 +120,8 @@ def scores_plot(model, pc_a, pc_b, matrix='x', normalize=False):
     for n in range(scores.shape[0]):
         score_pc_a = scores_a[n]
         score_pc_b = scores_b[n]
-        cat = model.categories[n]
-        scatter_plot(score_pc_a, score_pc_b, cat, model.categories)
+        cat = nipals.preproc.categories[n]
+        scatter_plot(score_pc_a, score_pc_b, cat, nipals.preproc.categories)
 
     ax = plt.gca()
     plt.title('Scores plot for {}'.format(matrix))
@@ -133,15 +133,15 @@ def scores_plot(model, pc_a, pc_b, matrix='x', normalize=False):
         ax.set_xlim(-1.1, 1.1)
         ax.set_ylim(-1.1, 1.1)
     else:
-        ax.set_xlim(model.get_loadings_scores_xy_limits(pc_a, pc_b)['x'])
-        ax.set_ylim(model.get_loadings_scores_xy_limits(pc_a, pc_b)['y'])
+        ax.set_xlim(model.integer_bounds(nipals.P, nipals.T, pc_a))
+        ax.set_ylim(model.integer_bounds(nipals.P, nipals.T, pc_b))
 
     handles, labels = ax.get_legend_handles_labels()
     by_label = collections.OrderedDict(zip(labels, handles))
     plt.legend(by_label.values(), by_label.keys())
 
 
-def loadings_plot(model, pc_a, pc_b, matrix='x'):
+def loadings_plot(nipals, pc_a, pc_b, matrix='x'):
     """Plot the loadings on the specified components for the chosen matrix."""
     if pc_a == pc_b:
         IO.Log.error('Principal components must be different!')
@@ -155,16 +155,16 @@ def loadings_plot(model, pc_a, pc_b, matrix='x'):
     pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
 
     if matrix == 'x':
-        loadings = model.P.copy()
+        loadings = nipals.P.copy()
     else:
-        loadings = model.Q.copy()
+        loadings = nipals.Q.copy()
 
     scatter_plot(loadings[:, pc_a],
                  loadings[:, pc_b])
 
     ax = plt.gca()
     for n in range(loadings.shape[0]):
-        ax.annotate(model.keys[n + 1],
+        ax.annotate(nipals.preproc.header[n + 1],
                     xy=(loadings[n, pc_a], loadings[n, pc_b]),
                     xycoords='data',
                     xytext=(0, 5),
@@ -179,7 +179,7 @@ def loadings_plot(model, pc_a, pc_b, matrix='x'):
     plt.axhline(0, linestyle='dashed', color='black')
 
 
-def biplot(model, pc_a, pc_b, matrix='x'):
+def biplot(nipals, pc_a, pc_b, matrix='x'):
     """Plot both loadings and scores on the same graph."""
     if pc_a == pc_b:
         IO.Log.error('Principal components must be different!')
@@ -192,15 +192,15 @@ def biplot(model, pc_a, pc_b, matrix='x'):
 
     pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
 
-    scores_plot(model, pc_a, pc_b, normalize=True, matrix=matrix)
-    loadings_plot(model, pc_a, pc_b, matrix=matrix)
+    scores_plot(nipals, pc_a, pc_b, normalize=True, matrix=matrix)
+    loadings_plot(nipals, pc_a, pc_b, matrix=matrix)
 
     plt.title('Biplot for {}'.format(matrix))
     plt.xlabel('LV{}'.format(pc_a + 1))
     plt.ylabel('LV{}'.format(pc_b + 1))
 
 
-def explained_variance_plot(model, matrix='x'):
+def explained_variance_plot(nipals, matrix='x'):
     """Plot the cumulative explained variance for the chosen matrix."""
 
     if not check_matrix(matrix):
@@ -212,7 +212,7 @@ def explained_variance_plot(model, matrix='x'):
     plt.xlabel('Principal component number')
     plt.ylabel('Cumulative variance captured (%)')
 
-    explained_variance = model.get_explained_variance(matrix)
+    explained_variance = model.explained_variance(nipals, matrix)
 
     ax = plt.gca()
     ax.set_xlim(-0.5, len(explained_variance))
@@ -221,7 +221,7 @@ def explained_variance_plot(model, matrix='x'):
              np.cumsum(explained_variance))
 
 
-def scree_plot(model, matrix='x'):
+def scree_plot(nipals, matrix='x'):
     """Plot the explained variance of the model for the chosen matrix."""
     plt.title('Scree plot for {}'.format(matrix))
     plt.xlabel('Principal component number')
@@ -234,9 +234,9 @@ def scree_plot(model, matrix='x'):
                         'scree_plot() '.format(repr(matrix)))
 
     if matrix == 'x':
-        eigen = model.x_eigenvalues
+        eigen = nipals.x_eigenvalues
     else:
-        eigen = model.y_eigenvalues
+        eigen = nipals.y_eigenvalues
 
     ax = plt.gca()
     ax.set_xlim(-0.5, len(eigen))
@@ -244,32 +244,33 @@ def scree_plot(model, matrix='x'):
     plot_plot(range(len(eigen)), eigen)
 
 
-def inner_relation_plot(model, nr):
+def inner_relation_plot(nipals, nr):
     """Plot the inner relation for the chosen latent variable."""
-    if nr > model.nr_lv:
+    if nr > nipals.nr_lv:
         IO.Log.error('[inner_relation_plot] '
-                     'chosen LV must be in [0-{}]'.format(model.nr_lv))
+                     'chosen LV must be in [0-{}]'.format(nipals.nr_lv))
 
     plt.title('Inner relation for LV {}'.format(nr))
     plt.xlabel('t{}'.format(nr))
     plt.ylabel('u{}'.format(nr))
 
-    for i in range(model.T.shape[0]):
-        cat = model.categories[i]
-        scatter_plot(model.T[i, nr], model.U[i, nr], cat, model.categories)
+    for i in range(nipals.T.shape[0]):
+        cat = nipals.preproc.categories[i]
+        scatter_plot(nipals.T[i, nr], nipals.U[i, nr],
+                     cat, nipals.preproc.categories)
 
 
-def data_plot(model, all_cat):
+def data_plot(nipals, all_cat):
     """Plot the dataset distinguishing with colors the categories."""
 
     plt.title('Data by category')
     plt.xlabel('sample')
     plt.ylabel('Value')
 
-    for i in range(model.dataset.shape[0]):
-        cat = model.categories[i]
-        plt.plot(range(model.dataset.shape[1]),
-                 model.dataset[i],
+    for i in range(nipals.preproc.dataset.shape[0]):
+        cat = nipals.preproc.categories[i]
+        plt.plot(range(nipals.preproc.dataset.shape[1]),
+                 nipals.preproc.dataset[i],
                  color=properties_of(cat, all_cat)['face_color'],  # line color
                  linestyle='solid',
                  alpha=.5,
@@ -278,52 +279,53 @@ def data_plot(model, all_cat):
                  markeredgecolor=properties_of(cat, all_cat)['edge_color'])
 
 
-def modeled_Y_plot(model):
+def modeled_Y_plot(nipals):
     """Plot the difference between the real categories and the modeled ones."""
     plt.title('Y calculated')
     plt.xlabel('sample')
     plt.ylabel('modeled Y')
-    for j in range(model.p):
-        for i in range(model.n):
-            cat = model.categories[i]
-            scatter_plot(i, model.Y_modeled[i, j], cat, model.categories)
+    for j in range(nipals.p):
+        for i in range(nipals.n):
+            cat = nipals.preproc.categories[i]
+            scatter_plot(i, nipals.Y_modeled[i, j],
+                         cat, nipals.preproc.categories)
 
 
-def y_leverage_plot(model):
+def y_leverage_plot(nipals):
     """Plot Y residuals over the leverage."""
     plt.title('Leverage')
     plt.xlabel('leverage')
     plt.ylabel('Y residuals')
-    tmp = np.linalg.inv(np.dot(model.U.T, model.U))
-    leverage = np.empty(model.n)
+    tmp = np.linalg.inv(np.dot(nipals.U.T, nipals.U))
+    leverage = np.empty(nipals.n)
 
-    for j in range(model.p):
-        for i in range(model.n):
-            leverage[i] = model.U[i].dot(tmp).dot(model.U[i].T)
-            cat = model.categories[i]
-            scatter_plot(leverage[i], model.E_y[i, j], cat, model.categories)
+    for j in range(nipals.p):
+        for i in range(nipals.n):
+            leverage[i] = nipals.U[i].dot(tmp).dot(nipals.U[i].T)
+            cat = nipals.preproc.categories[i]
+            scatter_plot(leverage[i], nipals.E_y[i, j],
+                         cat, nipals.preproc.categories)
 
 
-
-def d_plot(model):
+def d_plot(nipals):
     plt.title('Inner relation (variable b)')
     plt.xlabel('LV number')
     plt.ylabel('inner relation variable')
 
-    for i in range(model.d.shape[0]):
-        cat = model.categories[i]
-        scatter_plot(i, model.d[i], cat, model.categories)
+    for i in range(nipals.d.shape[0]):
+        cat = nipals.preproc.categories[i]
+        scatter_plot(i, nipals.d[i], cat, nipals.preproc.categories)
 
 
-def inner_relation_sklearn(model, nr):
-    if nr > model.nr_lv:
+def inner_relation_sklearn(nipals, nr):
+    if nr > nipals.nr_lv:
         IO.Log.error('[inner_relation_plot] '
-                     'chosen LV must be in [0-{}]'.format(model.nr_lv))
+                     'chosen LV must be in [0-{}]'.format(nipals.nr_lv))
 
-    X = model.dataset.copy()
-    Y = model.dummy_Y.copy()
+    X = nipals.preproc.dataset.copy()
+    Y = nipals.preproc.dummy_y.copy()
 
-    sklearn_pls = sklCD.PLSRegression(n_components=min(model.n, model.m),
+    sklearn_pls = sklCD.PLSRegression(n_components=min(nipals.n, nipals.m),
                                       scale=True, max_iter=1e4, tol=1e-6,
                                       copy=True)
     sklearn_pls.fit(X, Y)
@@ -332,8 +334,8 @@ def inner_relation_sklearn(model, nr):
     plt.xlabel('t{}'.format(nr))
     plt.ylabel('u{}'.format(nr))
 
-    for i in range(model.T.shape[0]):
-        cat = model.categories[i]
+    for i in range(nipals.T.shape[0]):
+        cat = nipals.preproc.categories[i]
         scatter_plot(sklearn_pls.x_scores_[i, nr],
                      sklearn_pls.y_scores_[i, nr],
-                     cat, model.categories)
+                     cat, nipals.preproc.categories)

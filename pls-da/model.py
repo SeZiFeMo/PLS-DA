@@ -36,12 +36,27 @@ class Preprocessing(object):
 
         self.dummy_y = np.array([[1.0 if c == cat else 0.0
                                   for c in self.categories]
-                                 for cat in CATEGORIES])
+                                 for cat in CATEGORIES]).T
         IO.Log.debug('Dummy y', self.dummy_y)
 
         self.axis = 0
         self._centered = False
         self._normalized = False
+
+    @property
+    def n(self):
+        """Return number of rows of dataset (or of dummy y)."""
+        return self.dataset.shape[0]
+
+    @property
+    def m(self):
+        """Return number of columns of dataset."""
+        return self.dataset.shape[1]
+
+    @property
+    def p(self):
+        """Return number of columns in dummy y."""
+        return self.dummy_y.shape[1]
 
     @property
     def centered(self):
@@ -116,6 +131,18 @@ class Nipals(object):
                             'Preprocessing object!')
 
         self.preproc = preproc
+
+    @property
+    def n(self):
+        return self.preproc.n
+
+    @property
+    def m(self):
+        return self.preproc.m
+
+    @property
+    def p(self):
+        return self.preproc.p
 
     def run(self, nr_lv=None, tol=1e-6, max_iter=1e4):
         """Find the Principal Components with the NIPALS algorithm."""
@@ -201,7 +228,7 @@ class Nipals(object):
         # tmp = (P'W)^{-1}
         tmp = np.linalg.inv(self.P.T.dot(self.W))
         self.B = self.W.dot(tmp).dot(np.diag(self.d)).dot(self.Q.T)
-        self.Y_modeled = self.dataset.dot(self.B)
+        self.Y_modeled = self.preproc.dataset.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
                      self.Y_modeled)
         Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
@@ -220,6 +247,7 @@ def integer_bounds(P, T, col):
         extracted = np.concatenate((P[:, col], T[:, col]))
         return math.floor(np.min(extracted)), math.ceil(np.max(extracted))
 
+
 def explained_variance(model, matrix='x'):
         """Return the explained variance of model.[x|y].eigenvalues
 
@@ -231,9 +259,9 @@ def explained_variance(model, matrix='x'):
             eigen = model.y_eigenvalues
         else:
             raise ValueError('Bad matrix parameter ({}) in '
-                            'get_explained_variance() '.format(repr(matrix)))
+                             'explained_variance() '.format(repr(matrix)))
 
-        IO.Log.info('[PCA::get_explained_variance] '
+        IO.Log.info('[model.explained_variance] '
                     'Eigenvalues for {}: \n{}'.format(matrix, eigen))
         return 100 * eigen / np.sum(eigen)
 

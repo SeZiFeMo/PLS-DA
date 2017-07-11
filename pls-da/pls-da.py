@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import IO
 import model
 import plot
 import utility
@@ -13,40 +12,41 @@ try:
     import PyQt5.QtCore as QtCore
     import PyQt5.QtWidgets as QtWidgets
     import scipy
-    import sklearn.cross_decomposition
+    import sklearn.cross_decomposition as sklCD
     import yaml
+
 except ImportError as e:
     raise SystemExit('Could not import {} library, '.format(e.name)
                      'please install it!')
 
 if __name__ != '__main__':
-    IO.Log.warning('Please do not load that script, run it!')
-    exit(1)
+    raise SystemExit('Please do not load that script, run it!')
 
 utility.check_python_version()
 
-pls_da = model.PLS_DA()
+preproc = model.Preprocessing()
+preproc.autoscale()
 
-pls_da.preprocess_autoscale()
-pls_da.nipals_method()
+nipals = model.Nipals(preproc)
+nipals.run()
 
 plt.subplot(2, 2, 1)
-# plot.scores_plot(pls_da, 0, 1)
-# plot.loadings_plot(pls_da, 0, 1)
-# plot.biplot(pls_da, 0, 1)
-# plot.explained_variance_plot(pls_da)
-# plot.inner_relation_plot(pls_da, 2)
-# plot.scree_plot(pls_da, 'y')
-plot.y_leverage_plot(pls_da)
+# plot.scores_plot(nipals, 0, 1)
+# plot.loadings_plot(nipals, 0, 1)
+# plot.biplot(nipals, 0, 1)
+# plot.explained_variance_plot(nipals)
+# plot.inner_relation_plot(nipals, 2)
+# plot.scree_plot(nipals, 'y')
+plot.y_leverage_plot(nipals)
 
 plt.subplot(2, 2, 2)
-plot.modeled_Y_plot(pls_da)
+plot.modeled_Y_plot(nipals)
 
 plt.subplot(2, 2, 3)
-plot.data_plot(pls_da, pls_da.allowed_categories)
+plot.data_plot(nipals, model.CATEGORIES)
 
 plt.subplot(2, 2, 4)
-plot.d_plot(pls_da)
+plot.d_plot(nipals)
 
 plt.tight_layout()
 plt.show()

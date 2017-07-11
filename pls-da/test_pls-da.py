@@ -88,69 +88,68 @@ class test_model_module(unittest.TestCase):
     null_3x2 = np.array([[0.0 for c in range(2)] for r in range(3)])
 
     def setUp(self):
-        self.pls_da = model.PLS_DA()
+        self.preproc = model.Preprocessing()
 
     def tearDown(self):
-        self.pls_da = None
+        self.preproc = None
 
-    def test_PLS_DA_init(self):
-        self.assertEqual(len(self.pls_da.keys), self.pls_da.m + 1)
-        self.assertEqual(len(self.pls_da.categories), self.pls_da.n)
-        self.assertEqual(len(self.pls_da.dummy_Y), self.pls_da.n)
-        self.assertEqual(len(self.pls_da.dummy_Y[0]),
-                         len(set(self.pls_da.categories)))
-        self.assertIsNone(self.pls_da.mean)
-        self.assertIsNone(self.pls_da.sigma)
-        self.assertFalse(self.pls_da.centered)
-        self.assertFalse(self.pls_da.normalized)
-        self.assertFalse(self.pls_da.autoscaled)
+    def test_Preprocessing_init(self):
+        self.assertEqual(len(self.preproc.header), self.preproc.m + 1)
+        self.assertEqual(len(self.preproc.categories), self.preproc.n)
+        self.assertEqual(len(self.preproc.dummy_y), self.preproc.n)
+        self.assertEqual(len(self.preproc.dummy_y[0]),
+                         len(set(self.preproc.categories)))
+        self.assertFalse(self.preproc.centered)
+        self.assertFalse(self.preproc.normalized)
+        self.assertFalse(self.preproc.autoscaled)
 
-    def test_PLS_DA_preprocess_mean(self):
-        self.pls_da.dataset = self.matrix_3x3.copy()
-        self.pls_da.dummy_Y = self.matrix_3x2.copy()
+    def test_Preprocessing_center(self):
+        self.preproc.dataset = self.matrix_3x3.copy()
+        self.preproc.dummy_y = self.matrix_3x2.copy()
 
-        self.pls_da.preprocess_mean()
+        self.preproc.center()
 
-        self.assertTrue(self.pls_da.centered)
-        self.assertFalse(self.pls_da.normalized)
-        self.assertFalse(self.pls_da.autoscaled)
-        np.testing.assert_allclose(self.pls_da.dataset, self.null_3x3,
+        self.assertTrue(self.preproc.centered)
+        self.assertFalse(self.preproc.normalized)
+        self.assertFalse(self.preproc.autoscaled)
+        np.testing.assert_allclose(self.preproc.dataset, self.null_3x3,
                                    atol=absolute_tolerance)
-        np.testing.assert_allclose(self.pls_da.dummy_Y, self.null_3x2,
+        np.testing.assert_allclose(self.preproc.dummy_y, self.null_3x2,
                                    atol=absolute_tolerance)
 
-    def test_PLS_DA_preprocess_normalize(self):
-        self.pls_da.dataset = self.matrix_A.copy()
-        self.pls_da.dummy_Y = self.matrix_A.copy()
+    def test_Preprocessing_normalize(self):
+        self.preproc.dataset = self.matrix_A.copy()
+        self.preproc.dummy_y = self.matrix_A.copy()
 
-        self.pls_da.preprocess_normalize()
+        self.preproc.normalize()
 
-        self.assertFalse(self.pls_da.centered)
-        self.assertTrue(self.pls_da.normalized)
-        self.assertFalse(self.pls_da.autoscaled)
-        np.testing.assert_allclose(self.pls_da.dataset, self.normalized_A)
-        np.testing.assert_allclose(self.pls_da.dummy_Y, self.normalized_A)
+        self.assertFalse(self.preproc.centered)
+        self.assertTrue(self.preproc.normalized)
+        self.assertFalse(self.preproc.autoscaled)
+        np.testing.assert_allclose(self.preproc.dataset, self.normalized_A)
+        np.testing.assert_allclose(self.preproc.dummy_y, self.normalized_A)
 
-    def test_PLS_DA_preprocess_autoscale(self):
-        dataset_copy = self.pls_da.dataset.copy()
-        dummy_Y_copy = self.pls_da.dummy_Y.copy()
+    def test_Preprocess_autoscale(self):
+        dataset_copy = self.preproc.dataset.copy()
+        dummy_y_copy = self.preproc.dummy_y.copy()
 
-        self.pls_da.preprocess_mean()
-        self.pls_da.preprocess_normalize()
+        self.preproc.center()
+        self.preproc.normalize()
 
-        dataset_autoscaled = self.pls_da.dataset
-        dummy_Y_autoscaled = self.pls_da.dummy_Y
+        dataset_autoscaled = self.preproc.dataset
+        dummy_y_autoscaled = self.preproc.dummy_y
+        self.assertTrue(self.preproc.autoscaled)
 
-        self.pls_da.dataset = dataset_copy
-        self.pls_da.dummy_Y = dummy_Y_copy
-        self.pls_da.centered = False
-        self.pls_da.normalized = False
+        self.preproc.dataset = dataset_copy
+        self.preproc.dummy_y = dummy_y_copy
+        self.preproc._centered = False
+        self.preproc._normalized = False
 
-        self.pls_da.preprocess_autoscale()
+        self.preproc.autoscale()
 
-        self.assertTrue(self.pls_da.autoscaled)
-        np.testing.assert_allclose(self.pls_da.dataset, dataset_autoscaled)
-        np.testing.assert_allclose(self.pls_da.dummy_Y, dummy_Y_autoscaled)
+        self.assertTrue(self.preproc.autoscaled)
+        np.testing.assert_allclose(self.preproc.dataset, dataset_autoscaled)
+        np.testing.assert_allclose(self.preproc.dummy_y, dummy_y_autoscaled)
 
 
 class test_eigen_module(unittest.TestCase):
@@ -163,16 +162,17 @@ class test_eigen_module(unittest.TestCase):
                            [0.5 + 1e-8, 0.5 - 1e-8]])
 
     def setUp(self):
-        self.pls_da = model.PLS_DA()
-        self.pls_da.dataset = self.matrix_3x3.copy()
-        self.pls_da.dummy_Y = self.matrix_3x2.copy()
+        self.preproc = model.Preprocessing()
+        self.preproc.dataset = self.matrix_3x3.copy()
+        self.preproc.dummy_y = self.matrix_3x2.copy()
 
-        cov_x = np.dot(self.pls_da.dataset.T,
-                       self.pls_da.dataset) / (self.pls_da.n - 1)
-        cov_y = np.dot(self.pls_da.dummy_Y.T,
-                       self.pls_da.dummy_Y) / (self.pls_da.n - 1)
+        cov_x = np.dot(self.preproc.dataset.T,
+                       self.preproc.dataset) / (self.preproc.n - 1)
+        cov_y = np.dot(self.preproc.dummy_y.T,
+                       self.preproc.dummy_y) / (self.preproc.n - 1)
 
-        self.pls_da.nipals_method()
+        self.nipals = model.Nipals(self.preproc)
+        self.nipals.run()
         self.wx, vx = scipy.linalg.eig(cov_x)
         self.wy, vy = scipy.linalg.eig(cov_y)
         self.wx = np.real(self.wx)
@@ -183,22 +183,23 @@ class test_eigen_module(unittest.TestCase):
         self.y_variance = 100 * self.wy / np.sum(self.wy)
 
     def tearDown(self):
-        self.pls_da = None
+        self.preproc = None
+        self.nipals = None
 
-    def test_PLS_DA_eigenvectors_x_eigen(self):
-        np.testing.assert_allclose(self.pls_da.x_eigenvalues, self.wx,
+    def test_nipals_eigenvectors_x_eigen(self):
+        np.testing.assert_allclose(self.nipals.x_eigenvalues, self.wx,
                                    atol=absolute_tolerance)
 
-    def test_PLS_DA_eigenvectors_y_eigen(self):
-        np.testing.assert_allclose(self.pls_da.y_eigenvalues, self.wy,
+    def test_nipals_eigenvectors_y_eigen(self):
+        np.testing.assert_allclose(self.nipals.y_eigenvalues, self.wy,
                                    atol=absolute_tolerance)
 
-    def test_PLS_DA_eigenvectors_x_variance(self):
-        np.testing.assert_allclose(self.pls_da.get_explained_variance(),
+    def test_nipals_eigenvectors_x_variance(self):
+        np.testing.assert_allclose(model.explained_variance(self.nipals, 'x'),
                                    self.x_variance, atol=absolute_tolerance)
 
-    def test_PLS_DA_eigenvectors_y_variance(self):
-        np.testing.assert_allclose(self.pls_da.get_explained_variance('y'),
+    def test_nipals_eigenvectors_y_variance(self):
+        np.testing.assert_allclose(model.explained_variance(self.nipals, 'y'),
                                    self.y_variance, atol=absolute_tolerance)
 
 
@@ -206,104 +207,108 @@ class nipals_abstract(object):
 
     def setUp(self):
         j = 2
-        self.pls_da = model.PLS_DA()
+        self.preproc = model.Preprocessing()
 
         X = np.array([[1, 1.9], [1.9, 1], [3.8, 4.2], [4, 3.6]])
         Y = np.array([[1, 0], [1, 0], [0, 1], [0, 1]])
-        self.pls_da.dataset = X.copy()
-        self.pls_da.dummy_Y = Y.copy()
-        self.pls_da.preprocess_autoscale()
-        self.pls_da.nipals_method(nr_lv=j)
+        self.preproc.dataset = X.copy()
+        self.preproc.dummy_y = Y.copy()
+
+        self.preproc.autoscale()
+        self.nipals = model.Nipals(self.preproc)
+        self.nipals.run(nr_lv=j)
         # autoscale also matrices for sklearn
-        X = self.pls_da.dataset.copy()
-        Y = self.pls_da.dummy_Y.copy()
+        X = self.nipals.preproc.dataset.copy()
+        Y = self.nipals.preproc.dummy_y.copy()
 
         self.sklearn_pls = sklCD.PLSRegression(n_components=j, scale=True,
                                                max_iter=1e4, tol=1e-6,
                                                copy=True)
         self.sklearn_pls.fit(X, Y)
 
-        IO.Log.debug('NIPALS x scores', self.pls_da.T)
+        IO.Log.debug('NIPALS x scores', self.nipals.T)
         IO.Log.debug('sklearn x scores', self.sklearn_pls.x_scores_)
-        IO.Log.debug('NIPALS x loadings', self.pls_da.P)
+        IO.Log.debug('NIPALS x loadings', self.nipals.P)
         IO.Log.debug('sklearn x loadings', self.sklearn_pls.x_loadings_)
-        IO.Log.debug('NIPALS x weights', self.pls_da.W)
+        IO.Log.debug('NIPALS x weights', self.nipals.W)
         IO.Log.debug('sklearn x weights', self.sklearn_pls.x_weights_)
-        IO.Log.debug('NIPALS y scores', self.pls_da.U)
+        IO.Log.debug('NIPALS y scores', self.nipals.U)
         IO.Log.debug('sklearn y scores', self.sklearn_pls.y_scores_)
-        IO.Log.debug('NIPALS y loadings', self.pls_da.Q)
+        IO.Log.debug('NIPALS y loadings', self.nipals.Q)
         IO.Log.debug('sklearn y loadings', self.sklearn_pls.y_loadings_)
         IO.Log.debug('sklearn y weights', self.sklearn_pls.y_weights_)
 
     def tearDown(self):
-        self.pls_da = None
+        self.preproc = None
+        self.nipals = None
+        self.sklearn_pls = None
 
     @unittest.skip("Different algorithm")
-    def test_PLS_DA_x_scores(self):
-        np.testing.assert_allclose(np.absolute(self.pls_da.T),
+    def test_nipals_x_scores(self):
+        np.testing.assert_allclose(np.absolute(self.nipals.T),
                                    np.absolute(self.sklearn_pls.x_scores_),
                                    atol=absolute_tolerance)
 
-    def test_PLS_DA_x_loadings(self):
-        np.testing.assert_allclose(np.absolute(self.pls_da.P),
+    def test_nipals_x_loadings(self):
+        np.testing.assert_allclose(np.absolute(self.nipals.P),
                                    np.absolute(self.sklearn_pls.x_loadings_),
                                    atol=absolute_tolerance)
 
-    def test_PLS_DA_x_weights(self):
-        np.testing.assert_allclose(np.absolute(self.pls_da.W),
+    def test_nipals_x_weights(self):
+        np.testing.assert_allclose(np.absolute(self.nipals.W),
                                    np.absolute(self.sklearn_pls.x_weights_),
                                    atol=absolute_tolerance)
 
     @unittest.skip("Different algorithm")
-    def test_PLS_DA_y_scores(self):
-        np.testing.assert_allclose(np.absolute(self.pls_da.U),
+    def test_nipals_y_scores(self):
+        np.testing.assert_allclose(np.absolute(self.nipals.U),
                                    np.absolute(self.sklearn_pls.y_scores_),
                                    atol=absolute_tolerance)
 
     @unittest.skip("Different algorithm")
-    def test_PLS_DA_y_loadings(self):
-        np.testing.assert_allclose(np.absolute(self.pls_da.Q),
+    def test_nipals_y_loadings(self):
+        np.testing.assert_allclose(np.absolute(self.nipals.Q),
                                    np.absolute(self.sklearn_pls.y_loadings_),
                                    atol=absolute_tolerance)
 
-    def test_PLS_DA_coefficient(self):
-        np.testing.assert_allclose(np.absolute(self.pls_da.B),
+    def test_nipals_coefficient(self):
+        np.testing.assert_allclose(np.absolute(self.nipals.B),
                                    np.absolute(self.sklearn_pls.coef_),
                                    err_msg='From class '
                                            '{}'.format(type(self).__name__),
                                    atol=absolute_tolerance)
 
-    def test_PLS_DA_inner_relation(self):
+    def test_nipals_inner_relation(self):
         """The relation in U = TD + H"""
-        np.testing.assert_allclose(self.pls_da.U,
-                                   np.dot(self.pls_da.T,
-                                          np.diag(self.pls_da.d)),
+        np.testing.assert_allclose(self.nipals.U,
+                                   np.dot(self.nipals.T,
+                                          np.diag(self.nipals.d)),
                                    atol=1)
 
     def test_x_component(self):
-        np.testing.assert_allclose(self.pls_da.dataset,
-                                   np.dot(self.pls_da.T, self.pls_da.P.T),
+        np.testing.assert_allclose(self.nipals.preproc.dataset,
+                                   np.dot(self.nipals.T, self.nipals.P.T),
                                    err_msg="X != TP'", atol=absolute_tolerance)
 
     def test_y_component(self):
-        np.testing.assert_allclose(self.pls_da.dummy_Y,
-                                   np.dot(self.pls_da.U, self.pls_da.Q.T),
+        np.testing.assert_allclose(self.nipals.preproc.dummy_y,
+                                   np.dot(self.nipals.U, self.nipals.Q.T),
                                    err_msg="Y != UQ'", atol=absolute_tolerance)
 
     def test_coef(self):
-        np.testing.assert_allclose(self.pls_da.dummy_Y,
-                                   self.pls_da.Y_modeled_dummy,
+        np.testing.assert_allclose(self.nipals.preproc.dummy_y,
+                                   self.nipals.Y_modeled_dummy,
                                    atol=absolute_tolerance)
 
 
 class test_nipals_method(nipals_abstract, unittest.TestCase):
 
     def calculate_nipals(self, j):
-        self.pls_da.nipals_method(nr_lv=j)
+        self.nipals.run(nr_lv=j)
 
     @unittest.skip("Different algorithm")
-    def test_PLS_DA_y_weights(self):
-        np.testing.assert_allclose(np.absolute(self.pls_da.W),
+    def test_nipals_y_weights(self):
+        np.testing.assert_allclose(np.absolute(self.nipals.W),
                                    np.absolute(self.sklearn_pls.y_weights_),
                                    atol=absolute_tolerance)
 
@@ -313,36 +318,42 @@ class test_plot_module(unittest.TestCase):
     x = [-5, -4, 0, 4, 5]
     y = [0, 3, -1, 3, 10]
 
+    def setUp(self):
+        model.Preprocessing()
+        self.all_cat = model.CATEGORIES
+
+    def tearDown(self):
+        self.all_cat = None
+
     def test_properties_of(self):
-        all_cat = model.PLS_DA.allowed_categories
-        for cat in all_cat:
-            self.assertIsInstance(plot.properties_of(cat, all_cat), dict)
-            d = plot.properties_of(cat, all_cat)
+        for cat in self.all_cat:
+            self.assertIsInstance(plot.properties_of(cat, self.all_cat), dict)
+            d = plot.properties_of(cat, self.all_cat)
             for key in ('edge_color', 'face_color', 'marker'):
                 self.assertTrue(key in d)
                 self.assertIsInstance(d[key], str)
-        self.assertRaises(Exception, plot.properties_of, '', all_cat)
-        self.assertRaises(Exception, plot.properties_of, None, all_cat)
+        self.assertRaises(Exception, plot.properties_of, '', self.all_cat)
+        self.assertRaises(Exception, plot.properties_of, None, self.all_cat)
 
     def test_scatter_plot(self):
-        all_cat = model.PLS_DA.allowed_categories
-        for cat in all_cat:
-            self.assertIsNone(plot.scatter_plot(self.x, self.y, cat, all_cat))
+        for cat in self.all_cat:
+            self.assertIsNone(plot.scatter_plot(self.x, self.y, cat,
+                                                self.all_cat))
         self.assertRaises(ValueError, plot.scatter_plot,
-                          self.x, self.y[:-1], 'U', all_cat)
+                          self.x, self.y[:-1], 'U', self.all_cat)
         self.assertRaises(ValueError, plot.scatter_plot,
-                          'string', 123, 'U', all_cat)
+                          'string', 123, 'U', self.all_cat)
         self.assertRaises(ValueError, plot.scatter_plot,
-                          456, 'string', 'U', all_cat)
+                          456, 'string', 'U', self.all_cat)
 
     def test_scores_plot(self):
         with self.assertRaises(SystemExit) as cm:
-            plot.scores_plot(model=None, pc_a=1, pc_b=1)
+            plot.scores_plot(nipals=None, pc_a=1, pc_b=1)
         self.assertEqual(cm.exception.code, 1)
 
     def test_loadings_plot(self):
         with self.assertRaises(SystemExit) as cm:
-            plot.loadings_plot(model=None, pc_a=1, pc_b=1)
+            plot.loadings_plot(nipals=None, pc_a=1, pc_b=1)
         self.assertEqual(cm.exception.code, 1)
 
 
