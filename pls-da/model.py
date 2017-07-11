@@ -117,103 +117,12 @@ class Nipals(object):
 
         self.preproc = preproc
 
-
-class PLS_DA(object):
-
-    allowed_categories = ('NA', 'SA', 'U', 'WL')
-
-    def __init__(self, csv_file=None):
-        """Constructor method.
-
-           Raises Exception if file could not be parsed.
-        """
-        if csv_file is None:
-            csv_file = utility.CLI.args().input_file
-
-        self.axis = 0
-        self.keys, body = IO.CSV.parse(csv_file)
-        IO.Log.debug('[PLS_DA::__init__] Using {} as input'.format(csv_file))
-
-        # Delete category column from body and save it for future uses
-        self.categories = [row[0] for row in body]
-        PLS_DA.allowed_categories = set(self.categories)
-
-        # The other columns of body are the dataset (matrix)
-        self._dataset_original = np.array([np.array(row[1:]) for row in body])
-        IO.Log.debug('[PLS_DA::__init__] self._dataset_original',
-                     self._dataset_original)
-
-        self.dataset = np.copy(self._dataset_original)
-        self.n, self.m = self.dataset.shape
-
-        self.nr_lv = None
-
-        self.T = None
-        self.P = None
-        self.W = None
-        self.U = None
-        self.Q = None
-        self.B = None
-        self.Y_modeled = None
-        self.Y_modeled_dummy = None
-        self.x_eigenvalues = None
-        self.y_eigenvalues = None
-
-        self.mean = None
-        self.sigma = None
-        self.centered = False
-        self.normalized = False
-        self.autoscaled = False
-
-        # For each category create a vector
-        self.dummy_Y = np.array([[1.0 if c == cat else 0.0
-                                  for c in self.categories]
-                                 for cat in set(self.categories)]).T
-        IO.Log.debug('[PLS_DA::__init__] dummy Y variables', self.dummy_Y)
-        self.p = self.dummy_Y.shape[1]
-
-    def no_preprocessing(self, use_original=False):
-        """Simply do nothing.
-
-           Do not remove this method or the preprocessing choice in the GUI
-           will fail on 'none' choice.
-        """
-        pass
-
-    def preprocess_mean(self, use_original=False):
-        """Substitute self.dataset with its centered version."""
-        dataset = self._dataset_original if use_original else self.dataset
-        self.mean = dataset.mean(axis=self.axis)
-        self.dataset = dataset - self.mean
-        self.dummy_Y = self.dummy_Y - self.dummy_Y.mean(axis=self.axis)
-        IO.Log.debug('[PLS_DA::preprocess_mean] Centered matrix',
-                     self.dataset)
-        self.centered = True
-
-    def preprocess_normalize(self, use_original=False):
-        """Substitute self.dataset with its normalized version."""
-        dataset = self._dataset_original if use_original else self.dataset
-        self.sigma = dataset.std(axis=self.axis)
-        self.dataset = self.dataset / self.sigma
-        self.dummy_Y = self.dummy_Y / self.dummy_Y.std(axis=self.axis)
-        IO.Log.debug('[PLS_DA::preprocess_normalize] Normalized matrix',
-                     self.dataset)
-        self.normalized = True
-
-    def preprocess_autoscale(self, use_original=False):
-        """Substitute self.dataset with its autoscaled version."""
-        self.preprocess_mean(use_original)  # it initializes self.dataset
-        self.preprocess_normalize(use_original)
-        IO.Log.debug('[PLS_DA::preprocess_autoscale] Autoscaled matrix',
-                     self.dataset)
-        self.autoscaled = True
-
-    def nipals_method(self, nr_lv=None, tol=1e-6, max_iter=1e4):
+    def run(self, nr_lv=None, tol=1e-6, max_iter=1e4):
         """Find the Principal Components with the NIPALS algorithm."""
 
         # Start with maximal residual (matrix X, matrix Y)
-        E_x = self.dataset.copy()
-        E_y = self.dummy_Y.copy()
+        E_x = self.preproc.dataset.copy()
+        E_y = self.preproc.dummy_y.copy()
 
         n, m = E_x.shape
         n, p = E_y.shape
@@ -304,28 +213,24 @@ class PLS_DA(object):
         IO.Log.info('NIPALS scores shape', self.T.shape)
         IO.Log.info('NIPALS x_eigenvalues', self.x_eigenvalues)
 
-    def get_loadings_scores_xy_limits(self, pc_x, pc_y):
-        """Return dict of x and y limits: {'x': (min, max), 'y': (min, max)}"""
-        x_val = np.concatenate((self.P[:, pc_x], self.T[:, pc_x]))
-        y_val = np.concatenate((self.P[:, pc_y], self.T[:, pc_y]))
-        min_x, max_x = math.floor(np.min(x_val)), math.ceil(np.max(x_val))
-        min_y, max_y = math.floor(np.min(y_val)), math.ceil(np.max(y_val))
-        return {'x': (min_x, max_x), 'y': (min_y, max_y)}
 
-    def get_explained_variance(self, matrix='x'):
-        """Return the explained variance (computed over self.eigenvalues)
+def integer_bounds(P, T, col):
+        """Return tuple with min and max integers bounds for P[col] and T[col].
+        """
+        extracted = np.concatenate((P[:, col], T[:, col]))
+        return math.floor(np.min(extracted)), math.ceil(np.max(extracted))
+
+def explained_variance(model, matrix='x'):
+        """Return the explained variance of model.[x|y].eigenvalues
 
            Raises Exception if matrix is not 'x' or 'y'
         """
         if matrix == 'x':
-            eigen = self.x_eigenvalues
+            eigen = model.x_eigenvalues
         elif matrix == 'y':
-            eigen = self.y_eigenvalues
+            eigen = model.y_eigenvalues
         else:
-            IO.Log.error('[PCA::get_explained_variance] '
-                         'Accepted values for matrix are x and y '
-                         '(got {} instead)'.format(repr(matrix)))
-            raise Exception('Bad matrix parameter ({}) in '
+            raise ValueError('Bad matrix parameter ({}) in '
                             'get_explained_variance() '.format(repr(matrix)))
 
         IO.Log.info('[PCA::get_explained_variance] '
