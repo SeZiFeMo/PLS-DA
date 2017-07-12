@@ -12,7 +12,7 @@ CATEGORIES = ('NA', 'SA', 'U', 'WL')
 class Preprocessing(object):
     """Class to preprocess csv input data."""
 
-    def __init__(self):
+    def __init__(self, input_file=None):
         """Load and parse csv input file.
 
            self.header      list of samples' properties (text)
@@ -22,8 +22,8 @@ class Preprocessing(object):
 
            self.axis        axis to compute std and mean
         """
-
-        input_file = utility.CLI.args().input_file
+        if input_file is None:
+            input_file = utility.CLI.args().input_file
         self.header, body = IO.CSV.parse(input_file)
         IO.Log.debug('Successfully parsed {} input file.'.format(input_file))
 
@@ -113,6 +113,10 @@ class Preprocessing(object):
         self.center(quiet=True)
         self.normalize(quiet=True)
         IO.Log.debug('Autoscaled dataset', self.dataset)
+
+    def empty_method(self):
+        """Do not remove this method, it is needed by the GUI."""
+        pass
 
 
 class Nipals(object):

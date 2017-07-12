@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import model
-import os
-import pickle
+import copy
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import sys
 
 import IO
+import model
 import utility
 
 
@@ -22,31 +21,69 @@ def new_qt(widget, name, parent=None):
     return ret
 
 
-def popupChooseFile(parent, input=False, output=False, name_filter=None):
-    """Display a dialog to choose a file.
+def _popupChoose(parent, filter_csv=False,
+                 _input=False, _output=False, _directory=False, _file=False):
+    """Display a dialog to choose an input/output file/directory.
 
-       Raises Exception if input and outpu flag does not differ.
        Return file path or None.
     """
-    if bool(input) == bool(output):
-        raise Exception('In popupChooseFile() i/o flags must differ')
-    mode = 'input' if input else 'output'
+    if bool(_input) == bool(_output):
+        IO.Log.error('In _popupChoose() input/output flags must differ')
+        return
+    if bool(_file) == bool(_directory):
+        IO.Log.error('In _popupChoose() file/directory flags must differ')
+        return
 
-    IO.Log.debug('Choose an {} file'.format(mode))
-    dialog = new_qt('QFileDialog', 'popupChooseFile', parent=parent)
-    dialog.setWindowTitle('Choose an {} file'.format(mode))
-    if input:
-        dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+    mode = 'input' if _input else 'output'
+    obj = 'file' if _file else 'directory'
+
+    IO.Log.debug('Choose an {} {}'.format(mode, obj))
+    dialog = new_qt('QFileDialog',
+                 'popupChoose' + mode.capitalize() + obj.capitalize(),
+                 parent=parent)
+    dialog.setWindowTitle('Choose an {} {}'.format(mode, obj))
+
+    if _input:
         dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
-    else:
+    else:  # _output
         dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
-    if name_filter is not None:
-        dialog.setNameFilter(name_filter)
+
+    if _file:
+        dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+        if filter_csv:
+            dialog.setNameFilter("Comma-separated values files (*.csv *.txt)")
+    else:  # _directory
+        dialog.setFileMode(QtWidgets.QFileDialog.Directory)
+        dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly)
+
     if not dialog.exec():
-        IO.Log.debug('CANCEL (not chosen {} file)'.format(mode))
+        IO.Log.debug('CANCEL (not chosen {} {})'.format(mode, obj))
         return None
-    IO.Log.debug('OK (chosen {} file)'.format(mode), dialog.selectedFiles()[0])
+    IO.Log.debug('OK (chosen {} {})'.format(mode, obj),
+                 dialog.selectedFiles()[0])
     return dialog.selectedFiles()[0]
+
+
+def popupChooseInputDirectory(parent):
+    """Display a dialog to choose an input directory; return its path or None.
+    """
+    return _popupChoose(parent, _input=True, _directory=True)
+
+
+def popupChooseOutputDirectory(parent):
+    """Display a dialog to choose an output directory; return its path or None.
+    """
+    return _popupChoose(parent, _output=True, _directory=True)
+
+
+def popupChooseInputFile(parent, filter_csv=False):
+    """Display a dialog to choose an input file; return its path or None."""
+    return _popupChoose(parent, filter_csv, _input=True, _file=True)
+
+
+def popupChooseOutputFile(parent, filter_csv=False):
+    """Display a dialog to choose an output file; return its path or None."""
+    return _popupChoose(parent, filter_csv, _output=True, _file=True)
 
 
 def popupChooseItem(message, item_list, parent, title=None):
@@ -145,9 +182,6 @@ def setPolicy(widget, h_policy='Preferred', v_policy='Preferred',
 
 
 class UserInterface(object):
-
-    csv_file_filter = "Comma-separated values files (*.csv *.txt)"
-    pickle_file_filter = "Python pickle files (*.p *.pkl *.pickle)"
 
     drop_down_choices = ['Scree', 'LVs - Explained variance Y',
                          'Inner relationships', 'Biplot', 'Scores & Loadings',
@@ -587,35 +621,33 @@ class UserInterface(object):
         self.setupHandlers()
         self.setupStatusAttributes()
 
-    def currentMode(self, value=None):
-        """Both getter and setter of current mode."""
-        if value is None:
-            return self.__current_mode
-        if isinstance(value, str):
-            if value.lower() == 'model':
-                self.__current_mode = 'model'
-                IO.Log.debug('Current mode changed into "MODEL"')
-            elif value.lower() in ('crossvalidation', 'cv'):
-                self.__current_mode = 'crossvalidation'
-                IO.Log.debug('Current mode changed into "CROSSVALIDATION"')
-            elif value.lower() == 'prediction':
-                self.__current_mode = 'prediction'
-                IO.Log.debug('Current mode changed into "PREDICTION"')
-            elif value.lower() == 'start':
-                self.__current_mode = 'start'
-                IO.Log.debug('Current mode changed into "START"')
-            else:
-                IO.Log.error('Unknown mode ({}) passed to '
-                             'currentMode()'.format(value))
-                return
-            self.CurrentModeLabel.setText(self.__current_mode.capitalize()
-                                          + ' mode')
+    @property
+    def current_mode(self):
+        """Get value of CurrentModeLabel."""
+        return self._current_mode.capitalize() + ' mode'
+
+    @current_mode.setter
+    def current_mode(self, value):
+        """Set value of CurrentModeLabel and change."""
+        if not isinstance(value, str) or \
+            value.lower() not in ('start', 'cv', 'crossvalidation', 'model',
+                                  'prediction'):
+            IO.Log.error('Could not change current mode to '
+                         '{} !'.format(repr(value)))
+            return
+
+        if value == 'cv':
+            self._current_mode = 'crossvalidation'
         else:
-            IO.Log.error('currentMode() takes a string when used as a setter')
+            self._current_mode = value.lower()
+
+        IO.Log.debug('Current mode changed to: ' + self._current_mode.upper())
+        self.CurrentModeLabel.setText(self.current_mode)
+
 
     def newModel(self, load=False):
         """Both getter and setter of pls-da model."""
-        if self.__plsda_model is not None:
+        if self.plsda_model is not None:
             title = 'Replace current model?'
             msg = str('Are you sure to replace the current model? '
                       '(All data not saved will be lost)')
@@ -626,95 +658,91 @@ class UserInterface(object):
             IO.Log.debug('YES (replacing current model)')
 
         if load:
-            input_file = popupChooseFile(input=True,
-                                         name_filter=self.pickle_file_filter,
-                                         parent=self.MainWindow)
-        else:
-            input_file = popupChooseFile(input=True,
-                                         name_filter=self.csv_file_filter,
-                                         parent=self.MainWindow)
-        if input_file is None:
-            return
+            workspace_dir = popupChooseInputDirectory(parent=self.MainWindow)
+            if workspace_dir is None:
+                return
 
-        try:
-            if load:
-                with open(input_file, 'br') as f:
-                    self.__plsda_model = pickle.load(f)
+            plsda_model_copy = copy.deepcopy(self.plsda_model)
+            try:
+                self.plsda_model = IO.load(workspace_dir)
+            except Exception as e:
+                self.plsda_model = plsda_model_copy
+                IO.Log.debug(str(e))
+                popupError(message=str(e), parent=self.MainWindow)
+                return
             else:
-                self.__plsda_model = model.PLS_DA(csv_file=input_file)
-        except Exception as e:
-            self.__plsda_model = None
-            IO.Log.debug(str(e))
-            popupError(message=str(e), parent=self.MainWindow)
-            return
-        if not load:
+                IO.Log.debug('Model loaded correctly')
+        else:
+            input_file = popupChooseInputFile(parent=self.MainWindow,
+                                              filter_csv=True)
+            if input_file is None:
+                return
+
+            try:
+                preproc = model.Preprocessing(input_file)
+            except Exception as e:
+                IO.Log.debug(str(e))
+                popupError(message=str(e), parent=self.MainWindow)
+                return
+
             title = 'Choose preprocessing'
             msg = 'Please choose the desired preprocessing: '
-            choices = (('preprocess_autoscale', 'autoscaling'),
-                       ('preprocess_mean', 'centering'),
-                       ('preprocess_normalize', 'normalizing'),
-                       ('no_preprocessing', 'none'))
+            choices = (('autoscale', 'autoscaling'),
+                       ('center', 'centering'),
+                       ('normalize', 'normalizing'),
+                       ('empty_method', 'none'))
             IO.Log.debug(title)
             ok, index = popupChooseItem(msg, [b for a, b in choices],
                                         title=title, parent=self.MainWindow)
-            for i, (attr, prep) in enumerate(choices):
+            for i, (method, name) in enumerate(choices):
                 if ok and index == i:
-                    IO.Log.debug('OK (chosen preprocessing: {})'.format(prep))
-                    getattr(self.__plsda_model, attr)(use_original=True)
+                    IO.Log.debug('OK (chosen preprocessing: {})'.format(name))
+                    getattr(preproc, method)()
                     break
             else:
                 IO.Log.debug('CANCEL (not chosen any preprocessing)')
-            self.__plsda_model.nipals_method()
-            IO.Log.debug('Model created correctly')
-        else:
-            IO.Log.debug('Model loaded correctly')
-        self.currentMode('model')
+
+            try:
+                self.plsda_model = model.Nipals(preproc)
+            except Exception as e:
+                IO.Log.debug(str(e))
+                popupError(message=str(e), parent=self.MainWindow)
+                return
+            else:
+                IO.Log.debug('Model created correctly')
+        self.current_mode = 'model'
 
     def saveModel(self):
-        if self.__plsda_model is None:
+        if self.plsda_model is None:
             msg = 'To save a model you have to create or load it before'
             IO.Log.debug(msg)
             popupError(msg, parent=self.MainWindow)
             return
 
-        output_file = popupChooseFile(output=True,
-                                      name_filter=self.pickle_file_filter,
-                                      parent=self.MainWindow)
-        if output_file is None:
+        export_dir = popupChooseOutputDirectory(parent=self.MainWindow)
+        if export_dir is None:
             return
-        if not output_file.endswith('.p') and \
-           not output_file.endswith('.pkl') and \
-           not output_file.endswith('.pickle'):
-            dirname, basename = os.path.split(output_file)
-            if '.' in basename:
-                basename = '.'.join(basename.split('.')[:-1])
-            basename += '.p'
-            output_file = os.path.join(dirname, basename)
-            IO.Log.debug('Adapted output file', output_file)
-            if os.path.isfile(output_file):
-                IO.Log.debug('Output file already exists, '
-                             'it will be overwritten!')
-
         try:
-            with open(output_file, 'bw') as f:
-                pickle.dump(self.__plsda_model, f,
-                            protocol=pickle.HIGHEST_PROTOCOL)
+            IO.dump(self.plsda_model, export_dir)
         except Exception as e:
-            self.__plsda_model = None
             IO.Log.debug(str(e))
             popupError(message=str(e), parent=self.MainWindow)
             return
         IO.Log.debug('Model saved correctly')
 
     def setupStatusAttributes(self):
-        self.__plsda_model = None
-        self.currentMode('start')
+        self.plsda_model = None
+        self.current_mode = 'start'
 
     def setupHandlers(self):
-        self.ActionModel.triggered.connect(lambda: self.currentMode('model'))
-        self.ActionCV.triggered.connect(lambda: self.currentMode('cv'))
-        self.ActionPrediction.triggered.connect(lambda:
-                                                self.currentMode('prediction'))
+        self.ActionModel.triggered.connect(
+                lambda: setattr(self, 'current_mode', 'model'))
+
+        self.ActionCV.triggered.connect(
+                lambda: setattr(self, 'current_mode', 'cv'))
+
+        self.ActionPrediction.triggered.connect(
+                lambda: setattr(self, 'current_mode', 'prediction'))
 
         self.ActionNewModel.triggered.connect(lambda:
                                               self.newModel(load=False))

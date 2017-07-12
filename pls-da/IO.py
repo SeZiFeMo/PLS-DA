@@ -7,6 +7,19 @@ import utility
 import yaml
 
 
+def dump(plsda_model, workspace):
+    """Creates in workspace directory a csv file for each plsda_model matrix.
+    """
+    Log.error('Not yet implemented IO.dump(plsda_model, workspace)')
+
+
+def load(workspace):
+    """Return a plsda_model from csv file in workspace.
+    """
+    Log.error('Not yet implemented IO.load(workspace)')
+    return None
+
+
 def mat2str(data, h_bar='-', v_bar='|', join='+'):
     """Return an ascii table."""
     try:
