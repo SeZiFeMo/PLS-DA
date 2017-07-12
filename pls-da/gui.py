@@ -635,14 +635,24 @@ class UserInterface(object):
             IO.Log.error('Could not change current mode to '
                          '{} !'.format(repr(value)))
             return
-
-        if value == 'cv':
+        self._current_mode = value.lower()
+        if value.lower() == 'cv':
             self._current_mode = 'crossvalidation'
-        else:
-            self._current_mode = value.lower()
 
         IO.Log.debug('Current mode changed to: ' + self._current_mode.upper())
         self.CurrentModeLabel.setText(self.current_mode)
+
+        model_flag, cv_flag, pred_flag = False, False, False
+        if self._current_mode == 'crossvalidation':
+            model_flag, pred_flag = True, True
+        elif self._current_mode == 'model':
+            cv_flag, pred_flag = True, True
+        elif self._current_mode == 'prediction':
+            model_flag, cv_flag = True, True
+
+        self.ActionModel.setEnabled(model_flag)
+        self.ActionCV.setEnabled(cv_flag)
+        self.ActionPrediction.setEnabled(pred_flag)
 
 
     def newModel(self, load=False):
@@ -711,6 +721,8 @@ class UserInterface(object):
             else:
                 IO.Log.debug('Model created correctly')
         self.current_mode = 'model'
+        self.ActionSaveModel.setEnabled(True)
+        self.ActionExport.setEnabled(True)
 
     def saveModel(self):
         if self.plsda_model is None:
@@ -734,6 +746,9 @@ class UserInterface(object):
         self.plsda_model = None
         self.current_mode = 'start'
 
+        self.ActionSaveModel.setEnabled(False)
+        self.ActionExport.setEnabled(False)
+
     def setupHandlers(self):
         self.ActionModel.triggered.connect(
                 lambda: setattr(self, 'current_mode', 'model'))
@@ -744,11 +759,16 @@ class UserInterface(object):
         self.ActionPrediction.triggered.connect(
                 lambda: setattr(self, 'current_mode', 'prediction'))
 
-        self.ActionNewModel.triggered.connect(lambda:
-                                              self.newModel(load=False))
+        self.ActionNewModel.triggered.connect(
+                lambda: self.newModel(load=False))
+
         self.ActionSaveModel.triggered.connect(self.saveModel)
-        self.ActionLoadModel.triggered.connect(lambda:
-                                               self.newModel(load=True))
+
+        self.ActionLoadModel.triggered.connect(
+                lambda: self.newModel(load=True))
+
+        self.ActionExport.triggered.connect(
+                lambda: popupError('exception.NotImplementedError', parent=self.MainWindow))
 
     def show(self):
         self.MainWindow.show()
