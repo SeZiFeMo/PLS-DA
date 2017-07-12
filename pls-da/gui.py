@@ -654,83 +654,75 @@ class UserInterface(object):
         self.ActionCV.setEnabled(cv_flag)
         self.ActionPrediction.setEnabled(pred_flag)
 
-
-    def newModel(self, load=False):
-        """Both getter and setter of pls-da model."""
-        if self.plsda_model is not None:
-            title = 'Replace current model?'
-            msg = str('Are you sure to replace the current model? '
-                      '(All data not saved will be lost)')
-            IO.Log.debug(title)
-            if not popupQuestion(msg, title=title, parent=self.MainWindow):
-                IO.Log.debug('NO (not replacing current model)')
-                return
-            IO.Log.debug('YES (replacing current model)')
-
-        if load:
-            workspace_dir = popupChooseInputDirectory(parent=self.MainWindow)
-            if workspace_dir is None:
-                return
-
-            plsda_model_copy = copy.deepcopy(self.plsda_model)
-            try:
-                self.plsda_model = IO.load(workspace_dir)
-            except Exception as e:
-                self.plsda_model = plsda_model_copy
-                IO.Log.debug(str(e))
-                popupError(message=str(e), parent=self.MainWindow)
-                return
-            else:
-                IO.Log.debug('Model loaded correctly')
+        if self._current_mode == 'start':
+            self.ActionSaveModel.setEnabled(False)
+            self.ActionExport.setEnabled(False)
         else:
-            input_file = popupChooseInputFile(parent=self.MainWindow,
-                                              filter_csv=True)
-            if input_file is None:
-                return
+            self.ActionSaveModel.setEnabled(True)
+            self.ActionExport.setEnabled(True)
 
-            try:
-                preproc = model.Preprocessing(input_file)
-            except Exception as e:
-                IO.Log.debug(str(e))
-                popupError(message=str(e), parent=self.MainWindow)
-                return
 
-            title = 'Choose preprocessing'
-            msg = 'Please choose the desired preprocessing: '
-            choices = (('autoscale', 'autoscaling'),
-                       ('center', 'centering'),
-                       ('normalize', 'normalizing'),
-                       ('empty_method', 'none'))
-            IO.Log.debug(title)
-            ok, index = popupChooseItem(msg, [b for a, b in choices],
-                                        title=title, parent=self.MainWindow)
-            for i, (method, name) in enumerate(choices):
-                if ok and index == i:
-                    IO.Log.debug('OK (chosen preprocessing: {})'.format(name))
-                    getattr(preproc, method)()
-                    break
-            else:
-                IO.Log.debug('CANCEL (not chosen any preprocessing)')
-
-            try:
-                self.plsda_model = model.Nipals(preproc)
-            except Exception as e:
-                IO.Log.debug(str(e))
-                popupError(message=str(e), parent=self.MainWindow)
-                return
-            else:
-                IO.Log.debug('Model created correctly')
-        self.current_mode = 'model'
-        self.ActionSaveModel.setEnabled(True)
-        self.ActionExport.setEnabled(True)
-
-    def saveModel(self):
+    def _replace_current_model(self):
+        """Show a popup to ask if plsda_model should be replaced."""
         if self.plsda_model is None:
-            msg = 'To save a model you have to create or load it before'
-            IO.Log.debug(msg)
-            popupError(msg, parent=self.MainWindow)
+            return True
+
+        title = 'Replace current model?'
+        msg = str('Are you sure to replace the current model? '
+                  '(All data not saved will be lost)')
+        IO.Log.debug(title)
+        if popupQuestion(msg, title=title, parent=self.MainWindow):
+            IO.Log.debug('YES (replacing current model)')
+            return True
+        else:
+            IO.Log.debug('NO (not replacing current model)')
+            return False
+
+    def newModel(self):
+        """Initialize plsda_model attribute from csv."""
+        if not self._replace_current_model():
             return
 
+        input_file = popupChooseInputFile(parent=self.MainWindow,
+                                          filter_csv=True)
+        if input_file is None:
+            return
+
+        try:
+            preproc = model.Preprocessing(input_file)
+        except Exception as e:
+            IO.Log.debug(str(e))
+            popupError(message=str(e), parent=self.MainWindow)
+            return
+
+        title = 'Choose preprocessing'
+        msg = 'Please choose the desired preprocessing: '
+        choices = (('autoscale', 'autoscaling'),
+                   ('center', 'centering'),
+                   ('normalize', 'normalizing'),
+                   ('empty_method', 'none'))
+        IO.Log.debug(title)
+        ok, index = popupChooseItem(msg, [b for a, b in choices],
+                                    title=title, parent=self.MainWindow)
+        for i, (method, name) in enumerate(choices):
+            if ok and index == i:
+                IO.Log.debug('OK (chosen preprocessing: {})'.format(name))
+                getattr(preproc, method)()
+                break
+        else:
+            IO.Log.debug('CANCEL (not chosen any preprocessing)')
+
+        try:
+            self.plsda_model = model.Nipals(preproc)
+        except Exception as e:
+            IO.Log.debug(str(e))
+            popupError(message=str(e), parent=self.MainWindow)
+            return
+
+        IO.Log.debug('Model created correctly')
+        self.current_mode = 'model'
+
+    def saveModel(self):
         export_dir = popupChooseOutputDirectory(parent=self.MainWindow)
         if export_dir is None:
             return
@@ -742,12 +734,30 @@ class UserInterface(object):
             return
         IO.Log.debug('Model saved correctly')
 
+    def loadModel(self):
+        """Initialize plsda_model attribute from workspace directory."""
+        if not self._replace_current_model():
+            return
+
+        workspace_dir = popupChooseInputDirectory(parent=self.MainWindow)
+        if workspace_dir is None:
+            return
+
+        plsda_model_copy = copy.deepcopy(self.plsda_model)
+        try:
+            self.plsda_model = IO.load(workspace_dir)
+        except Exception as e:
+            self.plsda_model = plsda_model_copy
+            IO.Log.debug(str(e))
+            popupError(message=str(e), parent=self.MainWindow)
+            return
+
+        IO.Log.debug('Model loaded correctly')
+        self.current_mode = 'model'
+
     def setupStatusAttributes(self):
         self.plsda_model = None
         self.current_mode = 'start'
-
-        self.ActionSaveModel.setEnabled(False)
-        self.ActionExport.setEnabled(False)
 
     def setupHandlers(self):
         self.ActionModel.triggered.connect(
@@ -759,13 +769,9 @@ class UserInterface(object):
         self.ActionPrediction.triggered.connect(
                 lambda: setattr(self, 'current_mode', 'prediction'))
 
-        self.ActionNewModel.triggered.connect(
-                lambda: self.newModel(load=False))
-
+        self.ActionNewModel.triggered.connect(self.newModel)
         self.ActionSaveModel.triggered.connect(self.saveModel)
-
-        self.ActionLoadModel.triggered.connect(
-                lambda: self.newModel(load=True))
+        self.ActionLoadModel.triggered.connect(self.loadModel)
 
         self.ActionExport.triggered.connect(
                 lambda: popupError('exception.NotImplementedError', parent=self.MainWindow))
