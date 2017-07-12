@@ -21,17 +21,17 @@ def new_qt(widget, name, parent=None):
     return ret
 
 
-def _popupChoose(parent, filter_csv=False,
-                 _input=False, _output=False, _directory=False, _file=False):
+def _popup_choose(parent, filter_csv=False,
+                  _input=False, _output=False, _directory=False, _file=False):
     """Display a dialog to choose an input/output file/directory.
 
        Return file path or None.
     """
     if bool(_input) == bool(_output):
-        IO.Log.error('In _popupChoose() input/output flags must differ')
+        IO.Log.error('In _popup_choose() input/output flags must differ')
         return
     if bool(_file) == bool(_directory):
-        IO.Log.error('In _popupChoose() file/directory flags must differ')
+        IO.Log.error('In _popup_choose() file/directory flags must differ')
         return
 
     mode = 'input' if _input else 'output'
@@ -64,36 +64,36 @@ def _popupChoose(parent, filter_csv=False,
     return dialog.selectedFiles()[0]
 
 
-def popupChooseInputDirectory(parent):
+def popup_choose_input_directory(parent):
     """Display a dialog to choose an input directory; return its path or None.
     """
-    return _popupChoose(parent, _input=True, _directory=True)
+    return _popup_choose(parent, _input=True, _directory=True)
 
 
-def popupChooseOutputDirectory(parent):
+def popup_choose_output_directory(parent):
     """Display a dialog to choose an output directory; return its path or None.
     """
-    return _popupChoose(parent, _output=True, _directory=True)
+    return _popup_choose(parent, _output=True, _directory=True)
 
 
-def popupChooseInputFile(parent, filter_csv=False):
+def popup_choose_input_file(parent, filter_csv=False):
     """Display a dialog to choose an input file; return its path or None."""
-    return _popupChoose(parent, filter_csv, _input=True, _file=True)
+    return _popup_choose(parent, filter_csv, _input=True, _file=True)
 
 
-def popupChooseOutputFile(parent, filter_csv=False):
+def popup_choose_output_file(parent, filter_csv=False):
     """Display a dialog to choose an output file; return its path or None."""
-    return _popupChoose(parent, filter_csv, _output=True, _file=True)
+    return _popup_choose(parent, filter_csv, _output=True, _file=True)
 
 
-def popupChooseItem(message, item_list, parent, title=None):
+def popup_choose_item(message, item_list, parent, title=None):
     """Display a dialog to choose an item from a list.
 
        Return tuple with two values:
          True on Ok answer, False otherwise
          index of the chosen item in item_list.
     """
-    dialog = new_qt('QInputDialog', 'popupChooseItem', parent=parent)
+    dialog = new_qt('QInputDialog', 'popup_choose_item', parent=parent)
     if title is not None:
         dialog.setWindowTitle(title)
     dialog.setLabelText(message)
@@ -103,9 +103,9 @@ def popupChooseItem(message, item_list, parent, title=None):
     return ok_answer, item_list.index(dialog.textValue())
 
 
-def popupError(message, parent):
+def popup_error(message, parent):
     """Display a dialog with an informative message and an Ok button."""
-    dialog = new_qt('QMessageBox', 'popupError', parent=parent)
+    dialog = new_qt('QMessageBox', 'popup_error', parent=parent)
     dialog.setIcon(QtWidgets.QMessageBox.Critical)
     if not isinstance(message, str):
         message = str(message)
@@ -114,12 +114,12 @@ def popupError(message, parent):
     dialog.exec()
 
 
-def popupQuestion(message, parent, title=None):
+def popup_question(message, parent, title=None):
     """Display a dialog with a question.
 
        Return True on Yes answer, False otherwise.
     """
-    dialog = new_qt('QMessageBox', 'popupQuestion', parent=parent)
+    dialog = new_qt('QMessageBox', 'popup_question', parent=parent)
     if title is not None:
         dialog.setWindowTitle(title)
     dialog.setText(message)
@@ -129,7 +129,7 @@ def popupQuestion(message, parent, title=None):
     return choice == QtWidgets.QMessageBox.Yes
 
 
-def setSize(widget, minimum=None, maximum=None, base=None):
+def set_size(widget, minimum=None, maximum=None, base=None):
     """Set the minimum, maximum and base sizes.
 
        Each one can be a list or tuple which must have two integer values:
@@ -150,8 +150,8 @@ def setSize(widget, minimum=None, maximum=None, base=None):
                                'height not in [0; 4320]'.format(func, *sizes))
 
 
-def setPolicy(widget, h_policy='Preferred', v_policy='Preferred',
-              h_stretch_factor=0, v_stretch_factor=0):
+def set_policy(widget, h_policy='Preferred', v_policy='Preferred',
+               h_stretch_factor=0, v_stretch_factor=0):
     """Set the new size policy of widget.
 
        widget is used to keep the previous hasHeightForWidth value and
@@ -193,19 +193,19 @@ class UserInterface(object):
         self.MainWindow = new_qt('QMainWindow', 'MainWindow')
         self.MainWindow.setEnabled(True)
         self.MainWindow.resize(800, 600)
-        setPolicy(self.MainWindow, 'Expanding', 'Expanding', 0, 0)
-        setSize(self.MainWindow, minimum=(800, 600), maximum=(7680, 4320))
+        set_policy(self.MainWindow, 'Expanding', 'Expanding', 0, 0)
+        set_size(self.MainWindow, minimum=(800, 600), maximum=(7680, 4320))
         self.MainWindow.setUnifiedTitleAndToolBarOnMac(True)
 
         # Previously in setupUi()
         self.MainWidget = new_qt('QWidget', 'MainWidget', parent=self.MainWindow)
-        setPolicy(self.MainWidget, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.MainWidget, minimum=(800, 600), maximum=(7680, 4300))
+        set_policy(self.MainWidget, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.MainWidget, minimum=(800, 600), maximum=(7680, 4300))
 
         self.MainSplitter = new_qt('QSplitter', 'MainSplitter',
                                 parent=self.MainWidget)
-        setPolicy(self.MainSplitter, 'Expanding', 'Expanding', 0, 0)
-        setSize(self.MainSplitter, minimum=(800, 600), maximum=(7680, 4300))
+        set_policy(self.MainSplitter, 'Expanding', 'Expanding', 0, 0)
+        set_size(self.MainSplitter, minimum=(800, 600), maximum=(7680, 4300))
         self.MainSplitter.setOrientation(QtCore.Qt.Horizontal)
         self.MainSplitter.setHandleWidth(3)
 
@@ -214,10 +214,10 @@ class UserInterface(object):
                                                 'LeftScrollAreaWidgetContents')
         self.LeftScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0,
                                                                    291, 565))
-        setPolicy(self.LeftScrollAreaWidgetContents,
-                  'Expanding', 'Expanding', 0, 0)
-        setSize(self.LeftScrollAreaWidgetContents,
-                minimum=(174, 427), maximum=(3611, 4147))
+        set_policy(self.LeftScrollAreaWidgetContents,
+                   'Expanding', 'Expanding', 0, 0)
+        set_size(self.LeftScrollAreaWidgetContents,
+                 minimum=(174, 427), maximum=(3611, 4147))
         self.LeftScrollAreaWidgetContents.setLayoutDirection(
                 QtCore.Qt.LeftToRight)
 
@@ -235,7 +235,7 @@ class UserInterface(object):
 
         self.LeftLVsLabel = new_qt('QLabel', 'LeftLVsLabel',
                                 parent=self.LeftScrollAreaWidgetContents)
-        setSize(self.LeftLVsLabel, minimum=(70, 22), maximum=(1310, 170))
+        set_size(self.LeftLVsLabel, minimum=(70, 22), maximum=(1310, 170))
         self.LeftLVsLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.LeftLVsLabel.setWordWrap(True)
         self.LeftPlotFormLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole,
@@ -243,23 +243,23 @@ class UserInterface(object):
 
         self.LeftLVsSpinBox = new_qt('QSpinBox', 'LeftLVsSpinBox',
                                   parent=self.LeftScrollAreaWidgetContents)
-        setPolicy(self.LeftLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.LeftLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.LeftLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.LeftLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.LeftLVsSpinBox.setMinimum(1)
         self.LeftPlotFormLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole,
                                           self.LeftLVsSpinBox)
 
         self.LeftXRadioButton = new_qt('QRadioButton', 'LeftXRadioButton',
                                     parent=self.LeftScrollAreaWidgetContents)
-        setPolicy(self.LeftXRadioButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.LeftXRadioButton, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.LeftXRadioButton, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.LeftXRadioButton, minimum=(70, 22), maximum=(1310, 170))
         self.LeftPlotFormLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole,
                                           self.LeftXRadioButton)
 
         self.LeftYRadioButton = new_qt('QRadioButton', 'LeftYRadioButton',
                                     parent=self.LeftScrollAreaWidgetContents)
-        setPolicy(self.LeftYRadioButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.LeftYRadioButton, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.LeftYRadioButton, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.LeftYRadioButton, minimum=(70, 22), maximum=(1310, 170))
         self.LeftPlotFormLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole,
                                           self.LeftYRadioButton)
 
@@ -270,47 +270,49 @@ class UserInterface(object):
 
         self.LeftXSpinBox = new_qt('QSpinBox', 'LeftXSpinBox',
                                 parent=self.LeftScrollAreaWidgetContents)
-        setPolicy(self.LeftXSpinBox, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.LeftXSpinBox, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.LeftXSpinBox, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.LeftXSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.LeftXSpinBox.setMinimum(1)
         self.LeftPlotFormLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole,
                                           self.LeftXSpinBox)
 
         self.LeftYSpinBox = new_qt('QSpinBox', 'LeftYSpinBox',
                                 parent=self.LeftScrollAreaWidgetContents)
-        setPolicy(self.LeftYSpinBox, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.LeftYSpinBox, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.LeftYSpinBox, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.LeftYSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.LeftYSpinBox.setMinimum(1)
         self.LeftPlotFormLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole,
                                           self.LeftYSpinBox)
 
         self.LeftPlotPushButton = new_qt('QPushButton', 'LeftPlotPushButton',
                                       parent=self.LeftScrollAreaWidgetContents)
-        setPolicy(self.LeftPlotPushButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.LeftPlotPushButton, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.LeftPlotPushButton, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.LeftPlotPushButton,
+                 minimum=(70, 22), maximum=(1310, 170))
         self.LeftPlotFormLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole,
                                           self.LeftPlotPushButton)
 
         self.LeftBackPushButton = new_qt('QPushButton', 'LeftBackPushButton',
                                       parent=self.LeftScrollAreaWidgetContents)
-        setPolicy(self.LeftBackPushButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.LeftBackPushButton, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.LeftBackPushButton, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.LeftBackPushButton,
+                 minimum=(70, 22), maximum=(1310, 170))
         self.LeftPlotFormLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole,
                                           self.LeftBackPushButton)
 
         self.LeftWidget = new_qt('QWidget', 'LeftWidget',
                               parent=self.MainSplitter)
-        setSize(self.LeftWidget, minimum=(200, 580), maximum=(3637, 4300))
+        set_size(self.LeftWidget, minimum=(200, 580), maximum=(3637, 4300))
 
         self.LeftComboBox = new_qt('QComboBox', 'LeftComboBox',
                                 parent=self.LeftWidget)
-        setSize(self.LeftComboBox, minimum=(194, 22), maximum=(3631, 22))
+        set_size(self.LeftComboBox, minimum=(194, 22), maximum=(3631, 22))
         for entry in self.drop_down_choices:
             self.LeftComboBox.addItem("")
 
         self.LeftScrollArea = new_qt('QScrollArea', 'LeftScrollArea',
                                   parent=self.LeftWidget)
-        setSize(self.LeftScrollArea, minimum=(194, 547), maximum=(3631, 4267))
+        set_size(self.LeftScrollArea, minimum=(194, 547), maximum=(3631, 4267))
         self.LeftScrollArea.setWidgetResizable(True)
         self.LeftScrollArea.setWidget(self.LeftScrollAreaWidgetContents)
 
@@ -326,10 +328,10 @@ class UserInterface(object):
                 'QWidget', 'CentralScrollAreaWidgetContents')
         self.CentralScrollAreaWidgetContents.setGeometry(
                 QtCore.QRect(0, 0, 290, 565))
-        setPolicy(self.CentralScrollAreaWidgetContents,
-                  'Expanding', 'Expanding', 0, 0)
-        setSize(self.CentralScrollAreaWidgetContents,
-                minimum=(174, 427), maximum=(3611, 4147))
+        set_policy(self.CentralScrollAreaWidgetContents,
+                   'Expanding', 'Expanding', 0, 0)
+        set_size(self.CentralScrollAreaWidgetContents,
+                 minimum=(174, 427), maximum=(3611, 4147))
         self.CentralScrollAreaWidgetContents.setLayoutDirection(
                 QtCore.Qt.LeftToRight)
 
@@ -348,8 +350,8 @@ class UserInterface(object):
 
         self.CentralLVsLabel = new_qt('QLabel', 'CentralLVsLabel',
                                    parent=self.CentralScrollAreaWidgetContents)
-        setPolicy(self.CentralLVsLabel, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralLVsLabel, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.CentralLVsLabel, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.CentralLVsLabel, minimum=(70, 22), maximum=(1310, 170))
         self.CentralLVsLabel.setTextFormat(QtCore.Qt.AutoText)
         self.CentralLVsLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.CentralLVsLabel.setWordWrap(True)
@@ -360,8 +362,8 @@ class UserInterface(object):
         self.CentralLVsSpinBox = new_qt(
                 'QSpinBox', 'CentralLVsSpinBox',
                 parent=self.CentralScrollAreaWidgetContents)
-        setPolicy(self.CentralLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.CentralLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.CentralLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.CentralLVsSpinBox.setMinimum(1)
         self.CentralPlotFormLayout.setWidget(0,
                                              QtWidgets.QFormLayout.FieldRole,
@@ -370,9 +372,9 @@ class UserInterface(object):
         self.CentralXRadioButton = new_qt(
                 'QRadioButton', 'CentralXRadioButton',
                 parent=self.CentralScrollAreaWidgetContents)
-        setPolicy(self.CentralXRadioButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralXRadioButton,
-                minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.CentralXRadioButton, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.CentralXRadioButton,
+                 minimum=(70, 22), maximum=(1310, 170))
         self.CentralPlotFormLayout.setWidget(1,
                                              QtWidgets.QFormLayout.LabelRole,
                                              self.CentralXRadioButton)
@@ -380,9 +382,9 @@ class UserInterface(object):
         self.CentralYRadioButton = new_qt(
                 'QRadioButton', 'CentralYRadioButton',
                 parent=self.CentralScrollAreaWidgetContents)
-        setPolicy(self.CentralYRadioButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralYRadioButton,
-                minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.CentralYRadioButton, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.CentralYRadioButton,
+                 minimum=(70, 22), maximum=(1310, 170))
         self.CentralPlotFormLayout.setWidget(1,
                                              QtWidgets.QFormLayout.FieldRole,
                                              self.CentralYRadioButton)
@@ -396,8 +398,8 @@ class UserInterface(object):
         self.CentralXSpinBox = new_qt(
                 'QSpinBox', 'CentralXSpinBox',
                 parent=self.CentralScrollAreaWidgetContents)
-        setPolicy(self.CentralXSpinBox, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralXSpinBox, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.CentralXSpinBox, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.CentralXSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.CentralXSpinBox.setMinimum(1)
         self.CentralPlotFormLayout.setWidget(2,
                                              QtWidgets.QFormLayout.LabelRole,
@@ -405,8 +407,8 @@ class UserInterface(object):
 
         self.CentralYSpinBox = new_qt('QSpinBox', 'CentralYSpinBox',
                                    parent=self.CentralScrollAreaWidgetContents)
-        setPolicy(self.CentralYSpinBox, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralYSpinBox, minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.CentralYSpinBox, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.CentralYSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.CentralYSpinBox.setMinimum(1)
         self.CentralPlotFormLayout.setWidget(2,
                                              QtWidgets.QFormLayout.FieldRole,
@@ -415,9 +417,9 @@ class UserInterface(object):
         self.CentralBackPushButton = new_qt(
                 'QPushButton', 'CentralBackPushButton',
                 parent=self.CentralScrollAreaWidgetContents)
-        setPolicy(self.CentralBackPushButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralBackPushButton,
-                minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.CentralBackPushButton, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.CentralBackPushButton,
+                 minimum=(70, 22), maximum=(1310, 170))
         self.CentralPlotFormLayout.setWidget(3,
                                              QtWidgets.QFormLayout.LabelRole,
                                              self.CentralBackPushButton)
@@ -425,28 +427,28 @@ class UserInterface(object):
         self.CentralPlotPushButton = new_qt(
                 'QPushButton', 'CentralPlotPushButton',
                 parent=self.CentralScrollAreaWidgetContents)
-        setPolicy(self.CentralPlotPushButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralPlotPushButton,
-                minimum=(70, 22), maximum=(1310, 170))
+        set_policy(self.CentralPlotPushButton, 'Preferred', 'Preferred', 0, 0)
+        set_size(self.CentralPlotPushButton,
+                 minimum=(70, 22), maximum=(1310, 170))
         self.CentralPlotFormLayout.setWidget(3,
                                              QtWidgets.QFormLayout.FieldRole,
                                              self.CentralPlotPushButton)
 
         self.CentralWidget = new_qt('QWidget', 'CentralWidget',
                                  parent=self.MainSplitter)
-        setSize(self.CentralWidget, minimum=(200, 580), maximum=(3637, 4300))
+        set_size(self.CentralWidget, minimum=(200, 580), maximum=(3637, 4300))
 
         self.CentralComboBox = new_qt('QComboBox', 'CentralComboBox',
                                    parent=self.CentralWidget)
-        setPolicy(self.CentralComboBox, 'Expanding', 'Expanding', 0, 0)
-        setSize(self.CentralComboBox, minimum=(194, 22), maximum=(3631, 22))
+        set_policy(self.CentralComboBox, 'Expanding', 'Expanding', 0, 0)
+        set_size(self.CentralComboBox, minimum=(194, 22), maximum=(3631, 22))
         for entry in self.drop_down_choices:
             self.CentralComboBox.addItem("")
 
         self.CentralScrollArea = new_qt('QScrollArea', 'CentralScrollArea',
                                      parent=self.CentralWidget)
-        setSize(self.CentralScrollArea,
-                minimum=(194, 547), maximum=(3631, 4267))
+        set_size(self.CentralScrollArea,
+                 minimum=(194, 547), maximum=(3631, 4267))
         self.CentralScrollArea.setWidgetResizable(True)
         self.CentralScrollArea.setWidget(self.CentralScrollAreaWidgetContents)
 
@@ -462,15 +464,15 @@ class UserInterface(object):
                 'QWidget', 'RightScrollAreaWidgetContents')
         self.RightScrollAreaWidgetContents.setGeometry(
                 QtCore.QRect(0, 0, 189, 565))
-        setPolicy(self.RightScrollAreaWidgetContents,
-                  'Expanding', 'Expanding', 0, 0)
-        setSize(self.RightScrollAreaWidgetContents,
-                minimum=(138, 534), maximum=(388, 4259))
+        set_policy(self.RightScrollAreaWidgetContents,
+                   'Expanding', 'Expanding', 0, 0)
+        set_size(self.RightScrollAreaWidgetContents,
+                 minimum=(138, 534), maximum=(388, 4259))
 
         self.DetailsLabel = new_qt('QLabel', 'DetailsLabel',
                                 parent=self.RightScrollAreaWidgetContents)
-        setPolicy(self.DetailsLabel, 'Expanding', 'Expanding', 0, 0)
-        setSize(self.DetailsLabel, minimum=(138, 534), maximum=(388, 4259))
+        set_policy(self.DetailsLabel, 'Expanding', 'Expanding', 0, 0)
+        set_size(self.DetailsLabel, minimum=(138, 534), maximum=(388, 4259))
         self.DetailsLabel.setAlignment(QtCore.Qt.AlignHCenter
                                        | QtCore.Qt.AlignTop)
         self.DetailsLabel.setWordWrap(True)
@@ -486,19 +488,20 @@ class UserInterface(object):
 
         self.RightWidget = new_qt('QWidget', 'RightWidget',
                                parent=self.MainSplitter)
-        setPolicy(self.RightWidget, 'Expanding', 'Expanding', 0, 0)
-        setSize(self.RightWidget, minimum=(150, 580), maximum=(400, 4300))
+        set_policy(self.RightWidget, 'Expanding', 'Expanding', 0, 0)
+        set_size(self.RightWidget, minimum=(150, 580), maximum=(400, 4300))
 
         self.RightScrollArea = new_qt('QScrollArea', 'RightScrollArea',
                                    parent=self.RightWidget)
-        setSize(self.RightScrollArea, minimum=(144, 547), maximum=(394, 4272))
+        set_size(self.RightScrollArea,
+                 minimum=(144, 547), maximum=(394, 4272))
         self.RightScrollArea.setWidgetResizable(True)
         self.RightScrollArea.setWidget(self.RightScrollAreaWidgetContents)
 
         self.CurrentModeLabel = new_qt('QLabel', 'CurrentModeLabel',
                                     parent=self.RightWidget)
-        setPolicy(self.CurrentModeLabel, 'Expanding', 'Expanding', 0, 0)
-        setSize(self.CurrentModeLabel, minimum=(144, 22), maximum=(394, 22))
+        set_policy(self.CurrentModeLabel, 'Expanding', 'Expanding', 0, 0)
+        set_size(self.CurrentModeLabel, minimum=(144, 22), maximum=(394, 22))
         self.CurrentModeLabel.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.CurrentModeLabel.setFrameShadow(QtWidgets.QFrame.Plain)
         self.CurrentModeLabel.setLineWidth(1)
@@ -521,17 +524,17 @@ class UserInterface(object):
 
         self.TopMenuBar = new_qt('QMenuBar', 'TopMenuBar', parent=self.MainWindow)
         self.TopMenuBar.setGeometry(QtCore.QRect(0, 0, 800, 20))
-        setSize(self.TopMenuBar, minimum=(800, 20), maximum=(7680, 20))
+        set_size(self.TopMenuBar, minimum=(800, 20), maximum=(7680, 20))
 
         self.MenuOptions = new_qt('QMenu', 'MenuOptions', parent=self.TopMenuBar)
-        setSize(self.MenuOptions, minimum=(100, 20), maximum=(960, 4300))
+        set_size(self.MenuOptions, minimum=(100, 20), maximum=(960, 4300))
 
         self.MenuChangeMode = new_qt('QMenu', 'MenuChangeMode',
                                   parent=self.TopMenuBar)
-        setSize(self.MenuChangeMode, minimum=(100, 20), maximum=(960, 4300))
+        set_size(self.MenuChangeMode, minimum=(100, 20), maximum=(960, 4300))
 
         self.MenuAbout = new_qt('QMenu', 'MenuAbout', parent=self.TopMenuBar)
-        setSize(self.MenuAbout, minimum=(100, 20), maximum=(960, 4300))
+        set_size(self.MenuAbout, minimum=(100, 20), maximum=(960, 4300))
 
         self.MainWindow.setMenuBar(self.TopMenuBar)
 
@@ -618,8 +621,10 @@ class UserInterface(object):
         self.ActionSaveModel.setShortcut("Ctrl+S")
         QtCore.QMetaObject.connectSlotsByName(self.MainWindow)
 
-        self.setupHandlers()
-        self.setupStatusAttributes()
+        self.connect_handlers()
+
+        self.plsda_model = None
+        self.current_mode = 'start'
 
     @property
     def current_mode(self):
@@ -671,20 +676,20 @@ class UserInterface(object):
         msg = str('Are you sure to replace the current model? '
                   '(All data not saved will be lost)')
         IO.Log.debug(title)
-        if popupQuestion(msg, title=title, parent=self.MainWindow):
+        if popup_question(msg, title=title, parent=self.MainWindow):
             IO.Log.debug('YES (replacing current model)')
             return True
         else:
             IO.Log.debug('NO (not replacing current model)')
             return False
 
-    def newModel(self):
+    def new_model(self):
         """Initialize plsda_model attribute from csv."""
         if not self._replace_current_model():
             return
 
-        input_file = popupChooseInputFile(parent=self.MainWindow,
-                                          filter_csv=True)
+        input_file = popup_choose_input_file(parent=self.MainWindow,
+                                             filter_csv=True)
         if input_file is None:
             return
 
@@ -692,7 +697,7 @@ class UserInterface(object):
             preproc = model.Preprocessing(input_file)
         except Exception as e:
             IO.Log.debug(str(e))
-            popupError(message=str(e), parent=self.MainWindow)
+            popup_error(message=str(e), parent=self.MainWindow)
             return
 
         title = 'Choose preprocessing'
@@ -702,8 +707,8 @@ class UserInterface(object):
                    ('normalize', 'normalizing'),
                    ('empty_method', 'none'))
         IO.Log.debug(title)
-        ok, index = popupChooseItem(msg, [b for a, b in choices],
-                                    title=title, parent=self.MainWindow)
+        ok, index = popup_choose_item(msg, [b for a, b in choices],
+                                      title=title, parent=self.MainWindow)
         for i, (method, name) in enumerate(choices):
             if ok and index == i:
                 IO.Log.debug('OK (chosen preprocessing: {})'.format(name))
@@ -716,30 +721,30 @@ class UserInterface(object):
             self.plsda_model = model.Nipals(preproc)
         except Exception as e:
             IO.Log.debug(str(e))
-            popupError(message=str(e), parent=self.MainWindow)
+            popup_error(message=str(e), parent=self.MainWindow)
             return
 
         IO.Log.debug('Model created correctly')
         self.current_mode = 'model'
 
-    def saveModel(self):
-        export_dir = popupChooseOutputDirectory(parent=self.MainWindow)
+    def save_model(self):
+        export_dir = popup_choose_output_directory(parent=self.MainWindow)
         if export_dir is None:
             return
         try:
             IO.dump(self.plsda_model, export_dir)
         except Exception as e:
             IO.Log.debug(str(e))
-            popupError(message=str(e), parent=self.MainWindow)
+            popup_error(message=str(e), parent=self.MainWindow)
             return
         IO.Log.debug('Model saved correctly')
 
-    def loadModel(self):
+    def load_model(self):
         """Initialize plsda_model attribute from workspace directory."""
         if not self._replace_current_model():
             return
 
-        workspace_dir = popupChooseInputDirectory(parent=self.MainWindow)
+        workspace_dir = popup_choose_input_directory(parent=self.MainWindow)
         if workspace_dir is None:
             return
 
@@ -749,17 +754,13 @@ class UserInterface(object):
         except Exception as e:
             self.plsda_model = plsda_model_copy
             IO.Log.debug(str(e))
-            popupError(message=str(e), parent=self.MainWindow)
+            popup_error(message=str(e), parent=self.MainWindow)
             return
 
         IO.Log.debug('Model loaded correctly')
         self.current_mode = 'model'
 
-    def setupStatusAttributes(self):
-        self.plsda_model = None
-        self.current_mode = 'start'
-
-    def setupHandlers(self):
+    def connect_handlers(self):
         self.ActionModel.triggered.connect(
                 lambda: setattr(self, 'current_mode', 'model'))
 
@@ -769,12 +770,12 @@ class UserInterface(object):
         self.ActionPrediction.triggered.connect(
                 lambda: setattr(self, 'current_mode', 'prediction'))
 
-        self.ActionNewModel.triggered.connect(self.newModel)
-        self.ActionSaveModel.triggered.connect(self.saveModel)
-        self.ActionLoadModel.triggered.connect(self.loadModel)
+        self.ActionNewModel.triggered.connect(self.new_model)
+        self.ActionSaveModel.triggered.connect(self.save_model)
+        self.ActionLoadModel.triggered.connect(self.load_model)
 
         self.ActionExport.triggered.connect(
-                lambda: popupError('exception.NotImplementedError', parent=self.MainWindow))
+                lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
 
     def show(self):
         self.MainWindow.show()
