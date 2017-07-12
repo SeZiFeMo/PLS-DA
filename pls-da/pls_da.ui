@@ -244,7 +244,7 @@
            <property name="layoutDirection">
             <enum>Qt::LeftToRight</enum>
            </property>
-           <layout class="QFormLayout" name="PlotFormLayout">
+           <layout class="QFormLayout" name="LeftPlotFormLayout">
             <property name="sizeConstraint">
              <enum>QLayout::SetMaximumSize</enum>
             </property>
@@ -651,7 +651,7 @@
            <property name="layoutDirection">
             <enum>Qt::LeftToRight</enum>
            </property>
-           <layout class="QFormLayout" name="PlotFormLayout">
+           <layout class="QFormLayout" name="CentralPlotFormLayout">
             <property name="sizeConstraint">
              <enum>QLayout::SetMaximumSize</enum>
             </property>

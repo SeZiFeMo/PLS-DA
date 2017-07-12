@@ -9,6 +9,8 @@ import PyQt5.QtWidgets as QtWidgets
 import sys
 
 import IO
+import utility
+
 
 def new_qt(widget, name, parent=None):
     """Return a widget of type specified with 1st argument (a string).
@@ -166,7 +168,8 @@ class UserInterface(object):
         setPolicy(self.MainWidget, 'Preferred', 'Preferred', 0, 0)
         setSize(self.MainWidget, minimum=(800, 600), maximum=(7680, 4300))
 
-        self.MainSplitter = new_qt('QSplitter', 'MainSplitter', parent=self.MainWidget)
+        self.MainSplitter = new_qt('QSplitter', 'MainSplitter',
+                                parent=self.MainWidget)
         setPolicy(self.MainSplitter, 'Expanding', 'Expanding', 0, 0)
         setSize(self.MainSplitter, minimum=(800, 600), maximum=(7680, 4300))
         self.MainSplitter.setOrientation(QtCore.Qt.Horizontal)
@@ -175,201 +178,291 @@ class UserInterface(object):
         # Start creating widgets to put inside LeftWidget
         self.LeftScrollAreaWidgetContents = new_qt('QWidget',
                                                 'LeftScrollAreaWidgetContents')
-        self.LeftScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 291, 565))
-        setPolicy(self.LeftScrollAreaWidgetContents, 'Expanding', 'Expanding', 0, 0)
-        setSize(self.LeftScrollAreaWidgetContents, minimum=(174, 427), maximum=(3611, 4147))
-        self.LeftScrollAreaWidgetContents.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.LeftScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0,
+                                                                   291, 565))
+        setPolicy(self.LeftScrollAreaWidgetContents,
+                  'Expanding', 'Expanding', 0, 0)
+        setSize(self.LeftScrollAreaWidgetContents,
+                minimum=(174, 427), maximum=(3611, 4147))
+        self.LeftScrollAreaWidgetContents.setLayoutDirection(
+                QtCore.Qt.LeftToRight)
 
-        self.PlotFormLayout = new_qt('QFormLayout', 'PlotFormLayout', parent=self.LeftScrollAreaWidgetContents)
-        self.PlotFormLayout.setSizeConstraint(QtWidgets.QLayout.SetMaximumSize)
-        self.PlotFormLayout.setFieldGrowthPolicy(QtWidgets.QFormLayout.ExpandingFieldsGrow)
-        self.PlotFormLayout.setLabelAlignment(QtCore.Qt.AlignCenter)
-        self.PlotFormLayout.setFormAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
-        self.PlotFormLayout.setContentsMargins(10, 10, 10, 10)
-        self.PlotFormLayout.setSpacing(10)
+        self.LeftPlotFormLayout = new_qt('QFormLayout', 'LeftPlotFormLayout',
+                                      parent=self.LeftScrollAreaWidgetContents)
+        self.LeftPlotFormLayout.setSizeConstraint(
+                QtWidgets.QLayout.SetMaximumSize)
+        self.LeftPlotFormLayout.setFieldGrowthPolicy(
+                QtWidgets.QFormLayout.ExpandingFieldsGrow)
+        self.LeftPlotFormLayout.setLabelAlignment(QtCore.Qt.AlignCenter)
+        self.LeftPlotFormLayout.setFormAlignment(QtCore.Qt.AlignHCenter
+                                                 | QtCore.Qt.AlignTop)
+        self.LeftPlotFormLayout.setContentsMargins(10, 10, 10, 10)
+        self.LeftPlotFormLayout.setSpacing(10)
 
-        self.LeftLVsLabel = new_qt('QLabel', 'LeftLVsLabel', parent=self.LeftScrollAreaWidgetContents)
+        self.LeftLVsLabel = new_qt('QLabel', 'LeftLVsLabel',
+                                parent=self.LeftScrollAreaWidgetContents)
         setSize(self.LeftLVsLabel, minimum=(70, 22), maximum=(1310, 170))
         self.LeftLVsLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.LeftLVsLabel.setWordWrap(True)
-        self.PlotFormLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.LeftLVsLabel)
+        self.LeftPlotFormLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole,
+                                          self.LeftLVsLabel)
 
-        self.LeftLVsSpinBox = new_qt('QSpinBox', 'LeftLVsSpinBox', parent=self.LeftScrollAreaWidgetContents)
+        self.LeftLVsSpinBox = new_qt('QSpinBox', 'LeftLVsSpinBox',
+                                  parent=self.LeftScrollAreaWidgetContents)
         setPolicy(self.LeftLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
         setSize(self.LeftLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.LeftLVsSpinBox.setMinimum(1)
-        self.PlotFormLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.LeftLVsSpinBox)
+        self.LeftPlotFormLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole,
+                                          self.LeftLVsSpinBox)
 
-        self.LeftXRadioButton = new_qt('QRadioButton', 'LeftXRadioButton', parent=self.LeftScrollAreaWidgetContents)
+        self.LeftXRadioButton = new_qt('QRadioButton', 'LeftXRadioButton',
+                                    parent=self.LeftScrollAreaWidgetContents)
         setPolicy(self.LeftXRadioButton, 'Preferred', 'Preferred', 0, 0)
         setSize(self.LeftXRadioButton, minimum=(70, 22), maximum=(1310, 170))
-        self.PlotFormLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.LeftXRadioButton)
+        self.LeftPlotFormLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole,
+                                          self.LeftXRadioButton)
 
-        self.LeftYRadioButton = new_qt('QRadioButton', 'LeftYRadioButton', parent=self.LeftScrollAreaWidgetContents)
+        self.LeftYRadioButton = new_qt('QRadioButton', 'LeftYRadioButton',
+                                    parent=self.LeftScrollAreaWidgetContents)
         setPolicy(self.LeftYRadioButton, 'Preferred', 'Preferred', 0, 0)
         setSize(self.LeftYRadioButton, minimum=(70, 22), maximum=(1310, 170))
-        self.PlotFormLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.LeftYRadioButton)
+        self.LeftPlotFormLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole,
+                                          self.LeftYRadioButton)
 
-        self.LeftButtonGroup = new_qt('QButtonGroup', 'LeftButtonGroup', parent=self.MainWindow)
+        self.LeftButtonGroup = new_qt('QButtonGroup', 'LeftButtonGroup',
+                                   parent=self.LeftScrollAreaWidgetContents)
         self.LeftButtonGroup.addButton(self.LeftXRadioButton)
         self.LeftButtonGroup.addButton(self.LeftYRadioButton)
 
-        self.LeftXSpinBox = new_qt('QSpinBox', 'LeftXSpinBox', parent=self.LeftScrollAreaWidgetContents)
+        self.LeftXSpinBox = new_qt('QSpinBox', 'LeftXSpinBox',
+                                parent=self.LeftScrollAreaWidgetContents)
         setPolicy(self.LeftXSpinBox, 'Preferred', 'Preferred', 0, 0)
         setSize(self.LeftXSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.LeftXSpinBox.setMinimum(1)
-        self.PlotFormLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.LeftXSpinBox)
+        self.LeftPlotFormLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole,
+                                          self.LeftXSpinBox)
 
-        self.LeftYSpinBox = new_qt('QSpinBox', 'LeftYSpinBox', parent=self.LeftScrollAreaWidgetContents)
+        self.LeftYSpinBox = new_qt('QSpinBox', 'LeftYSpinBox',
+                                parent=self.LeftScrollAreaWidgetContents)
         setPolicy(self.LeftYSpinBox, 'Preferred', 'Preferred', 0, 0)
         setSize(self.LeftYSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.LeftYSpinBox.setMinimum(1)
-        self.PlotFormLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.LeftYSpinBox)
+        self.LeftPlotFormLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole,
+                                          self.LeftYSpinBox)
 
-        self.LeftPlotPushButton = new_qt('QPushButton', 'LeftPlotPushButton', parent=self.LeftScrollAreaWidgetContents)
+        self.LeftPlotPushButton = new_qt('QPushButton', 'LeftPlotPushButton',
+                                      parent=self.LeftScrollAreaWidgetContents)
         setPolicy(self.LeftPlotPushButton, 'Preferred', 'Preferred', 0, 0)
         setSize(self.LeftPlotPushButton, minimum=(70, 22), maximum=(1310, 170))
-        self.PlotFormLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.LeftPlotPushButton)
+        self.LeftPlotFormLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole,
+                                          self.LeftPlotPushButton)
 
-        self.LeftBackPushButton = new_qt('QPushButton', 'LeftBackPushButton', parent=self.LeftScrollAreaWidgetContents)
+        self.LeftBackPushButton = new_qt('QPushButton', 'LeftBackPushButton',
+                                      parent=self.LeftScrollAreaWidgetContents)
         setPolicy(self.LeftBackPushButton, 'Preferred', 'Preferred', 0, 0)
         setSize(self.LeftBackPushButton, minimum=(70, 22), maximum=(1310, 170))
-        self.PlotFormLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.LeftBackPushButton)
+        self.LeftPlotFormLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole,
+                                          self.LeftBackPushButton)
 
-        self.LeftWidget = new_qt('QWidget', 'LeftWidget', parent=self.MainSplitter)
+        self.LeftWidget = new_qt('QWidget', 'LeftWidget',
+                              parent=self.MainSplitter)
         setSize(self.LeftWidget, minimum=(200, 580), maximum=(3637, 4300))
 
-        self.LeftComboBox = new_qt('QComboBox', 'LeftComboBox', parent=self.LeftWidget)
+        self.LeftComboBox = new_qt('QComboBox', 'LeftComboBox',
+                                parent=self.LeftWidget)
         setSize(self.LeftComboBox, minimum=(194, 22), maximum=(3631, 22))
         for entry in self.drop_down_choices:
             self.LeftComboBox.addItem("")
 
-        self.LeftScrollArea = new_qt('QScrollArea', 'LeftScrollArea', parent=self.LeftWidget)
+        self.LeftScrollArea = new_qt('QScrollArea', 'LeftScrollArea',
+                                  parent=self.LeftWidget)
         setSize(self.LeftScrollArea, minimum=(194, 547), maximum=(3631, 4267))
         self.LeftScrollArea.setWidgetResizable(True)
         self.LeftScrollArea.setWidget(self.LeftScrollAreaWidgetContents)
 
-        self.LeftGridLayout = new_qt('QGridLayout', 'LeftGridLayout', parent=self.LeftWidget)
+        self.LeftGridLayout = new_qt('QGridLayout', 'LeftGridLayout',
+                                  parent=self.LeftWidget)
         self.LeftGridLayout.setContentsMargins(3, 3, 3, 3)
         self.LeftGridLayout.setSpacing(5)
         self.LeftGridLayout.addWidget(self.LeftComboBox, 0, 0, 1, 1)
         self.LeftGridLayout.addWidget(self.LeftScrollArea, 1, 0, 1, 1)
 
         # Start creating widgets to put inside CentralWidget
-        self.CentralScrollAreaWidgetContents = new_qt('QWidget', 'CentralScrollAreaWidgetContents')
-        self.CentralScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 290, 565))
-        setPolicy(self.CentralScrollAreaWidgetContents, 'Expanding', 'Expanding', 0, 0)
-        setSize(self.CentralScrollAreaWidgetContents, minimum=(174, 427), maximum=(3611, 4147))
-        self.CentralScrollAreaWidgetContents.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.CentralScrollAreaWidgetContents = new_qt(
+                'QWidget', 'CentralScrollAreaWidgetContents')
+        self.CentralScrollAreaWidgetContents.setGeometry(
+                QtCore.QRect(0, 0, 290, 565))
+        setPolicy(self.CentralScrollAreaWidgetContents,
+                  'Expanding', 'Expanding', 0, 0)
+        setSize(self.CentralScrollAreaWidgetContents,
+                minimum=(174, 427), maximum=(3611, 4147))
+        self.CentralScrollAreaWidgetContents.setLayoutDirection(
+                QtCore.Qt.LeftToRight)
 
-        self.PlotFormLayout1 = new_qt('QFormLayout', 'PlotFormLayout1', parent=self.CentralScrollAreaWidgetContents)
-        self.PlotFormLayout1.setSizeConstraint(QtWidgets.QLayout.SetMaximumSize)
-        self.PlotFormLayout1.setFieldGrowthPolicy(QtWidgets.QFormLayout.ExpandingFieldsGrow)
-        self.PlotFormLayout1.setLabelAlignment(QtCore.Qt.AlignCenter)
-        self.PlotFormLayout1.setFormAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
-        self.PlotFormLayout1.setContentsMargins(10, 10, 10, 10)
-        self.PlotFormLayout1.setSpacing(10)
+        self.CentralPlotFormLayout = new_qt(
+                'QFormLayout', 'CentralPlotFormLayout',
+                parent=self.CentralScrollAreaWidgetContents)
+        self.CentralPlotFormLayout.setSizeConstraint(
+                QtWidgets.QLayout.SetMaximumSize)
+        self.CentralPlotFormLayout.setFieldGrowthPolicy(
+                QtWidgets.QFormLayout.ExpandingFieldsGrow)
+        self.CentralPlotFormLayout.setLabelAlignment(QtCore.Qt.AlignCenter)
+        self.CentralPlotFormLayout.setFormAlignment(QtCore.Qt.AlignHCenter
+                                                    | QtCore.Qt.AlignTop)
+        self.CentralPlotFormLayout.setContentsMargins(10, 10, 10, 10)
+        self.CentralPlotFormLayout.setSpacing(10)
 
-        self.CentralLVsLabel = new_qt('QLabel', 'CentralLVsLabel', parent=self.CentralScrollAreaWidgetContents)
+        self.CentralLVsLabel = new_qt('QLabel', 'CentralLVsLabel',
+                                   parent=self.CentralScrollAreaWidgetContents)
         setPolicy(self.CentralLVsLabel, 'Preferred', 'Preferred', 0, 0)
         setSize(self.CentralLVsLabel, minimum=(70, 22), maximum=(1310, 170))
         self.CentralLVsLabel.setTextFormat(QtCore.Qt.AutoText)
         self.CentralLVsLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.CentralLVsLabel.setWordWrap(True)
-        self.PlotFormLayout1.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.CentralLVsLabel)
+        self.CentralPlotFormLayout.setWidget(0,
+                                             QtWidgets.QFormLayout.LabelRole,
+                                             self.CentralLVsLabel)
 
-        self.CentralLVsSpinBox = new_qt('QSpinBox', 'CentralLVsSpinBox', parent=self.CentralScrollAreaWidgetContents)
+        self.CentralLVsSpinBox = new_qt(
+                'QSpinBox', 'CentralLVsSpinBox',
+                parent=self.CentralScrollAreaWidgetContents)
         setPolicy(self.CentralLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
         setSize(self.CentralLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.CentralLVsSpinBox.setMinimum(1)
-        self.PlotFormLayout1.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.CentralLVsSpinBox)
+        self.CentralPlotFormLayout.setWidget(0,
+                                             QtWidgets.QFormLayout.FieldRole,
+                                             self.CentralLVsSpinBox)
 
-        self.CentralXRadioButton = new_qt('QRadioButton', 'CentralXRadioButton', parent=self.CentralScrollAreaWidgetContents)
+        self.CentralXRadioButton = new_qt(
+                'QRadioButton', 'CentralXRadioButton',
+                parent=self.CentralScrollAreaWidgetContents)
         setPolicy(self.CentralXRadioButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralXRadioButton, minimum=(70, 22), maximum=(1310, 170))
-        self.PlotFormLayout1.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.CentralXRadioButton)
+        setSize(self.CentralXRadioButton,
+                minimum=(70, 22), maximum=(1310, 170))
+        self.CentralPlotFormLayout.setWidget(1,
+                                             QtWidgets.QFormLayout.LabelRole,
+                                             self.CentralXRadioButton)
 
-        self.CentralYRadioButton = new_qt('QRadioButton', 'CentralYRadioButton', parent=self.CentralScrollAreaWidgetContents)
+        self.CentralYRadioButton = new_qt(
+                'QRadioButton', 'CentralYRadioButton',
+                parent=self.CentralScrollAreaWidgetContents)
         setPolicy(self.CentralYRadioButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralYRadioButton, minimum=(70, 22), maximum=(1310, 170))
-        self.PlotFormLayout1.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.CentralYRadioButton)
+        setSize(self.CentralYRadioButton,
+                minimum=(70, 22), maximum=(1310, 170))
+        self.CentralPlotFormLayout.setWidget(1,
+                                             QtWidgets.QFormLayout.FieldRole,
+                                             self.CentralYRadioButton)
 
-        self.CentralButtonGroup = new_qt('QButtonGroup', 'CentralButtonGroup', parent=self.MainWindow)
+        self.CentralButtonGroup = new_qt(
+                'QButtonGroup', 'CentralButtonGroup',
+                parent=self.CentralScrollAreaWidgetContents)
         self.CentralButtonGroup.addButton(self.CentralXRadioButton)
         self.CentralButtonGroup.addButton(self.CentralYRadioButton)
 
-        self.CentralXSpinBox = new_qt('QSpinBox', 'CentralXSpinBox', parent=self.CentralScrollAreaWidgetContents)
+        self.CentralXSpinBox = new_qt(
+                'QSpinBox', 'CentralXSpinBox',
+                parent=self.CentralScrollAreaWidgetContents)
         setPolicy(self.CentralXSpinBox, 'Preferred', 'Preferred', 0, 0)
         setSize(self.CentralXSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.CentralXSpinBox.setMinimum(1)
-        self.PlotFormLayout1.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.CentralXSpinBox)
+        self.CentralPlotFormLayout.setWidget(2,
+                                             QtWidgets.QFormLayout.LabelRole,
+                                             self.CentralXSpinBox)
 
-        self.CentralYSpinBox = new_qt('QSpinBox', 'CentralYSpinBox', parent=self.CentralScrollAreaWidgetContents)
+        self.CentralYSpinBox = new_qt('QSpinBox', 'CentralYSpinBox',
+                                   parent=self.CentralScrollAreaWidgetContents)
         setPolicy(self.CentralYSpinBox, 'Preferred', 'Preferred', 0, 0)
         setSize(self.CentralYSpinBox, minimum=(70, 22), maximum=(1310, 170))
         self.CentralYSpinBox.setMinimum(1)
-        self.PlotFormLayout1.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.CentralYSpinBox)
+        self.CentralPlotFormLayout.setWidget(2,
+                                             QtWidgets.QFormLayout.FieldRole,
+                                             self.CentralYSpinBox)
 
-        self.CentralBackPushButton = new_qt('QPushButton', 'CentralBackPushButton',
+        self.CentralBackPushButton = new_qt(
+                'QPushButton', 'CentralBackPushButton',
                 parent=self.CentralScrollAreaWidgetContents)
         setPolicy(self.CentralBackPushButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralBackPushButton, minimum=(70, 22), maximum=(1310, 170))
-        self.PlotFormLayout1.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.CentralBackPushButton)
+        setSize(self.CentralBackPushButton,
+                minimum=(70, 22), maximum=(1310, 170))
+        self.CentralPlotFormLayout.setWidget(3,
+                                             QtWidgets.QFormLayout.LabelRole,
+                                             self.CentralBackPushButton)
 
-        self.CentralPlotPushButton = new_qt('QPushButton', 'CentralPlotPushButton',
+        self.CentralPlotPushButton = new_qt(
+                'QPushButton', 'CentralPlotPushButton',
                 parent=self.CentralScrollAreaWidgetContents)
         setPolicy(self.CentralPlotPushButton, 'Preferred', 'Preferred', 0, 0)
-        setSize(self.CentralPlotPushButton, minimum=(70, 22), maximum=(1310, 170))
-        self.PlotFormLayout1.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.CentralPlotPushButton)
+        setSize(self.CentralPlotPushButton,
+                minimum=(70, 22), maximum=(1310, 170))
+        self.CentralPlotFormLayout.setWidget(3,
+                                             QtWidgets.QFormLayout.FieldRole,
+                                             self.CentralPlotPushButton)
 
-        self.CentralWidget = new_qt('QWidget', 'CentralWidget', parent=self.MainSplitter)
+        self.CentralWidget = new_qt('QWidget', 'CentralWidget',
+                                 parent=self.MainSplitter)
         setSize(self.CentralWidget, minimum=(200, 580), maximum=(3637, 4300))
 
-        self.CentralComboBox = new_qt('QComboBox', 'CentralComboBox', parent=self.CentralWidget)
+        self.CentralComboBox = new_qt('QComboBox', 'CentralComboBox',
+                                   parent=self.CentralWidget)
         setPolicy(self.CentralComboBox, 'Expanding', 'Expanding', 0, 0)
         setSize(self.CentralComboBox, minimum=(194, 22), maximum=(3631, 22))
         for entry in self.drop_down_choices:
             self.CentralComboBox.addItem("")
 
-        self.CentralScrollArea = new_qt('QScrollArea', 'CentralScrollArea', parent=self.CentralWidget)
-        setSize(self.CentralScrollArea, minimum=(194, 547), maximum=(3631, 4267))
+        self.CentralScrollArea = new_qt('QScrollArea', 'CentralScrollArea',
+                                     parent=self.CentralWidget)
+        setSize(self.CentralScrollArea,
+                minimum=(194, 547), maximum=(3631, 4267))
         self.CentralScrollArea.setWidgetResizable(True)
         self.CentralScrollArea.setWidget(self.CentralScrollAreaWidgetContents)
 
-        self.CentralGridLayout = new_qt('QGridLayout', 'CentralGridLayout', parent=self.CentralWidget)
+        self.CentralGridLayout = new_qt('QGridLayout', 'CentralGridLayout',
+                                     parent=self.CentralWidget)
         self.CentralGridLayout.setContentsMargins(3, 3, 3, 3)
         self.CentralGridLayout.setSpacing(5)
         self.CentralGridLayout.addWidget(self.CentralComboBox, 0, 0, 1, 1)
         self.CentralGridLayout.addWidget(self.CentralScrollArea, 1, 0, 1, 1)
 
         # Start creating widgets to put inside RightWidget
-        self.RightScrollAreaWidgetContents = new_qt('QWidget', 'RightScrollAreaWidgetContents')
-        self.RightScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 189, 565))
-        setPolicy(self.RightScrollAreaWidgetContents, 'Expanding', 'Expanding', 0, 0)
-        setSize(self.RightScrollAreaWidgetContents, minimum=(138, 534), maximum=(388, 4259))
+        self.RightScrollAreaWidgetContents = new_qt(
+                'QWidget', 'RightScrollAreaWidgetContents')
+        self.RightScrollAreaWidgetContents.setGeometry(
+                QtCore.QRect(0, 0, 189, 565))
+        setPolicy(self.RightScrollAreaWidgetContents,
+                  'Expanding', 'Expanding', 0, 0)
+        setSize(self.RightScrollAreaWidgetContents,
+                minimum=(138, 534), maximum=(388, 4259))
 
-        self.DetailsLabel = new_qt('QLabel', 'DetailsLabel', parent=self.RightScrollAreaWidgetContents)
+        self.DetailsLabel = new_qt('QLabel', 'DetailsLabel',
+                                parent=self.RightScrollAreaWidgetContents)
         setPolicy(self.DetailsLabel, 'Expanding', 'Expanding', 0, 0)
         setSize(self.DetailsLabel, minimum=(138, 534), maximum=(388, 4259))
-        self.DetailsLabel.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
+        self.DetailsLabel.setAlignment(QtCore.Qt.AlignHCenter
+                                       | QtCore.Qt.AlignTop)
         self.DetailsLabel.setWordWrap(True)
-        self.DetailsLabel.setTextInteractionFlags(QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
+        self.DetailsLabel.setTextInteractionFlags(
+                QtCore.Qt.TextSelectableByKeyboard
+                | QtCore.Qt.TextSelectableByMouse)
 
-        self.gridLayout = new_qt('QGridLayout', 'gridLayout', parent=self.RightScrollAreaWidgetContents)
+        self.gridLayout = new_qt('QGridLayout', 'gridLayout',
+                              parent=self.RightScrollAreaWidgetContents)
         self.gridLayout.setContentsMargins(3, 3, 3, 3)
         self.gridLayout.setSpacing(5)
         self.gridLayout.addWidget(self.DetailsLabel, 0, 0, 1, 1)
 
-        self.RightWidget = new_qt('QWidget', 'RightWidget', parent=self.MainSplitter)
+        self.RightWidget = new_qt('QWidget', 'RightWidget',
+                               parent=self.MainSplitter)
         setPolicy(self.RightWidget, 'Expanding', 'Expanding', 0, 0)
         setSize(self.RightWidget, minimum=(150, 580), maximum=(400, 4300))
 
-        self.RightScrollArea = new_qt('QScrollArea', 'RightScrollArea', parent=self.RightWidget)
+        self.RightScrollArea = new_qt('QScrollArea', 'RightScrollArea',
+                                   parent=self.RightWidget)
         setSize(self.RightScrollArea, minimum=(144, 547), maximum=(394, 4272))
         self.RightScrollArea.setWidgetResizable(True)
         self.RightScrollArea.setWidget(self.RightScrollAreaWidgetContents)
 
-        self.CurrentModeLabel = new_qt('QLabel', 'CurrentModeLabel', parent=self.RightWidget)
+        self.CurrentModeLabel = new_qt('QLabel', 'CurrentModeLabel',
+                                    parent=self.RightWidget)
         setPolicy(self.CurrentModeLabel, 'Expanding', 'Expanding', 0, 0)
         setSize(self.CurrentModeLabel, minimum=(144, 22), maximum=(394, 22))
         self.CurrentModeLabel.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -378,13 +471,15 @@ class UserInterface(object):
         self.CurrentModeLabel.setTextFormat(QtCore.Qt.AutoText)
         self.CurrentModeLabel.setAlignment(QtCore.Qt.AlignCenter)
 
-        self.RightGridLayout = new_qt('QGridLayout', 'RightGridLayout', parent=self.RightWidget)
+        self.RightGridLayout = new_qt('QGridLayout', 'RightGridLayout',
+                                   parent=self.RightWidget)
         self.RightGridLayout.setContentsMargins(3, 3, 3, 3)
         self.RightGridLayout.setSpacing(5)
         self.RightGridLayout.addWidget(self.RightScrollArea, 1, 0, 1, 1)
         self.RightGridLayout.addWidget(self.CurrentModeLabel, 0, 0, 1, 1)
 
-        self.MainGridLayout = new_qt('QGridLayout', 'MainGridLayout', parent=self.MainWidget)
+        self.MainGridLayout = new_qt('QGridLayout', 'MainGridLayout',
+                                  parent=self.MainWidget)
         self.MainGridLayout.setContentsMargins(0, 0, 0, 0)
         self.MainGridLayout.setSpacing(0)
         self.MainGridLayout.addWidget(self.MainSplitter, 0, 0, 1, 1)
@@ -397,7 +492,8 @@ class UserInterface(object):
         self.MenuOptions = new_qt('QMenu', 'MenuOptions', parent=self.TopMenuBar)
         setSize(self.MenuOptions, minimum=(100, 20), maximum=(960, 4300))
 
-        self.MenuChangeMode = new_qt('QMenu', 'MenuChangeMode', parent=self.TopMenuBar)
+        self.MenuChangeMode = new_qt('QMenu', 'MenuChangeMode',
+                                  parent=self.TopMenuBar)
         setSize(self.MenuChangeMode, minimum=(100, 20), maximum=(960, 4300))
 
         self.MenuAbout = new_qt('QMenu', 'MenuAbout', parent=self.TopMenuBar)
@@ -405,16 +501,24 @@ class UserInterface(object):
 
         self.MainWindow.setMenuBar(self.TopMenuBar)
 
-        qa, mw = 'QAction', self.MainWindow
-        self.ActionExport = new_qt(qa, 'ActionExport', parent=mw)
-        self.ActionModel = new_qt(qa, 'ActionModel', parent=mw)
-        self.ActionCV = new_qt(qa, 'ActionCV', parent=mw)
-        self.ActionPrediction = new_qt(qa, 'ActionPrediction', parent=mw)
-        self.ActionQuit = new_qt(qa, 'ActionQuit', parent=mw)
-        self.ActionSaveModel = new_qt(qa, 'ActionSaveModel', parent=mw)
-        self.ActionLoadModel = new_qt(qa, 'ActionLoadModel', parent=mw)
-        self.ActionNewModel = new_qt(qa, 'ActionNewModel', parent=mw)
-        self.ActionAboutThatProject = new_qt(qa, 'ActionAboutThatProject', parent=mw)
+        self.ActionNewModel = new_qt('QAction', 'ActionNewModel',
+                                  parent=self.MenuOptions)
+        self.ActionSaveModel = new_qt('QAction', 'ActionSaveModel',
+                                   parent=self.MenuOptions)
+        self.ActionLoadModel = new_qt('QAction', 'ActionLoadModel',
+                                   parent=self.MenuOptions)
+        self.ActionExport = new_qt('QAction', 'ActionExport',
+                                parent=self.MenuOptions)
+        self.ActionQuit = new_qt('QAction', 'ActionQuit', parent=self.MenuOptions)
+
+        self.ActionModel = new_qt('QAction', 'ActionModel',
+                               parent=self.MenuChangeMode)
+        self.ActionCV = new_qt('QAction', 'ActionCV', parent=self.MenuChangeMode)
+        self.ActionPrediction = new_qt('QAction', 'ActionPrediction',
+                                    parent=self.MenuChangeMode)
+
+        self.ActionAboutThatProject = new_qt('QAction', 'ActionAboutThatProject',
+                                          parent=self.MenuAbout)
 
         self.MenuOptions.addAction(self.ActionNewModel)
         self.MenuOptions.addAction(self.ActionSaveModel)
@@ -626,4 +730,7 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     ui = UserInterface()
     ui.show()
+    if utility.CLI.args().verbose:
+        ui.MainWindow.dumpObjectTree()
+        #  ui.MainWindow.dumpObjectInfo()
     sys.exit(app.exec_())
