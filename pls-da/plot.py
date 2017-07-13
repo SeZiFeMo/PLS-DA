@@ -2,340 +2,317 @@
 # coding: utf-8
 
 import collections
+import functools
 import math
-import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.cross_decomposition as sklCD
+
 import IO
 import model
 
 
-if __name__ == '__main__':
-    raise SystemExit('Please do not run that script, load it!')
 
 
-def properties_of(category, all_categories):
-    """Return a dictionary with keys: edge_color, face_color, marker
+@functools.lru_cache(maxsize=32, typed=False)
+def symbol(category=None):
+    """Return a dictionary with keys: hex, marker.
 
-       category is a unique string in all_categories (list, set or tuple)
-       Raises Exception if category is not in all_categories
+       On unknown category the first record is returned as default.
     """
-    all_categories = sorted(list(set(all_categories)))
-
-    if len(all_categories) < 2:
-        IO.Log.warning('Too few categories to choose different colors/markers')
-
-    if category not in all_categories:
-        raise Exception('Could not choose a color/marker for {} since it '
-                        'does not compare in all categories '
-                        '({})'.format(category, all_categories))
-    matches = (('#1F77B4', 'o'),  # blue,     circle
+    records = (('#1F77B4', 'o'),  # blue,     circle
                ('#2CA02C', 'x'),  # green,    cross
                ('#D62728', '^'),  # red,      triangle_up
                ('#FF7F0E', 'D'),  # orange,   diamond
                ('#A00000', 's'),  # dark_red, square
                ('#FFD700', '*'),  # gold,     star
+
+
                ('#000000', '+'),  #           plus
                ('#000000', 'h'),  #           hexagon
                ('#000000', 'p'),  #           pentagon
                )
-    index = all_categories.index(category) % len(matches)
-    color, marker = matches[index]
-    return {'edge_color': color, 'face_color': color, 'marker': marker}
+    index = 0
+    if category in model.CATEGORIES:
+        index = sorted(list(model.CATEGORIES)).index(category) % len(records)
+    return [dict(zip(('hex', 'marker'), rec)) for rec in records][index]
 
 
-def check_matrix(matrix):
-    """Test whether matrix is 'x' or 'y'."""
-    return matrix in ('x', 'y')
-
-
-def scatter_plot(x_values, y_values, cat=None, all_cat=None):
-    """Draw a scatter plot using a custom color determined by the category."""
-
-    if cat is None:
-        color = 'blue'
-        linecolor = '#1F77B4'
-        marker = 'o'
+def update_global_model(value):
+    """Set value to MODEL."""
+    if isinstance(value, model.Model):
+        global MODEL
+        MODEL = value
+        global PREPROC
+        PREPROC = MODEL.preproc
     else:
-        color = properties_of(cat, all_cat)['face_color']
-        linecolor = color
-        marker = properties_of(cat, all_cat)['marker']
-
-    plt.scatter(x=x_values,
-                y=y_values,
-                edgecolors=linecolor,
-                marker=marker,
-                s=30,
-                c=color,
-                alpha=.6,
-                # linewidth=0.10,
-                label=cat)
+        IO.Log.Error('Wrong type in update_global_model() '
+                     '({}).'.format(type(value)))
 
 
-def plot_plot(x_values, y_values, cat=None, all_cat=None):
-    """Draw a plot using a custom color determined by the given category."""
-    if cat is None:
-        color = 'blue'
-        linecolor = '#1F77B4'
-    else:
-        color = properties_of(cat, all_cat)['face_color']
-        linecolor = color
-
-    plt.plot(x_values,
-             y_values,
-             color=linecolor,         # line color
-             linestyle='solid',
-             marker='D',              # do not set it to
-             markerfacecolor=color,  # marker color
-             markersize=5)
+def scatter_wrapper(ax, x_values, y_values, cat=None):
+    """Draw a scatter plot using a different color/marker for each category."""
+    ax.scatter(x=x_values, y=y_values,
+               alpha=0.5,
+               c=symbol(cat)['hex'],
+               edgecolors=symbol(cat)['hex'],
+               label=cat,
+               # linewidth=0.1,
+               marker=symbol(cat)['marker'],
+               s=30)
 
 
-def scores_plot(nipals, pc_a, pc_b, matrix='x', normalize=False):
-    """Plot the scores on the specified components for the chosen matrix.
+def line_wrapper(ax, x_values, y_values, cat=None):
+    """Draw a line plot using a different color for each category."""
+    ax.plot(x_values, y_values,
+            alpha=0.5,
+            color=symbol(cat)['hex'],
+            linestyle='solid',
+            marker=symbol(cat)['marker'],
+            markerfacecolor=symbol(cat)['hex'],
+            markeredgecolor=symbol(cat)['hex'],
+            markersize=5)
 
-    Each point is plotted using a custom color determined by its category.
 
-    If normalize is True the plot will be between -1 and 1.
+def scree(ax, x=False, y=False):
+    """Plot the explained variance of the model for the x or y matrix.
+
+       Raise ValueError if x and y does not differ.
     """
+    if bool(x) == bool(y):
+        raise ValueError('In plot.scree() x, y matrix flags must differ')
+
+    eigen = MODEL.x_eigenvalues if x else MODEL.y_eigenvalues
+    line_wrapper(ax, range(len(eigen)), eigen)
+
+    ax.set_title('Scree plot for {}'.format('x' if x else 'y'))
+    ax.set_xlabel('Principal component number')
+    ax.set_ylabel('Eigenvalues')
+    ax.set_xlim(-0.5, len(eigen))
+    ax.set_ylim(-0.5, math.ceil(eigen[0]) + 0.5)
+
+
+def cumulative_explained_variance(ax, x=False, y=False):
+    """Plot the cumulative explained variance for the x or y matrix.
+
+       Raise ValueError if x and y does not differ.
+    """
+    if bool(x) == bool(y):
+        raise ValueError('In plot.explained_variance() x, y matrix flags '
+                         'does not differ')
+
+    explained_variance = model.explained_variance(MODEL, 'x' if x else 'y')
+    line_wrapper(ax, range(len(explained_variance)),
+                 np.cumsum(explained_variance))
+
+    ax.set_title('Explained variance plot for {}'.format('x' if x else 'y'))
+    ax.set_xlabel('Principal component number')
+    ax.set_ylabel('Cumulative variance captured (%)')
+    ax.set_xlim(-0.5, len(explained_variance))
+    ax.set_ylim(max(-2, explained_variance[0] - 2), 102)
+
+
+def inner_relations(ax, num):
+    """Plot the inner relations for the chosen latent variable.
+
+       Raise ValueError if num is greater than available latent variables.
+    """
+    if num > MODEL.nr_lv:
+        raise ValueError('In plot.inner_relations() num of latent variables '
+                         'is out of bounds')
+
+    for i in range(MODEL.T.shape[0]):
+        scatter_wrapper(ax, MODEL.T[i, num], MODEL.U[i, num],
+                        PREPROC.categories[i])
+
+    ax.set_title('Inner relation for LV {}'.format(num))
+    ax.set_xlabel('t{}'.format(num))
+    ax.set_ylabel('u{}'.format(num))
+
+
+def biplot(ax, pc_a, pc_b, x=False, y=False, normalize=True):
+    """Plot loadings and scores on pc_a, pc_b components for the x or y matrix.
+
+       Setting normalize force axes ends to -1 and 1.
+
+       Raise ValueError if x and y does not differ.
+       Raise ValueError if pc_a and pc_b are the same component.
+    """
+    if bool(x) == bool(y):
+        raise ValueError('In plot.biplot() x, y matrix flags must differ')
     if pc_a == pc_b:
-        IO.Log.error('Principal components must be different!')
-        exit(1)
-    if not check_matrix(matrix):
-        IO.Log.error('[scores_plot] '
-                     'Accepted values for matrix are x and y')
-        return
+        raise ValueError('Principal components must be different!')
+
+    scores(ax, pc_a, pc_b, x=x, y=y, normalize=normalize)
+    loadings(ax, pc_a, pc_b, x=x, y=y)
+
+    ax.set_title('Biplot for {}'.format('x' if x else 'y'))
+    ax.set_xlabel('LV{}'.format(pc_a + 1))
+    ax.set_ylabel('LV{}'.format(pc_b + 1))
+
+
+def scores(ax, pc_a, pc_b, x=False, y=False, normalize=False):
+    """Plot the scores on the pc_a, pc_b components for the x or y matrix.
+
+       Setting normalize force axes ends to -1 and 1.
+       Points of each category have a different color/shape.
+
+       Raise ValueError if x and y does not differ.
+       Raise ValueError if pc_a and pc_b are the same component.
+    """
+    if bool(x) == bool(y):
+        raise ValueError('In plot.scores() x, y matrix flags must differ')
+    if pc_a == pc_b:
+        raise ValueError('Principal components must be different!')
 
     pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
 
-    if matrix == 'x':
-        scores = nipals.T.copy()
-    else:
-        scores = nipals.U.copy()
+    scores_matrix = MODEL.T.copy() if x else MODEL.U.copy()
 
-    scores_a = scores[:, pc_a]
-    scores_b = scores[:, pc_b]
+    scores_a, scores_b = scores_matrix[:, pc_a], scores_matrix[:, pc_b]
     if normalize:
         scores_a = scores_a / max(abs(scores_a))
         scores_b = scores_b / max(abs(scores_b))
-    for n in range(scores.shape[0]):
-        score_pc_a = scores_a[n]
-        score_pc_b = scores_b[n]
-        cat = nipals.preproc.categories[n]
-        scatter_plot(score_pc_a, score_pc_b, cat, nipals.preproc.categories)
 
-    ax = plt.gca()
-    plt.title('Scores plot for {}'.format(matrix))
-    plt.xlabel('LV{}'.format(pc_a + 1))
-    plt.ylabel('LV{}'.format(pc_b + 1))
-    plt.axvline(0, linestyle='dashed', color='black')
-    plt.axhline(0, linestyle='dashed', color='black')
+    for n in range(scores_matrix.shape[0]):
+        scatter_wrapper(ax, scores_a[n], scores_b[n], PREPROC.categories[n])
+
+    ax.set_title('Scores plot for {}'.format('x' if x else 'y'))
+    ax.set_xlabel('LV{}'.format(pc_a + 1))
+    ax.set_ylabel('LV{}'.format(pc_b + 1))
+    ax.axvline(0, linestyle='dashed', color='black')
+    ax.axhline(0, linestyle='dashed', color='black')
     if normalize:
         ax.set_xlim(-1.1, 1.1)
         ax.set_ylim(-1.1, 1.1)
     else:
-        ax.set_xlim(model.integer_bounds(nipals.P, nipals.T, pc_a))
-        ax.set_ylim(model.integer_bounds(nipals.P, nipals.T, pc_b))
+        ax.set_xlim(model.integer_bounds(MODEL.P, MODEL.T, pc_a))
+        ax.set_ylim(model.integer_bounds(MODEL.P, MODEL.T, pc_b))
 
     handles, labels = ax.get_legend_handles_labels()
     by_label = collections.OrderedDict(zip(labels, handles))
-    plt.legend(by_label.values(), by_label.keys())
+    ax.legend(by_label.values(), by_label.keys())
 
 
-def loadings_plot(nipals, pc_a, pc_b, matrix='x'):
-    """Plot the loadings on the specified components for the chosen matrix."""
+def loadings(ax, pc_a, pc_b, x=False, y=False):
+    """Plot the loadings on the pc_a, pc_b components for the x or y matrix.
+
+       Points of each category have a different color/shape.
+
+       Raise ValueError if x and y does not differ.
+       Raise ValueError if pc_a and pc_b are the same component.
+    """
+    if bool(x) == bool(y):
+        raise ValueError('In plot.loadings() x, y matrix flags must differ')
     if pc_a == pc_b:
-        IO.Log.error('Principal components must be different!')
-        exit(1)
-
-    if not check_matrix(matrix):
-        IO.Log.error('[loadings_plot] '
-                     'Accepted values for matrix are x and y')
-        return
+        raise ValueError('Principal components must be different!')
 
     pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
 
-    if matrix == 'x':
-        loadings = nipals.P.copy()
-    else:
-        loadings = nipals.Q.copy()
+    loadings_matrix = MODEL.P.copy() if x else MODEL.Q.copy()
+    scatter_wrapper(ax, loadings_matrix[:, pc_a], loadings_matrix[:, pc_b])
 
-    scatter_plot(loadings[:, pc_a],
-                 loadings[:, pc_b])
-
-    ax = plt.gca()
-    for n in range(loadings.shape[0]):
-        ax.annotate(nipals.preproc.header[n + 1],
-                    xy=(loadings[n, pc_a], loadings[n, pc_b]),
-                    xycoords='data',
-                    xytext=(0, 5),
-                    textcoords='offset points',
+    for n in range(loadings_matrix.shape[0]):
+        ax.annotate(PREPROC.header[n + 1],
                     horizontalalignment='center',
-                    verticalalignment='bottom')
+                    textcoords='offset points',
+                    verticalalignment='bottom',
+                    xy=(loadings_matrix[n, pc_a], loadings_matrix[n, pc_b]),
+                    xycoords='data',
+                    xytext=(0, 5))
 
-    plt.title('Loadings plot for {}'.format(matrix))
-    plt.xlabel('LV{}'.format(pc_a + 1))
-    plt.ylabel('LV{}'.format(pc_b + 1))
-    plt.axvline(0, linestyle='dashed', color='black')
-    plt.axhline(0, linestyle='dashed', color='black')
-
-
-def biplot(nipals, pc_a, pc_b, matrix='x'):
-    """Plot both loadings and scores on the same graph."""
-    if pc_a == pc_b:
-        IO.Log.error('Principal components must be different!')
-        exit(1)
-
-    if not check_matrix(matrix):
-        IO.Log.error('[biplot] '
-                     'Accepted values for matrix are x and y')
-        return
-
-    pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
-
-    scores_plot(nipals, pc_a, pc_b, normalize=True, matrix=matrix)
-    loadings_plot(nipals, pc_a, pc_b, matrix=matrix)
-
-    plt.title('Biplot for {}'.format(matrix))
-    plt.xlabel('LV{}'.format(pc_a + 1))
-    plt.ylabel('LV{}'.format(pc_b + 1))
+    ax.set_title('Loadings plot for {}'.format('x' if x else 'y'))
+    ax.set_xlabel('LV{}'.format(pc_a + 1))
+    ax.set_ylabel('LV{}'.format(pc_b + 1))
+    ax.axvline(0, linestyle='dashed', color='black')
+    ax.axhline(0, linestyle='dashed', color='black')
 
 
-def explained_variance_plot(nipals, matrix='x'):
-    """Plot the cumulative explained variance for the chosen matrix."""
-
-    if not check_matrix(matrix):
-        IO.Log.error('[explained_variance_plot] '
-                     'Accepted values for matrix are x and y')
-        return
-
-    plt.title('Explained variance plot for {}'.format(matrix))
-    plt.xlabel('Principal component number')
-    plt.ylabel('Cumulative variance captured (%)')
-
-    explained_variance = model.explained_variance(nipals, matrix)
-
-    ax = plt.gca()
-    ax.set_xlim(-0.5, len(explained_variance))
-    ax.set_ylim(max(-2, explained_variance[0] - 2), 102)
-    plt.plot(range(len(explained_variance)),
-             np.cumsum(explained_variance))
-
-
-def scree_plot(nipals, matrix='x'):
-    """Plot the explained variance of the model for the chosen matrix."""
-    plt.title('Scree plot for {}'.format(matrix))
-    plt.xlabel('Principal component number')
-    plt.ylabel('Eigenvalues')
-
-    if not check_matrix(matrix):
-        IO.Log.error('[scree_plot] Accepted values for matrix are x and y '
-                     '(got {} instead)'.format(repr(matrix)))
-        raise Exception('Bad matrix parameter ({}) in '
-                        'scree_plot() '.format(repr(matrix)))
-
-    if matrix == 'x':
-        eigen = nipals.x_eigenvalues
-    else:
-        eigen = nipals.y_eigenvalues
-
-    ax = plt.gca()
-    ax.set_xlim(-0.5, len(eigen))
-    ax.set_ylim(-0.5, math.ceil(eigen[0]) + 0.5)
-    plot_plot(range(len(eigen)), eigen)
-
-
-def inner_relation_plot(nipals, nr):
-    """Plot the inner relation for the chosen latent variable."""
-    if nr > nipals.nr_lv:
-        IO.Log.error('[inner_relation_plot] '
-                     'chosen LV must be in [0-{}]'.format(nipals.nr_lv))
-
-    plt.title('Inner relation for LV {}'.format(nr))
-    plt.xlabel('t{}'.format(nr))
-    plt.ylabel('u{}'.format(nr))
-
-    for i in range(nipals.T.shape[0]):
-        cat = nipals.preproc.categories[i]
-        scatter_plot(nipals.T[i, nr], nipals.U[i, nr],
-                     cat, nipals.preproc.categories)
-
-
-def data_plot(nipals, all_cat):
-    """Plot the dataset distinguishing with colors the categories."""
-
-    plt.title('Data by category')
-    plt.xlabel('sample')
-    plt.ylabel('Value')
-
-    for i in range(nipals.preproc.dataset.shape[0]):
-        cat = nipals.preproc.categories[i]
-        plt.plot(range(nipals.preproc.dataset.shape[1]),
-                 nipals.preproc.dataset[i],
-                 color=properties_of(cat, all_cat)['face_color'],  # line color
-                 linestyle='solid',
-                 alpha=.5,
-                 marker=properties_of(cat, all_cat)['marker'],     # do not set it to
-                 markerfacecolor=properties_of(cat, all_cat)['face_color'],
-                 markeredgecolor=properties_of(cat, all_cat)['edge_color'])
-
-
-def modeled_Y_plot(nipals):
+def calculated_y(ax):
     """Plot the difference between the real categories and the modeled ones."""
-    plt.title('Y calculated')
-    plt.xlabel('sample')
-    plt.ylabel('modeled Y')
-    for j in range(nipals.p):
-        for i in range(nipals.n):
-            cat = nipals.preproc.categories[i]
-            scatter_plot(i, nipals.Y_modeled[i, j],
-                         cat, nipals.preproc.categories)
+    ax.set_title('Y calculated')
+    ax.set_xlabel('sample')
+    ax.set_ylabel('modeled Y')
+    for j in range(MODEL.p):
+        for i in range(MODEL.n):
+            scatter_wrapper(ax, i, MODEL.Y_modeled[i, j],
+                            PREPROC.categories[i])
 
 
-def y_leverage_plot(nipals):
+def predicted_y(ax):
+    raise NotImplementedError
+
+
+def t_square_q(ax):
+    raise NotImplementedError
+
+
+def y_residuals_leverage(ax):
     """Plot Y residuals over the leverage."""
-    plt.title('Leverage')
-    plt.xlabel('leverage')
-    plt.ylabel('Y residuals')
-    tmp = np.linalg.inv(np.dot(nipals.U.T, nipals.U))
-    leverage = np.empty(nipals.n)
+    temp = np.linalg.inv(np.dot(MODEL.U.T, MODEL.U))
+    leverage = np.empty(MODEL.n)
 
-    for j in range(nipals.p):
-        for i in range(nipals.n):
-            leverage[i] = nipals.U[i].dot(tmp).dot(nipals.U[i].T)
-            cat = nipals.preproc.categories[i]
-            scatter_plot(leverage[i], nipals.E_y[i, j],
-                         cat, nipals.preproc.categories)
+    for j in range(MODEL.p):
+        for i in range(MODEL.n):
+            leverage[i] = MODEL.U[i].dot(temp).dot(MODEL.U[i].T)
+            scatter_wrapper(ax, leverage[i], MODEL.E_y[i, j],
+                            PREPROC.categories[i])
 
-
-def d_plot(nipals):
-    plt.title('Inner relation (variable b)')
-    plt.xlabel('LV number')
-    plt.ylabel('inner relation variable')
-
-    for i in range(nipals.d.shape[0]):
-        cat = nipals.preproc.categories[i]
-        scatter_plot(i, nipals.d[i], cat, nipals.preproc.categories)
+    ax.set_title('Leverage')
+    ax.set_xlabel('leverage')
+    ax.set_ylabel('Y residuals')
 
 
-def inner_relation_sklearn(nipals, nr):
-    if nr > nipals.nr_lv:
-        IO.Log.error('[inner_relation_plot] '
-                     'chosen LV must be in [0-{}]'.format(nipals.nr_lv))
+def regression_coefficients(ax):
+    """Plot the regression coefficients."""
+    for i in range(MODEL.d.shape[0]):
+        scatter_wrapper(ax, i, MODEL.d[i], PREPROC.categories[i])
 
-    X = nipals.preproc.dataset.copy()
-    Y = nipals.preproc.dummy_y.copy()
+    ax.set_title('Inner relation (variable b)')
+    ax.set_xlabel('LV number')
+    ax.set_ylabel('inner relation variable')
 
-    sklearn_pls = sklCD.PLSRegression(n_components=min(nipals.n, nipals.m),
+
+def w_w1_weights(ax):
+    raise NotImplementedError
+
+
+def data(ax):
+    """Plot the dataset distinguishing with colors the categories."""
+    for i in range(MODEL.n):
+        line_wrapper(ax, range(MODEL.m), PREPROC.dataset[i],
+                     PREPROC.categories[i])
+
+    ax.set_title('Data by category')
+    ax.set_xlabel('sample')
+    ax.set_ylabel('Value')
+
+
+def sklearn_inner_relations(ax, num):
+    """Plot the inner relations for the chosen latent variable.
+
+       WARNING: implementation uses sklearn PLS regression!
+
+       Raise ValueError if num is greater than available latent variables.
+    """
+    if num > MODEL.nr_lv:
+        raise ValueError('In sklearn_inner_relations() num of latent variables'
+                         ' is out of bounds')
+
+    X, Y = PREPROC.dataset.copy(), PREPROC.dummy_y.copy()
+    sklearn_pls = sklCD.PLSRegression(n_components=min(MODEL.n, MODEL.m),
                                       scale=True, max_iter=1e4, tol=1e-6,
                                       copy=True)
     sklearn_pls.fit(X, Y)
 
-    plt.title('Inner relation for LV {} (sklearn)'.format(nr))
-    plt.xlabel('t{}'.format(nr))
-    plt.ylabel('u{}'.format(nr))
+    for i in range(MODEL.T.shape[0]):
+        scatter_wrapper(ax, sklearn_pls.x_scores_[i, num],
+                        sklearn_pls.y_scores_[i, num],
+                        PREPROC.categories[i])
 
-    for i in range(nipals.T.shape[0]):
-        cat = nipals.preproc.categories[i]
-        scatter_plot(sklearn_pls.x_scores_[i, nr],
-                     sklearn_pls.y_scores_[i, nr],
-                     cat, nipals.preproc.categories)
+    ax.set_title('Inner relation for LV {} (sklearn)'.format(num))
+    ax.set_xlabel('t{}'.format(num))
+    ax.set_ylabel('u{}'.format(num))
+
+
+if __name__ == '__main__':
+    raise SystemExit('Please do not run that script, load it!')

@@ -718,7 +718,7 @@ class UserInterface(object):
             IO.Log.debug('CANCEL (not chosen any preprocessing)')
 
         try:
-            self.plsda_model = model.Nipals(preproc)
+            self.plsda_model = model.nipals(preproc)
         except Exception as e:
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
