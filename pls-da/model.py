@@ -255,28 +255,27 @@ def nipals(preproc, nr_lv=None, tol=1e-6, max_iter=1e4):
 
 
 def integer_bounds(P, T, col):
-        """Return tuple with min and max integers bounds for P[col] and T[col].
-        """
-        extracted = np.concatenate((P[:, col], T[:, col]))
-        return math.floor(np.min(extracted)), math.ceil(np.max(extracted))
+    """Return tuple with min and max integers bounds for P[col] and T[col]."""
+    extracted = np.concatenate((P[:, col], T[:, col]))
+    return math.floor(np.min(extracted)), math.ceil(np.max(extracted))
 
 
 def explained_variance(model, matrix='x'):
-        """Return the explained variance of model.[x|y].eigenvalues
+    """Return the explained variance of model.[x|y].eigenvalues
 
-           Raises Exception if matrix is not 'x' or 'y'
-        """
-        if matrix == 'x':
-            eigen = model.x_eigenvalues
-        elif matrix == 'y':
-            eigen = model.y_eigenvalues
-        else:
-            raise ValueError('Bad matrix parameter ({}) in '
-                             'explained_variance() '.format(repr(matrix)))
+       Raise ValueError if matrix is not 'x' or 'y'.
+    """
+    if matrix == 'x':
+        eigen = model.x_eigenvalues
+    elif matrix == 'y':
+        eigen = model.y_eigenvalues
+    else:
+        raise ValueError('Bad matrix parameter ({}) in '
+                         'explained_variance() '.format(repr(matrix)))
 
-        IO.Log.info('[model.explained_variance] '
-                    'Eigenvalues for {}: \n{}'.format(matrix, eigen))
-        return 100 * eigen / np.sum(eigen)
+    IO.Log.info('[model.explained_variance] '
+                'Eigenvalues for {}: \n{}'.format(matrix, eigen))
+    return 100 * eigen / np.sum(eigen)
 
 
 if __name__ == '__main__':
