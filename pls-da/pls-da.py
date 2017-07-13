@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+import IO
 import model
 import plot
 import utility
@@ -29,23 +30,18 @@ preproc.autoscale()
 
 nipals_model = model.nipals(preproc)
 
-plt.subplot(2, 2, 1)
-# plot.scores_plot(nipals_model, 0, 1)
-# plot.loadings_plot(nipals_model, 0, 1)
-# plot.biplot(nipals_model, 0, 1)
-# plot.explained_variance_plot(nipals_model)
-# plot.inner_relation_plot(nipals_model, 2)
-# plot.scree_plot(nipals_model, 'y')
-plot.y_leverage_plot(nipals_model)
+fig = plt.figure(tight_layout=True)
 
-plt.subplot(2, 2, 2)
-plot.modeled_Y_plot(nipals_model)
+# plot.scores(ax, 0, 1, x=True)
+# plot.loadings(ax, 0, 1, x=True)
+# plot.biplot(ax, 0, 1, x=True)
+# plot.cumulative_explained_variance(ax, x=True)
+# plot.inner_relations(ax, num=2)
+# plot.scree(ax, y=True)
 
-plt.subplot(2, 2, 3)
-plot.data_plot(nipals_model, model.CATEGORIES)
-
-plt.subplot(2, 2, 4)
-plot.d_plot(nipals_model)
-
-plt.tight_layout()
+plot.y_residuals_leverage(fig.add_subplot(2, 2, 1))
+plot.calculated_y(fig.add_subplot(2, 2, 2))
+plot.data(fig.add_subplot(2, 2, 3))
+plot.regression_coefficients(fig.add_subplot(2, 2, 4))
 plt.show()
+

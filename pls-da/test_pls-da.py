@@ -3,12 +3,12 @@
 
 import argparse
 import math
-import os
-import unittest
-import scipy
-
+import matplotlib.pyplot as plt
 import numpy as np
+import os
+import scipy
 import sklearn.cross_decomposition as sklCD
+import unittest
 
 import IO
 import model
@@ -318,41 +318,38 @@ class test_plot_module(unittest.TestCase):
 
     def setUp(self):
         model.Preprocessing()
-        self.all_cat = model.CATEGORIES
 
-    def tearDown(self):
-        self.all_cat = None
+    def test_symbol(self):
+        categories = list(model.CATEGORIES)
+        categories.append(None)
+        categories.append('')
+        for cat in categories:
+            cat_symbols = plot.symbol(cat)
+            self.assertIsInstance(cat_symbols, dict)
+            for key in ('hex', 'marker'):
+                self.assertTrue(key in cat_symbols)
+                self.assertIsInstance(cat_symbols[key], str)
 
-    def test_properties_of(self):
-        for cat in self.all_cat:
-            self.assertIsInstance(plot.properties_of(cat, self.all_cat), dict)
-            d = plot.properties_of(cat, self.all_cat)
-            for key in ('edge_color', 'face_color', 'marker'):
-                self.assertTrue(key in d)
-                self.assertIsInstance(d[key], str)
-        self.assertRaises(Exception, plot.properties_of, '', self.all_cat)
-        self.assertRaises(Exception, plot.properties_of, None, self.all_cat)
+    def test_scatter_wrapper(self):
+        for cat in model.CATEGORIES:
+            self.assertIsNone(plot.scatter_wrapper(plt.gca(), self.x, self.y,
+                                                   cat))
+            plt.clf()  # clear current figure
 
-    def test_scatter_plot(self):
-        for cat in self.all_cat:
-            self.assertIsNone(plot.scatter_plot(self.x, self.y, cat,
-                                                self.all_cat))
-        self.assertRaises(ValueError, plot.scatter_plot,
-                          self.x, self.y[:-1], 'U', self.all_cat)
-        self.assertRaises(ValueError, plot.scatter_plot,
-                          'string', 123, 'U', self.all_cat)
-        self.assertRaises(ValueError, plot.scatter_plot,
-                          456, 'string', 'U', self.all_cat)
+        self.assertRaises(ValueError, plot.scatter_wrapper, plt.gca(),
+                          self.x, self.y[:-1], 'U')
+        self.assertRaises(ValueError, plot.scatter_wrapper, plt.gca(),
+                          'string', 123, 'U')
+        self.assertRaises(ValueError, plot.scatter_wrapper, plt.gca(),
+                          456, 'string', 'U')
 
     def test_scores_plot(self):
-        with self.assertRaises(SystemExit) as cm:
-            plot.scores_plot(nipals=None, pc_a=1, pc_b=1)
-        self.assertEqual(cm.exception.code, 1)
+        self.assertRaises(ValueError, plot.scores, plt.gca(),
+                          pc_a=1, pc_b=1, x=True)
 
     def test_loadings_plot(self):
-        with self.assertRaises(SystemExit) as cm:
-            plot.loadings_plot(nipals=None, pc_a=1, pc_b=1)
-        self.assertEqual(cm.exception.code, 1)
+        self.assertRaises(ValueError, plot.loadings, plt.gca(),
+                          pc_a=1, pc_b=1, y=True)
 
 
 class test_utility_module(unittest.TestCase):

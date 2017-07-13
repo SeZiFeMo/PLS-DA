@@ -3,8 +3,12 @@
 
 import math
 import numpy as np
+
 import IO
+import plot
 import utility
+
+
 
 
 class Preprocessing(object):
@@ -251,6 +255,7 @@ def nipals(preproc, nr_lv=None, tol=1e-6, max_iter=1e4):
     IO.Log.info('NIPALS scores shape', model.T.shape)
     IO.Log.info('NIPALS x_eigenvalues', model.x_eigenvalues)
 
+    plot.update_global_model(model)
     return model
 
 
