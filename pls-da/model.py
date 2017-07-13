@@ -6,8 +6,6 @@ import numpy as np
 import IO
 import utility
 
-CATEGORIES = ('NA', 'SA', 'U', 'WL')
-
 
 class Preprocessing(object):
     """Class to preprocess csv input data."""
@@ -70,12 +68,12 @@ class Preprocessing(object):
 
     @property
     def autoscaled(self):
-        """Return wheter dataset has been autoscaled"""
+        """Return whether dataset has been autoscaled"""
         return self._centered and self._normalized
 
     @property
     def original(self):
-        """Return wheter dataset has been preprocessed"""
+        """Return whether dataset has been preprocessed"""
         return not (self._centered or self._normalized)
 
     def center(self, quiet=False):
