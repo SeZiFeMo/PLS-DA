@@ -171,8 +171,7 @@ class test_eigen_module(unittest.TestCase):
         cov_y = np.dot(self.preproc.dummy_y.T,
                        self.preproc.dummy_y) / (self.preproc.n - 1)
 
-        self.nipals = model.Nipals(self.preproc)
-        self.nipals.run()
+        self.nipals = model.nipals(self.preproc)
         self.wx, vx = scipy.linalg.eig(cov_x)
         self.wy, vy = scipy.linalg.eig(cov_y)
         self.wx = np.real(self.wx)
@@ -215,8 +214,7 @@ class nipals_abstract(object):
         self.preproc.dummy_y = Y.copy()
 
         self.preproc.autoscale()
-        self.nipals = model.Nipals(self.preproc)
-        self.nipals.run(nr_lv=j)
+        self.nipals = model.nipals(self.preproc)
         # autoscale also matrices for sklearn
         X = self.nipals.preproc.dataset.copy()
         Y = self.nipals.preproc.dummy_y.copy()

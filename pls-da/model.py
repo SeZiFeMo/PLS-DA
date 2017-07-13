@@ -113,22 +113,34 @@ class Preprocessing(object):
         IO.Log.debug('Autoscaled dataset', self.dataset)
 
 
-class Nipals(object):
-    """Class to compute the NIPALS method used in PLS.
+class Model(object):
+    """Save a NIPALS model and provide helper methods to access it."""
 
-       Non-linear Iterative PArtial Least Square
-    """
-
-    def __init__(self, preproc):
-        """Nipals method will be applied to a Preprocessing object.
+    def __init__(self, preproc, nr_lv):
+        """Instantiate space for the model.
 
            Raises TypeError on wrong preproc data type.
         """
         if not isinstance(preproc, Preprocessing):
-            raise TypeError('Argument passed to Nipals.__init__() is not a'
+            raise TypeError('Argument passed to Model.__init__() is not a'
                             'Preprocessing object!')
 
         self.preproc = preproc
+
+        self.T = np.empty((self.n, nr_lv))
+        self.P = np.empty((self.m, nr_lv))
+        self.W = np.empty((self.m, nr_lv))
+        self.U = np.empty((self.n, nr_lv))
+        self.Q = np.empty((self.p, nr_lv))
+
+        self.d = np.empty((nr_lv))
+        self.x_eigenvalues = np.empty((nr_lv))
+        self.y_eigenvalues = np.empty((nr_lv))
+        self.Y_modeled = np.empty((self.n, self.p))
+        self.Y_modeled_dummy = np.empty((self.n, self.p))
+        self.B = np.empty((self.n, self.m))
+        self.E_x = np.empty((self.n, self.m))
+        self.E_y = np.empty((self.n, self.p))
 
     @property
     def n(self):
@@ -142,101 +154,100 @@ class Nipals(object):
     def p(self):
         return self.preproc.p
 
-    def run(self, nr_lv=None, tol=1e-6, max_iter=1e4):
-        """Find the Principal Components with the NIPALS algorithm."""
 
-        # Start with maximal residual (matrix X, matrix Y)
-        E_x = self.preproc.dataset.copy()
-        E_y = self.preproc.dummy_y.copy()
+def nipals(preproc, nr_lv=None, tol=1e-6, max_iter=1e4):
+    """Find the Principal Components with the NIPALS algorithm."""
 
-        n, m = E_x.shape
-        n, p = E_y.shape
+    # Start with maximal residual (matrix X, matrix Y)
+    E_x = preproc.dataset.copy()
+    E_y = preproc.dummy_y.copy()
 
-        if nr_lv is None:
-            nr_lv = min(n, m)
-        if nr_lv > min(n, m):
-            IO.Log.warning('Too many latent variables specified. '
-                           'Will use {}'.format(min(n, m)))
-            nr_lv = min(n, m)
-        self.nr_lv = nr_lv
+    n = preproc.n
+    m = preproc.m
+    p = preproc.p
 
-        self.T = np.empty((n, nr_lv))
-        self.P = np.empty((m, nr_lv))
-        self.W = np.empty((m, nr_lv))
-        self.U = np.empty((n, nr_lv))
-        self.Q = np.empty((p, nr_lv))
-        self.d = np.empty((nr_lv))
-        s_list_x = []
-        s_list_y = []
+    if nr_lv is None:
+        nr_lv = min(n, m)
+    if nr_lv > min(n, m):
+        IO.Log.warning('Too many latent variables specified. '
+                       'Will use {}'.format(min(n, m)))
+        nr_lv = min(n, m)
 
-        # Loop for each possible PC
-        for i in range(nr_lv):
-            # Initialize u as a column of E_x with maximum variance
-            max_var_index = np.argmax(np.sum(np.power(E_y, 2), axis=0))
-            u = E_y[:, max_var_index].copy()
+    model = Model(preproc, nr_lv)
 
-            for it in range(int(max_iter) + 2):
-                # Evaluate w as projection of u in X and normalize it
-                w = np.dot(E_x.T, u) / np.dot(u, u)
-                w = w / np.linalg.norm(w)
-                # Evaluate t as projection of w in X
-                t = np.dot(E_x, w) / np.dot(w, w)
+    s_list_x = []
+    s_list_y = []
 
-                # Y part
-                # Evaluate q as projection of t in Y and normalize it
-                q = np.dot(E_y.T, t) / np.dot(t, t)
-                q = q / np.linalg.norm(q)
-                # Evaluate u_star as projection of c in Y
-                u_star = np.dot(E_y, q) / np.dot(q, q)
+    # Loop for each possible PC
+    for i in range(nr_lv):
+        # Initialize u as a column of E_x with maximum variance
+        max_var_index = np.argmax(np.sum(np.power(E_y, 2), axis=0))
+        u = E_y[:, max_var_index].copy()
 
-                diff = u_star - u
-                delta_u = np.dot(diff, diff)
-                if it > 1 and delta_u < tol:
-                    break
-                u = u_star
-            else:
-                IO.Log.warning('Reached max '
-                               'iteration number ({})'.format(max_iter))
-                IO.Log.warning('NIPALS iteration: {}\n'
-                               '       difference: {:.5e}'.format(it, delta_u))
+        for it in range(int(max_iter) + 2):
+            # Evaluate w as projection of u in X and normalize it
+            w = np.dot(E_x.T, u) / np.dot(u, u)
+            w = w / np.linalg.norm(w)
+            # Evaluate t as projection of w in X
+            t = np.dot(E_x, w) / np.dot(w, w)
 
-            # Save the evaluated values
-            p = np.dot(E_x.T, t) / np.dot(t, t)
-            p_norm = np.linalg.norm(p)
-            self.P[:, i] = p / p_norm
-            self.T[:, i] = t * p_norm
-            self.W[:, i] = w * p_norm
-            self.U[:, i] = u
-            self.Q[:, i] = q
+            # Y part
+            # Evaluate q as projection of t in Y and normalize it
+            q = np.dot(E_y.T, t) / np.dot(t, t)
+            q = q / np.linalg.norm(q)
+            # Evaluate u_star as projection of c in Y
+            u_star = np.dot(E_y, q) / np.dot(q, q)
 
-            s_list_x.append(np.linalg.norm(t))
-            s_list_y.append(np.linalg.norm(u))
-            # regression coefficient for the inner relation
-            self.d[i] = np.dot(u.T, t) / np.dot(t, t)
+            diff = u_star - u
+            delta_u = np.dot(diff, diff)
+            if it > 1 and delta_u < tol:
+                break
+            u = u_star
+        else:
+            IO.Log.warning('Reached max '
+                           'iteration number ({})'.format(max_iter))
+            IO.Log.warning('NIPALS iteration: {}\n'
+                           '       difference: {:.5e}'.format(it, delta_u))
 
-            # Calculate residuals
-            E_x = E_x - np.dot(np.row_stack(t), np.column_stack(self.P[:, i]))
-            E_y = E_y - self.d[i] * np.dot(np.row_stack(t),
-                                           np.column_stack(q.T))
+        # Save the evaluated values
+        p = np.dot(E_x.T, t) / np.dot(t, t)
+        p_norm = np.linalg.norm(p)
+        model.P[:, i] = p / p_norm
+        model.T[:, i] = t * p_norm
+        model.W[:, i] = w * p_norm
+        model.U[:, i] = u
+        model.Q[:, i] = q
 
-        self.x_eigenvalues = np.power(np.array(s_list_x), 2) / (self.n - 1)
-        self.y_eigenvalues = np.power(np.array(s_list_y), 2) / (self.n - 1)
+        s_list_x.append(np.linalg.norm(t))
+        s_list_y.append(np.linalg.norm(u))
+        # regression coefficient for the inner relation
+        model.d[i] = np.dot(u.T, t) / np.dot(t, t)
 
-        # Compute regression parameters B
-        # tmp = (P'W)^{-1}
-        tmp = np.linalg.inv(self.P.T.dot(self.W))
-        self.B = self.W.dot(tmp).dot(np.diag(self.d)).dot(self.Q.T)
-        self.Y_modeled = self.preproc.dataset.dot(self.B)
-        IO.Log.debug('Modeled Y prior to the discriminant classification',
-                     self.Y_modeled)
-        Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
-                   for row in self.Y_modeled]
-        self.Y_modeled_dummy = np.array(Y_dummy)
+        # Calculate residuals
+        E_x = E_x - np.dot(np.row_stack(t), np.column_stack(model.P[:, i]))
+        E_y = E_y - model.d[i] * np.dot(np.row_stack(t),
+                                        np.column_stack(q.T))
 
-        self.E_y = E_y
-        IO.Log.info('NIPALS loadings shape', self.P.shape)
-        IO.Log.info('NIPALS scores shape', self.T.shape)
-        IO.Log.info('NIPALS x_eigenvalues', self.x_eigenvalues)
+    model.x_eigenvalues = np.power(np.array(s_list_x), 2) / (model.n - 1)
+    model.y_eigenvalues = np.power(np.array(s_list_y), 2) / (model.n - 1)
+
+    # Compute regression parameters B
+    # tmp = (P'W)^{-1}
+    tmp = np.linalg.inv(model.P.T.dot(model.W))
+    model.B = model.W.dot(tmp).dot(np.diag(model.d)).dot(model.Q.T)
+    model.Y_modeled = model.preproc.dataset.dot(model.B)
+    IO.Log.debug('Modeled Y prior to the discriminant classification',
+                 model.Y_modeled)
+    Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
+               for row in model.Y_modeled]
+    model.Y_modeled_dummy = np.array(Y_dummy)
+
+    model.E_y = E_y
+    IO.Log.info('NIPALS loadings shape', model.P.shape)
+    IO.Log.info('NIPALS scores shape', model.T.shape)
+    IO.Log.info('NIPALS x_eigenvalues', model.x_eigenvalues)
+
+    return model
 
 
 def integer_bounds(P, T, col):
