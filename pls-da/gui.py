@@ -23,6 +23,18 @@ def new_qt(widget, name, parent=None):
     return ret
 
 
+def clear(layout):
+    """Recursively call deleteLayer() over all widgets in layout."""
+    if not isinstance(layout, QtWidgets.QLayout):
+        return
+    while layout.count():
+        child = layout.takeAt(0)
+        if child.widget() is not None:
+            child.widget().deleteLater()
+        elif child.layout() is not None:
+            clear(child.layout())
+
+
 def _popup_choose(parent, filter_csv=False,
                   _input=False, _output=False, _directory=False, _file=False):
     """Display a dialog to choose an input/output file/directory.
@@ -743,6 +755,11 @@ class UserInterface(object):
 
         self.ActionExport.triggered.connect(
                 lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
+
+#        self.LeftComboBox.currentIndexChanged.connect(
+#                lambda index: print(repr(index)))
+#        self.CentralComboBox.currentTextChanged.connect(
+#                lambda text: print(repr(text)))
 
     def show(self):
         self.MainWindow.show()
