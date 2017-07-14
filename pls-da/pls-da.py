@@ -27,8 +27,10 @@ utility.check_python_version()
 
 preproc = model.Preprocessing()
 preproc.autoscale()
+plot.update_global_preproc(preproc)
 
-nipals_model = model.nipals(preproc)
+nipals_model = model.nipals(preproc.dataset, preproc.dummy_y)
+plot.update_global_model(nipals_model)
 
 fig = plt.figure(tight_layout=True)
 

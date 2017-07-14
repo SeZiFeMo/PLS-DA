@@ -124,55 +124,48 @@ class Preprocessing(object):
 class Model(object):
     """Save a NIPALS model and provide helper methods to access it."""
 
-    def __init__(self, preproc, nr_lv):
-        """Instantiate space for the model.
+    def __init__(self, X, Y, max_lv):
+        """Instantiate space for the model."""
 
-           Raises TypeError on wrong preproc data type.
-        """
-        if not isinstance(preproc, Preprocessing):
-            raise TypeError('Argument passed to Model.__init__() is not a'
-                            'Preprocessing object!')
+        self.X = X
+        self.Y = Y
+        self.n = X.shape[0]
+        self.m = X.shape[1]
+        self.p = Y.shape[1]
 
-        self.preproc = preproc
+        # max_lv is the number of lv in which the model was calculated
+        # nr_lv is the number of lv used for prediction
+        self.max_lv = max_lv
+        self.nr_lv = max_lv
 
-        self.T = np.empty((self.n, nr_lv))
-        self.P = np.empty((self.m, nr_lv))
-        self.W = np.empty((self.m, nr_lv))
-        self.U = np.empty((self.n, nr_lv))
-        self.Q = np.empty((self.p, nr_lv))
+        self.T = np.empty((self.n, max_lv))
+        self.P = np.empty((self.m, max_lv))
+        self.W = np.empty((self.m, max_lv))
+        self.U = np.empty((self.n, max_lv))
+        self.Q = np.empty((self.p, max_lv))
 
-        self.d = np.empty((nr_lv))
-        self.x_eigenvalues = np.empty((nr_lv))
-        self.y_eigenvalues = np.empty((nr_lv))
+        self.b = np.empty((max_lv))
+        self.x_eigenvalues = np.empty((max_lv))
+        self.y_eigenvalues = np.empty((max_lv))
         self.Y_modeled = np.empty((self.n, self.p))
         self.Y_modeled_dummy = np.empty((self.n, self.p))
         self.B = np.empty((self.n, self.m))
         self.E_x = np.empty((self.n, self.m))
         self.E_y = np.empty((self.n, self.p))
 
-    @property
-    def n(self):
-        return self.preproc.n
 
-    @property
-    def m(self):
-        return self.preproc.m
-
-    @property
-    def p(self):
-        return self.preproc.p
-
-
-def nipals(preproc, nr_lv=None, tol=1e-6, max_iter=1e4):
+def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
     """Find the Principal Components with the NIPALS algorithm."""
 
     # Start with maximal residual (matrix X, matrix Y)
-    E_x = preproc.dataset.copy()
-    E_y = preproc.dummy_y.copy()
+    E_x = X.copy()
+    E_y = Y.copy()
 
-    n = preproc.n
-    m = preproc.m
-    p = preproc.p
+    assert X.shape[0] == Y.shape[0], "Incompatible X and Y matrices"
+
+    n = X.shape[0]
+    m = X.shape[1]
+    p = Y.shape[1]
 
     if nr_lv is None:
         nr_lv = min(n, m)
@@ -181,7 +174,7 @@ def nipals(preproc, nr_lv=None, tol=1e-6, max_iter=1e4):
                        'Will use {}'.format(min(n, m)))
         nr_lv = min(n, m)
 
-    model = Model(preproc, nr_lv)
+    model = Model(X, Y, nr_lv)
 
     s_list_x = []
     s_list_y = []
@@ -229,11 +222,11 @@ def nipals(preproc, nr_lv=None, tol=1e-6, max_iter=1e4):
         s_list_x.append(np.linalg.norm(t))
         s_list_y.append(np.linalg.norm(u))
         # regression coefficient for the inner relation
-        model.d[i] = np.dot(u.T, t) / np.dot(t, t)
+        model.b[i] = np.dot(u.T, t) / np.dot(t, t)
 
         # Calculate residuals
         E_x = E_x - np.dot(np.row_stack(t), np.column_stack(model.P[:, i]))
-        E_y = E_y - model.d[i] * np.dot(np.row_stack(t),
+        E_y = E_y - model.b[i] * np.dot(np.row_stack(t),
                                         np.column_stack(q.T))
 
     model.x_eigenvalues = np.power(np.array(s_list_x), 2) / (model.n - 1)
@@ -242,8 +235,8 @@ def nipals(preproc, nr_lv=None, tol=1e-6, max_iter=1e4):
     # Compute regression parameters B
     # tmp = (P'W)^{-1}
     tmp = np.linalg.inv(model.P.T.dot(model.W))
-    model.B = model.W.dot(tmp).dot(np.diag(model.d)).dot(model.Q.T)
-    model.Y_modeled = model.preproc.dataset.dot(model.B)
+    model.B = model.W.dot(tmp).dot(np.diag(model.b)).dot(model.Q.T)
+    model.Y_modeled = X.dot(model.B)
     IO.Log.debug('Modeled Y prior to the discriminant classification',
                  model.Y_modeled)
     Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
@@ -255,7 +248,6 @@ def nipals(preproc, nr_lv=None, tol=1e-6, max_iter=1e4):
     IO.Log.info('NIPALS scores shape', model.T.shape)
     IO.Log.info('NIPALS x_eigenvalues', model.x_eigenvalues)
 
-    plot.update_global_model(model)
     return model
 
 

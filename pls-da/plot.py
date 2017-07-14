@@ -42,8 +42,16 @@ def update_global_model(value):
     if isinstance(value, model.Model):
         global MODEL
         MODEL = value
+    else:
+        IO.Log.Error('Wrong type in update_global_model() '
+                     '({}).'.format(type(value)))
+
+
+def update_global_preproc(value):
+    """Set value to MODEL."""
+    if isinstance(value, model.Preprocessing):
         global PREPROC
-        PREPROC = MODEL.preproc
+        PREPROC = value
     else:
         IO.Log.Error('Wrong type in update_global_model() '
                      '({}).'.format(type(value)))
@@ -264,8 +272,8 @@ def y_residuals_leverage(ax):
 
 def regression_coefficients(ax):
     """Plot the regression coefficients."""
-    for i in range(MODEL.d.shape[0]):
-        scatter_wrapper(ax, i, MODEL.d[i], PREPROC.categories[i])
+    for i in range(MODEL.b.shape[0]):
+        scatter_wrapper(ax, i, MODEL.b[i], PREPROC.categories[i])
 
     ax.set_title('Inner relation (variable b)')
     ax.set_xlabel('LV number')
