@@ -351,6 +351,23 @@ class test_plot_module(unittest.TestCase):
         self.assertRaises(ValueError, plot.loadings, plt.gca(),
                           pc_a=1, pc_b=1, y=True)
 
+    def test_check_consistency(self):
+        plot.scatter_wrapper(plt.gca(), self.x, self.y)
+        plot.scatter_wrapper(plt.gca(), self.x, self.y, 'U')
+        plot.line_wrapper(plt.gca(), self.x, self.y)
+        plot.line_wrapper(plt.gca(), self.x, self.y, 'U')
+        plot.scree(plt.gca(), x=True)
+        plot.cumulative_explained_variance(plt.gca(), x=True)
+        plot.inner_relations(plt.gca(), 0)
+        plot.biplot(plt.gca(), 0, 1, x=True)
+        plot.scores(plt.gca(), 0, 1, x=True)
+        plot.loadings(plt.gca(), 0, 1, x=True)
+        plot.calculated_y(plt.gca())
+        plot.y_residuals_leverage(plt.gca())
+        plot.regression_coefficients(plt.gca())
+        plot.data(plt.gca())
+        plot.sklearn_inner_relations(plt.gca(), 0)
+
 
 class test_utility_module(unittest.TestCase):
 
