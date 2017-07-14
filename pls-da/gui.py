@@ -8,6 +8,7 @@ import sys
 
 import IO
 import model
+import plot
 import utility
 
 
@@ -718,11 +719,16 @@ class UserInterface(object):
             IO.Log.debug('CANCEL (not chosen any preprocessing)')
 
         try:
-            self.plsda_model = model.nipals(preproc.dataset, preproc.dummy_y)
+            plsda_model = model.nipals(preproc.dataset, preproc.dummy_y)
         except Exception as e:
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
             return
+
+        self.preproc, self.plsda_model = preproc, plsda_model
+
+        plot.update_global_preproc(self.preproc)
+        plot.update_global_model(self.plsda_model)
 
         IO.Log.debug('Model created correctly')
         self.current_mode = 'model'
