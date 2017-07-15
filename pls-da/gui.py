@@ -2,12 +2,14 @@
 # coding: utf-8
 
 import copy
+import enum
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import sys
 
 import IO
 import model
+import plot
 import utility
 
 
@@ -19,6 +21,18 @@ def new_qt(widget, name, parent=None):
     ret = getattr(QtWidgets, widget)(parent)
     ret.setObjectName(name)
     return ret
+
+
+def clear(layout):
+    """Recursively call deleteLayer() over all widgets in layout."""
+    if not isinstance(layout, QtWidgets.QLayout):
+        return
+    while layout.count():
+        child = layout.takeAt(0)
+        if child.widget() is not None:
+            child.widget().deleteLater()
+        elif child.layout() is not None:
+            clear(child.layout())
 
 
 def _popup_choose(parent, filter_csv=False,
@@ -181,6 +195,13 @@ def set_policy(widget, h_policy='Preferred', v_policy='Preferred',
     widget.setSizePolicy(size_policy)
 
 
+class Lane(enum.Enum):
+    """Enumerate to identify the lanes of the gui which can contain plots."""
+
+    Left = 'Left'
+    Central = 'Central'
+
+
 class UserInterface(object):
 
     drop_down_choices = ['Scree', 'LVs - Explained variance Y',
@@ -233,72 +254,20 @@ class UserInterface(object):
         self.LeftPlotFormLayout.setContentsMargins(10, 10, 10, 10)
         self.LeftPlotFormLayout.setSpacing(10)
 
-        self.LeftLVsLabel = new_qt('QLabel', 'LeftLVsLabel',
-                                parent=self.LeftScrollAreaWidgetContents)
-        set_size(self.LeftLVsLabel, minimum=(70, 22), maximum=(1310, 170))
-        self.LeftLVsLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.LeftLVsLabel.setWordWrap(True)
-        self.LeftPlotFormLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole,
-                                          self.LeftLVsLabel)
+        self.add_label(Lane.Left, row=0, name='LVs', text='Latent Variables')
+        self.add_spin_box(Lane.Left, row=0, name='LVs')
 
-        self.LeftLVsSpinBox = new_qt('QSpinBox', 'LeftLVsSpinBox',
-                                  parent=self.LeftScrollAreaWidgetContents)
-        set_policy(self.LeftLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.LeftLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
-        self.LeftLVsSpinBox.setMinimum(1)
-        self.LeftPlotFormLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole,
-                                          self.LeftLVsSpinBox)
+        self.add_radio_button(Lane.Left, row=1, name='X',
+                              group_name='LeftButtonGroup')
+        self.add_spin_box(Lane.Left, row=1, name='X')
 
-        self.LeftXRadioButton = new_qt('QRadioButton', 'LeftXRadioButton',
-                                    parent=self.LeftScrollAreaWidgetContents)
-        set_policy(self.LeftXRadioButton, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.LeftXRadioButton, minimum=(70, 22), maximum=(1310, 170))
-        self.LeftPlotFormLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole,
-                                          self.LeftXRadioButton)
+        self.add_radio_button(Lane.Left, row=2, name='Y',
+                              group_name='LeftButtonGroup')
+        self.add_spin_box(Lane.Left, row=2, name='Y')
 
-        self.LeftYRadioButton = new_qt('QRadioButton', 'LeftYRadioButton',
-                                    parent=self.LeftScrollAreaWidgetContents)
-        set_policy(self.LeftYRadioButton, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.LeftYRadioButton, minimum=(70, 22), maximum=(1310, 170))
-        self.LeftPlotFormLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole,
-                                          self.LeftYRadioButton)
-
-        self.LeftButtonGroup = new_qt('QButtonGroup', 'LeftButtonGroup',
-                                   parent=self.LeftScrollAreaWidgetContents)
-        self.LeftButtonGroup.addButton(self.LeftXRadioButton)
-        self.LeftButtonGroup.addButton(self.LeftYRadioButton)
-
-        self.LeftXSpinBox = new_qt('QSpinBox', 'LeftXSpinBox',
-                                parent=self.LeftScrollAreaWidgetContents)
-        set_policy(self.LeftXSpinBox, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.LeftXSpinBox, minimum=(70, 22), maximum=(1310, 170))
-        self.LeftXSpinBox.setMinimum(1)
-        self.LeftPlotFormLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole,
-                                          self.LeftXSpinBox)
-
-        self.LeftYSpinBox = new_qt('QSpinBox', 'LeftYSpinBox',
-                                parent=self.LeftScrollAreaWidgetContents)
-        set_policy(self.LeftYSpinBox, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.LeftYSpinBox, minimum=(70, 22), maximum=(1310, 170))
-        self.LeftYSpinBox.setMinimum(1)
-        self.LeftPlotFormLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole,
-                                          self.LeftYSpinBox)
-
-        self.LeftPlotPushButton = new_qt('QPushButton', 'LeftPlotPushButton',
-                                      parent=self.LeftScrollAreaWidgetContents)
-        set_policy(self.LeftPlotPushButton, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.LeftPlotPushButton,
-                 minimum=(70, 22), maximum=(1310, 170))
-        self.LeftPlotFormLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole,
-                                          self.LeftPlotPushButton)
-
-        self.LeftBackPushButton = new_qt('QPushButton', 'LeftBackPushButton',
-                                      parent=self.LeftScrollAreaWidgetContents)
-        set_policy(self.LeftBackPushButton, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.LeftBackPushButton,
-                 minimum=(70, 22), maximum=(1310, 170))
-        self.LeftPlotFormLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole,
-                                          self.LeftBackPushButton)
+        self.add_push_button(Lane.Left, row=3, name='Back',
+                             role=QtWidgets.QFormLayout.LabelRole)
+        self.add_push_button(Lane.Left, row=3, name='Plot')
 
         self.LeftWidget = new_qt('QWidget', 'LeftWidget',
                               parent=self.MainSplitter)
@@ -348,91 +317,21 @@ class UserInterface(object):
         self.CentralPlotFormLayout.setContentsMargins(10, 10, 10, 10)
         self.CentralPlotFormLayout.setSpacing(10)
 
-        self.CentralLVsLabel = new_qt('QLabel', 'CentralLVsLabel',
-                                   parent=self.CentralScrollAreaWidgetContents)
-        set_policy(self.CentralLVsLabel, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.CentralLVsLabel, minimum=(70, 22), maximum=(1310, 170))
-        self.CentralLVsLabel.setTextFormat(QtCore.Qt.AutoText)
-        self.CentralLVsLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.CentralLVsLabel.setWordWrap(True)
-        self.CentralPlotFormLayout.setWidget(0,
-                                             QtWidgets.QFormLayout.LabelRole,
-                                             self.CentralLVsLabel)
+        self.add_label(Lane.Central, row=0, name='LVs',
+                       text='Latent Variables')
+        self.add_spin_box(Lane.Central, row=0, name='LVs')
 
-        self.CentralLVsSpinBox = new_qt(
-                'QSpinBox', 'CentralLVsSpinBox',
-                parent=self.CentralScrollAreaWidgetContents)
-        set_policy(self.CentralLVsSpinBox, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.CentralLVsSpinBox, minimum=(70, 22), maximum=(1310, 170))
-        self.CentralLVsSpinBox.setMinimum(1)
-        self.CentralPlotFormLayout.setWidget(0,
-                                             QtWidgets.QFormLayout.FieldRole,
-                                             self.CentralLVsSpinBox)
+        self.add_spin_box(Lane.Central, row=1, name='X')
+        self.add_radio_button(Lane.Central, row=1, name='X',
+                              group_name='CentralButtonGroup')
 
-        self.CentralXRadioButton = new_qt(
-                'QRadioButton', 'CentralXRadioButton',
-                parent=self.CentralScrollAreaWidgetContents)
-        set_policy(self.CentralXRadioButton, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.CentralXRadioButton,
-                 minimum=(70, 22), maximum=(1310, 170))
-        self.CentralPlotFormLayout.setWidget(1,
-                                             QtWidgets.QFormLayout.LabelRole,
-                                             self.CentralXRadioButton)
+        self.add_spin_box(Lane.Central, row=2, name='Y')
+        self.add_radio_button(Lane.Central, row=2, name='Y',
+                              group_name='CentralButtonGroup')
 
-        self.CentralYRadioButton = new_qt(
-                'QRadioButton', 'CentralYRadioButton',
-                parent=self.CentralScrollAreaWidgetContents)
-        set_policy(self.CentralYRadioButton, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.CentralYRadioButton,
-                 minimum=(70, 22), maximum=(1310, 170))
-        self.CentralPlotFormLayout.setWidget(1,
-                                             QtWidgets.QFormLayout.FieldRole,
-                                             self.CentralYRadioButton)
-
-        self.CentralButtonGroup = new_qt(
-                'QButtonGroup', 'CentralButtonGroup',
-                parent=self.CentralScrollAreaWidgetContents)
-        self.CentralButtonGroup.addButton(self.CentralXRadioButton)
-        self.CentralButtonGroup.addButton(self.CentralYRadioButton)
-
-        self.CentralXSpinBox = new_qt(
-                'QSpinBox', 'CentralXSpinBox',
-                parent=self.CentralScrollAreaWidgetContents)
-        set_policy(self.CentralXSpinBox, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.CentralXSpinBox, minimum=(70, 22), maximum=(1310, 170))
-        self.CentralXSpinBox.setMinimum(1)
-        self.CentralPlotFormLayout.setWidget(2,
-                                             QtWidgets.QFormLayout.LabelRole,
-                                             self.CentralXSpinBox)
-
-        self.CentralYSpinBox = new_qt('QSpinBox', 'CentralYSpinBox',
-                                   parent=self.CentralScrollAreaWidgetContents)
-        set_policy(self.CentralYSpinBox, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.CentralYSpinBox, minimum=(70, 22), maximum=(1310, 170))
-        self.CentralYSpinBox.setMinimum(1)
-        self.CentralPlotFormLayout.setWidget(2,
-                                             QtWidgets.QFormLayout.FieldRole,
-                                             self.CentralYSpinBox)
-
-        self.CentralBackPushButton = new_qt(
-                'QPushButton', 'CentralBackPushButton',
-                parent=self.CentralScrollAreaWidgetContents)
-        set_policy(self.CentralBackPushButton, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.CentralBackPushButton,
-                 minimum=(70, 22), maximum=(1310, 170))
-        self.CentralPlotFormLayout.setWidget(3,
-                                             QtWidgets.QFormLayout.LabelRole,
-                                             self.CentralBackPushButton)
-
-        self.CentralPlotPushButton = new_qt(
-                'QPushButton', 'CentralPlotPushButton',
-                parent=self.CentralScrollAreaWidgetContents)
-        set_policy(self.CentralPlotPushButton, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.CentralPlotPushButton,
-                 minimum=(70, 22), maximum=(1310, 170))
-        self.CentralPlotFormLayout.setWidget(3,
-                                             QtWidgets.QFormLayout.FieldRole,
-                                             self.CentralPlotPushButton)
+        self.add_push_button(Lane.Central, row=3, name='Back',
+                             role=QtWidgets.QFormLayout.LabelRole)
+        self.add_push_button(Lane.Central, row=3, name='Plot')
 
         self.CentralWidget = new_qt('QWidget', 'CentralWidget',
                                  parent=self.MainSplitter)
@@ -582,18 +481,6 @@ class UserInterface(object):
             self.LeftComboBox.setItemText(index, entry)
             self.CentralComboBox.setItemText(index, entry)
 
-        self.LeftLVsLabel.setText("Latent Variables")
-        self.LeftXRadioButton.setText("X")
-        self.LeftYRadioButton.setText("Y")
-        self.LeftPlotPushButton.setText("Plot")
-        self.LeftBackPushButton.setText("Back")
-
-        self.CentralLVsLabel.setText("Latent Variables")
-        self.CentralXRadioButton.setText("X")
-        self.CentralYRadioButton.setText("Y")
-        self.CentralBackPushButton.setText("Back")
-        self.CentralPlotPushButton.setText("Plot")
-
         self.DetailsLabel.setText("Details")
 
         self.MenuAbout.setTitle("&About")
@@ -683,6 +570,93 @@ class UserInterface(object):
             IO.Log.debug('NO (not replacing current model)')
             return False
 
+    def add_label(self, lane, row, name, text, word_wrap=True,
+                  text_format=QtCore.Qt.AutoText,
+                  alignment=QtCore.Qt.AlignCenter,
+                  role=QtWidgets.QFormLayout.LabelRole):
+        """Add to [Left|Central]PlotFormLayout a QLabel in row/role position.
+        """
+        attr_name = lane.value + str(name) + 'Label'
+        parent_name = getattr(self, lane.value + 'ScrollAreaWidgetContents')
+
+        new_label = new_qt('QLabel', attr_name, parent=parent_name)
+        new_label.setTextFormat(text_format)
+        new_label.setAlignment(alignment)
+        new_label.setWordWrap(word_wrap)
+        new_label.setText(str(text))
+
+        set_policy(new_label, 'Preferred', 'Preferred', 0, 0)
+        set_size(new_label, minimum=(70, 22), maximum=(1310, 170))
+
+        setattr(self, attr_name, new_label)
+
+        layout = getattr(self, lane.value + 'PlotFormLayout')
+        layout.setWidget(row, role, new_label)
+
+    def add_push_button(self, lane, row, name, text=None,
+                        role=QtWidgets.QFormLayout.FieldRole):
+        """Add to [Left|Central]PlotFormLayout a QPushButton in row/role pos.
+        """
+        attr_name = lane.value + str(name) + 'PushButton'
+        parent_name = getattr(self, lane.value + 'ScrollAreaWidgetContents')
+
+        new_push_button = new_qt('QPushButton', attr_name, parent=parent_name)
+        new_push_button.setText(str(text if text is not None else name))
+
+        set_policy(new_push_button, 'Preferred', 'Preferred', 0, 0)
+        set_size(new_push_button, minimum=(70, 22), maximum=(1310, 170))
+
+        setattr(self, attr_name, new_push_button)
+
+        layout = getattr(self, lane.value + 'PlotFormLayout')
+        layout.setWidget(row, role, new_push_button)
+
+    def add_radio_button(self, lane, row, name, group_name, text=None,
+                         role=QtWidgets.QFormLayout.LabelRole):
+        """Add to [Left|Central]PlotFormLayout a QRadioButton in row/role pos.
+
+           The QButtonGroup is searched by group_name and if not found it is
+           created and put in self.group_name
+        """
+        attr_name = lane.value + str(name) + 'RadioButton'
+        parent_name = getattr(self, lane.value + 'ScrollAreaWidgetContents')
+
+        new_radio_button = new_qt('QRadioButton', attr_name, parent=parent_name)
+        new_radio_button.setText(str(text if text is not None else name))
+
+        set_policy(new_radio_button, 'Preferred', 'Preferred', 0, 0)
+        set_size(new_radio_button, minimum=(70, 22), maximum=(1310, 170))
+
+        group = getattr(self, group_name, None)
+        if group is None:
+            group = new_qt('QButtonGroup', group_name, parent=parent_name)
+            setattr(self, group_name, group)
+        group.addButton(new_radio_button)
+
+        setattr(self, attr_name, new_radio_button)
+
+        layout = getattr(self, lane.value + 'PlotFormLayout')
+        layout.setWidget(row, role, new_radio_button)
+
+    def add_spin_box(self, lane, row, name, minimum=1, maximum=99,
+                     role=QtWidgets.QFormLayout.FieldRole):
+        """Add to [Left|Central]PlotFormLayout a QSpinBox in row/role position.
+        """
+        attr_name = lane.value + str(name) + 'SpinBox'
+        parent_name = getattr(self, lane.value + 'ScrollAreaWidgetContents')
+
+        new_spin_box = new_qt('QSpinBox', attr_name, parent=parent_name)
+        new_spin_box.setMinimum(minimum)
+        new_spin_box.setMaximum(maximum)
+
+        set_policy(new_spin_box, 'Preferred', 'Preferred', 0, 0)
+        set_size(new_spin_box, minimum=(70, 22), maximum=(1310, 170))
+
+        setattr(self, attr_name, new_spin_box)
+
+        layout = getattr(self, lane.value + 'PlotFormLayout')
+        layout.setWidget(row, role, new_spin_box)
+
     def new_model(self):
         """Initialize plsda_model attribute from csv."""
         if not self._replace_current_model():
@@ -718,11 +692,16 @@ class UserInterface(object):
             IO.Log.debug('CANCEL (not chosen any preprocessing)')
 
         try:
-            self.plsda_model = model.nipals(preproc.dataset, preproc.dummy_y)
+            plsda_model = model.nipals(preproc.dataset, preproc.dummy_y)
         except Exception as e:
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
             return
+
+        self.preproc, self.plsda_model = preproc, plsda_model
+
+        plot.update_global_preproc(self.preproc)
+        plot.update_global_model(self.plsda_model)
 
         IO.Log.debug('Model created correctly')
         self.current_mode = 'model'
@@ -776,6 +755,11 @@ class UserInterface(object):
 
         self.ActionExport.triggered.connect(
                 lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
+
+#        self.LeftComboBox.currentIndexChanged.connect(
+#                lambda index: print(repr(index)))
+#        self.CentralComboBox.currentTextChanged.connect(
+#                lambda text: print(repr(text)))
 
     def show(self):
         self.MainWindow.show()
