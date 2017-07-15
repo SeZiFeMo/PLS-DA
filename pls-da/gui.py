@@ -204,14 +204,8 @@ class Lane(enum.Enum):
 
 class UserInterface(object):
 
-    drop_down_choices = ['Scree', 'LVs - Explained variance Y',
-                         'Inner relationships', 'Biplot', 'Scores & Loadings',
-                         'Scores', 'Loadings', 'Samples - Y calculated',
-                         'Samples - Y predicted', 'T2 - Q',
-                         'Residuals - Leverage', 'Regression coefficients']
-
     def __init__(self):
-        self.MainWindow = new_qt('QMainWindow', 'MainWindow')
+        self.setattr('MainWindow', 'QMainWindow')
         self.MainWindow.setEnabled(True)
         self.MainWindow.resize(800, 600)
         set_policy(self.MainWindow, 'Expanding', 'Expanding', 0, 0)
@@ -219,20 +213,18 @@ class UserInterface(object):
         self.MainWindow.setUnifiedTitleAndToolBarOnMac(True)
 
         # Previously in setupUi()
-        self.MainWidget = new_qt('QWidget', 'MainWidget', parent=self.MainWindow)
+        self.setattr('MainWidget', 'QWidget', parent=self.MainWindow)
         set_policy(self.MainWidget, 'Preferred', 'Preferred', 0, 0)
         set_size(self.MainWidget, minimum=(800, 600), maximum=(7680, 4300))
 
-        self.MainSplitter = new_qt('QSplitter', 'MainSplitter',
-                                parent=self.MainWidget)
+        self.setattr('MainSplitter', 'QSplitter', parent=self.MainWidget)
         set_policy(self.MainSplitter, 'Expanding', 'Expanding', 0, 0)
         set_size(self.MainSplitter, minimum=(800, 600), maximum=(7680, 4300))
         self.MainSplitter.setOrientation(QtCore.Qt.Horizontal)
         self.MainSplitter.setHandleWidth(3)
 
         # Start creating widgets to put inside LeftWidget
-        self.LeftScrollAreaWidgetContents = new_qt('QWidget',
-                                                'LeftScrollAreaWidgetContents')
+        self.setattr('LeftScrollAreaWidgetContents', 'QWidget')
         self.LeftScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0,
                                                                    291, 565))
         set_policy(self.LeftScrollAreaWidgetContents,
@@ -242,8 +234,9 @@ class UserInterface(object):
         self.LeftScrollAreaWidgetContents.setLayoutDirection(
                 QtCore.Qt.LeftToRight)
 
-        self.LeftPlotFormLayout = new_qt('QFormLayout', 'LeftPlotFormLayout',
-                                      parent=self.LeftScrollAreaWidgetContents)
+        self.setattr('LeftPlotFormLayout', 'QFormLayout',
+                     parent=self.LeftScrollAreaWidgetContents)
+
         self.LeftPlotFormLayout.setSizeConstraint(
                 QtWidgets.QLayout.SetMaximumSize)
         self.LeftPlotFormLayout.setFieldGrowthPolicy(
@@ -269,32 +262,26 @@ class UserInterface(object):
                              role=QtWidgets.QFormLayout.LabelRole)
         self.add_push_button(Lane.Left, row=3, name='Plot')
 
-        self.LeftWidget = new_qt('QWidget', 'LeftWidget',
-                              parent=self.MainSplitter)
+        self.setattr('LeftWidget', 'QWidget', parent=self.MainSplitter)
         set_size(self.LeftWidget, minimum=(200, 580), maximum=(3637, 4300))
 
-        self.LeftComboBox = new_qt('QComboBox', 'LeftComboBox',
-                                parent=self.LeftWidget)
+        self.setattr('LeftComboBox', 'QComboBox', parent=self.LeftWidget)
+        set_policy(self.LeftComboBox, 'Expanding', 'Expanding', 0, 0)
         set_size(self.LeftComboBox, minimum=(194, 22), maximum=(3631, 22))
-        for entry in self.drop_down_choices:
-            self.LeftComboBox.addItem("")
 
-        self.LeftScrollArea = new_qt('QScrollArea', 'LeftScrollArea',
-                                  parent=self.LeftWidget)
+        self.setattr('LeftScrollArea', 'QScrollArea', parent=self.LeftWidget)
         set_size(self.LeftScrollArea, minimum=(194, 547), maximum=(3631, 4267))
         self.LeftScrollArea.setWidgetResizable(True)
         self.LeftScrollArea.setWidget(self.LeftScrollAreaWidgetContents)
 
-        self.LeftGridLayout = new_qt('QGridLayout', 'LeftGridLayout',
-                                  parent=self.LeftWidget)
+        self.setattr('LeftGridLayout', 'QGridLayout', parent=self.LeftWidget)
         self.LeftGridLayout.setContentsMargins(3, 3, 3, 3)
         self.LeftGridLayout.setSpacing(5)
         self.LeftGridLayout.addWidget(self.LeftComboBox, 0, 0, 1, 1)
         self.LeftGridLayout.addWidget(self.LeftScrollArea, 1, 0, 1, 1)
 
         # Start creating widgets to put inside CentralWidget
-        self.CentralScrollAreaWidgetContents = new_qt(
-                'QWidget', 'CentralScrollAreaWidgetContents')
+        self.setattr('CentralScrollAreaWidgetContents', 'QWidget')
         self.CentralScrollAreaWidgetContents.setGeometry(
                 QtCore.QRect(0, 0, 290, 565))
         set_policy(self.CentralScrollAreaWidgetContents,
@@ -304,9 +291,8 @@ class UserInterface(object):
         self.CentralScrollAreaWidgetContents.setLayoutDirection(
                 QtCore.Qt.LeftToRight)
 
-        self.CentralPlotFormLayout = new_qt(
-                'QFormLayout', 'CentralPlotFormLayout',
-                parent=self.CentralScrollAreaWidgetContents)
+        self.setattr('CentralPlotFormLayout', 'QFormLayout',
+                     parent=self.CentralScrollAreaWidgetContents)
         self.CentralPlotFormLayout.setSizeConstraint(
                 QtWidgets.QLayout.SetMaximumSize)
         self.CentralPlotFormLayout.setFieldGrowthPolicy(
@@ -333,34 +319,29 @@ class UserInterface(object):
                              role=QtWidgets.QFormLayout.LabelRole)
         self.add_push_button(Lane.Central, row=3, name='Plot')
 
-        self.CentralWidget = new_qt('QWidget', 'CentralWidget',
-                                 parent=self.MainSplitter)
+        self.setattr('CentralWidget', 'QWidget', parent=self.MainSplitter)
         set_size(self.CentralWidget, minimum=(200, 580), maximum=(3637, 4300))
 
-        self.CentralComboBox = new_qt('QComboBox', 'CentralComboBox',
-                                   parent=self.CentralWidget)
+        self.setattr('CentralComboBox', 'QComboBox', parent=self.CentralWidget)
         set_policy(self.CentralComboBox, 'Expanding', 'Expanding', 0, 0)
         set_size(self.CentralComboBox, minimum=(194, 22), maximum=(3631, 22))
-        for entry in self.drop_down_choices:
-            self.CentralComboBox.addItem("")
 
-        self.CentralScrollArea = new_qt('QScrollArea', 'CentralScrollArea',
-                                     parent=self.CentralWidget)
+        self.setattr('CentralScrollArea', 'QScrollArea',
+                     parent=self.CentralWidget)
         set_size(self.CentralScrollArea,
                  minimum=(194, 547), maximum=(3631, 4267))
         self.CentralScrollArea.setWidgetResizable(True)
         self.CentralScrollArea.setWidget(self.CentralScrollAreaWidgetContents)
 
-        self.CentralGridLayout = new_qt('QGridLayout', 'CentralGridLayout',
-                                     parent=self.CentralWidget)
+        self.setattr('CentralGridLayout', 'QGridLayout',
+                     parent=self.CentralWidget)
         self.CentralGridLayout.setContentsMargins(3, 3, 3, 3)
         self.CentralGridLayout.setSpacing(5)
         self.CentralGridLayout.addWidget(self.CentralComboBox, 0, 0, 1, 1)
         self.CentralGridLayout.addWidget(self.CentralScrollArea, 1, 0, 1, 1)
 
         # Start creating widgets to put inside RightWidget
-        self.RightScrollAreaWidgetContents = new_qt(
-                'QWidget', 'RightScrollAreaWidgetContents')
+        self.setattr('RightScrollAreaWidgetContents', 'QWidget')
         self.RightScrollAreaWidgetContents.setGeometry(
                 QtCore.QRect(0, 0, 189, 565))
         set_policy(self.RightScrollAreaWidgetContents,
@@ -368,8 +349,8 @@ class UserInterface(object):
         set_size(self.RightScrollAreaWidgetContents,
                  minimum=(138, 534), maximum=(388, 4259))
 
-        self.DetailsLabel = new_qt('QLabel', 'DetailsLabel',
-                                parent=self.RightScrollAreaWidgetContents)
+        self.setattr('DetailsLabel', 'QLabel',
+                     parent=self.RightScrollAreaWidgetContents)
         set_policy(self.DetailsLabel, 'Expanding', 'Expanding', 0, 0)
         set_size(self.DetailsLabel, minimum=(138, 534), maximum=(388, 4259))
         self.DetailsLabel.setAlignment(QtCore.Qt.AlignHCenter
@@ -379,26 +360,23 @@ class UserInterface(object):
                 QtCore.Qt.TextSelectableByKeyboard
                 | QtCore.Qt.TextSelectableByMouse)
 
-        self.gridLayout = new_qt('QGridLayout', 'gridLayout',
-                              parent=self.RightScrollAreaWidgetContents)
+        self.setattr('gridLayout', 'QGridLayout',
+                     parent=self.RightScrollAreaWidgetContents)
         self.gridLayout.setContentsMargins(3, 3, 3, 3)
         self.gridLayout.setSpacing(5)
         self.gridLayout.addWidget(self.DetailsLabel, 0, 0, 1, 1)
 
-        self.RightWidget = new_qt('QWidget', 'RightWidget',
-                               parent=self.MainSplitter)
+        self.setattr('RightWidget', 'QWidget', parent=self.MainSplitter)
         set_policy(self.RightWidget, 'Expanding', 'Expanding', 0, 0)
         set_size(self.RightWidget, minimum=(150, 580), maximum=(400, 4300))
 
-        self.RightScrollArea = new_qt('QScrollArea', 'RightScrollArea',
-                                   parent=self.RightWidget)
+        self.setattr('RightScrollArea', 'QScrollArea', parent=self.RightWidget)
         set_size(self.RightScrollArea,
                  minimum=(144, 547), maximum=(394, 4272))
         self.RightScrollArea.setWidgetResizable(True)
         self.RightScrollArea.setWidget(self.RightScrollAreaWidgetContents)
 
-        self.CurrentModeLabel = new_qt('QLabel', 'CurrentModeLabel',
-                                    parent=self.RightWidget)
+        self.setattr('CurrentModeLabel', 'QLabel', parent=self.RightWidget)
         set_policy(self.CurrentModeLabel, 'Expanding', 'Expanding', 0, 0)
         set_size(self.CurrentModeLabel, minimum=(144, 22), maximum=(394, 22))
         self.CurrentModeLabel.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -407,54 +385,45 @@ class UserInterface(object):
         self.CurrentModeLabel.setTextFormat(QtCore.Qt.AutoText)
         self.CurrentModeLabel.setAlignment(QtCore.Qt.AlignCenter)
 
-        self.RightGridLayout = new_qt('QGridLayout', 'RightGridLayout',
-                                   parent=self.RightWidget)
+        self.setattr('RightGridLayout', 'QGridLayout', parent=self.RightWidget)
         self.RightGridLayout.setContentsMargins(3, 3, 3, 3)
         self.RightGridLayout.setSpacing(5)
         self.RightGridLayout.addWidget(self.RightScrollArea, 1, 0, 1, 1)
         self.RightGridLayout.addWidget(self.CurrentModeLabel, 0, 0, 1, 1)
 
-        self.MainGridLayout = new_qt('QGridLayout', 'MainGridLayout',
-                                  parent=self.MainWidget)
+        self.setattr('MainGridLayout', 'QGridLayout', parent=self.MainWidget)
         self.MainGridLayout.setContentsMargins(0, 0, 0, 0)
         self.MainGridLayout.setSpacing(0)
         self.MainGridLayout.addWidget(self.MainSplitter, 0, 0, 1, 1)
         self.MainWindow.setCentralWidget(self.MainWidget)
 
-        self.TopMenuBar = new_qt('QMenuBar', 'TopMenuBar', parent=self.MainWindow)
+        self.setattr('TopMenuBar', 'QMenuBar', parent=self.MainWindow)
         self.TopMenuBar.setGeometry(QtCore.QRect(0, 0, 800, 20))
         set_size(self.TopMenuBar, minimum=(800, 20), maximum=(7680, 20))
 
-        self.MenuOptions = new_qt('QMenu', 'MenuOptions', parent=self.TopMenuBar)
+        self.setattr('MenuOptions', 'QMenu', parent=self.TopMenuBar)
         set_size(self.MenuOptions, minimum=(100, 20), maximum=(960, 4300))
 
-        self.MenuChangeMode = new_qt('QMenu', 'MenuChangeMode',
-                                  parent=self.TopMenuBar)
+        self.setattr('MenuChangeMode', 'QMenu', parent=self.TopMenuBar)
         set_size(self.MenuChangeMode, minimum=(100, 20), maximum=(960, 4300))
 
-        self.MenuAbout = new_qt('QMenu', 'MenuAbout', parent=self.TopMenuBar)
+        self.setattr('MenuAbout', 'QMenu', parent=self.TopMenuBar)
         set_size(self.MenuAbout, minimum=(100, 20), maximum=(960, 4300))
 
         self.MainWindow.setMenuBar(self.TopMenuBar)
 
-        self.ActionNewModel = new_qt('QAction', 'ActionNewModel',
-                                  parent=self.MenuOptions)
-        self.ActionSaveModel = new_qt('QAction', 'ActionSaveModel',
-                                   parent=self.MenuOptions)
-        self.ActionLoadModel = new_qt('QAction', 'ActionLoadModel',
-                                   parent=self.MenuOptions)
-        self.ActionExport = new_qt('QAction', 'ActionExport',
-                                parent=self.MenuOptions)
-        self.ActionQuit = new_qt('QAction', 'ActionQuit', parent=self.MenuOptions)
+        self.setattr('ActionNewModel', 'QAction', self.MenuOptions)
+        self.setattr('ActionSaveModel', 'QAction', self.MenuOptions)
+        self.setattr('ActionLoadModel', 'QAction', self.MenuOptions)
+        self.setattr('ActionExport', 'QAction', self.MenuOptions)
+        self.setattr('ActionQuit', 'QAction', parent=self.MenuOptions)
 
-        self.ActionModel = new_qt('QAction', 'ActionModel',
-                               parent=self.MenuChangeMode)
-        self.ActionCV = new_qt('QAction', 'ActionCV', parent=self.MenuChangeMode)
-        self.ActionPrediction = new_qt('QAction', 'ActionPrediction',
-                                    parent=self.MenuChangeMode)
+        self.setattr('ActionModel', 'QAction', self.MenuChangeMode)
+        self.setattr('ActionCV', 'QAction', parent=self.MenuChangeMode)
+        self.setattr('ActionPrediction', 'QAction', self.MenuChangeMode)
 
-        self.ActionAboutThatProject = new_qt('QAction', 'ActionAboutThatProject',
-                                          parent=self.MenuAbout)
+        self.setattr('ActionAboutThatProject', 'QAction', self.MenuAbout)
+        self.setattr('ActionAboutQt', 'QAction', self.MenuAbout)
 
         self.MenuOptions.addAction(self.ActionNewModel)
         self.MenuOptions.addAction(self.ActionSaveModel)
@@ -469,6 +438,7 @@ class UserInterface(object):
         self.MenuChangeMode.addAction(self.ActionPrediction)
 
         self.MenuAbout.addAction(self.ActionAboutThatProject)
+        self.MenuAbout.addAction(self.ActionAboutQt)
 
         self.TopMenuBar.addAction(self.MenuOptions.menuAction())
         self.TopMenuBar.addAction(self.MenuChangeMode.menuAction())
@@ -477,9 +447,9 @@ class UserInterface(object):
         # Previously in retranslateUi()
         self.MainWindow.setWindowTitle("PLS-DA")
 
-        for index, entry in enumerate(self.drop_down_choices):
-            self.LeftComboBox.setItemText(index, entry)
-            self.CentralComboBox.setItemText(index, entry)
+        for entry in self.drop_down_menu:
+            self.LeftComboBox.addItem(entry['text'])
+            self.CentralComboBox.addItem(entry['text'])
 
         self.DetailsLabel.setText("Details")
 
@@ -488,6 +458,7 @@ class UserInterface(object):
         self.MenuOptions.setTitle("&Options")
 
         self.ActionAboutThatProject.setText("A&bout this project")
+        self.ActionAboutQt.setText("Abo&ut Qt")
         self.ActionCV.setText("Cross&Validation")
         self.ActionExport.setText("&Export matrices")
         self.ActionLoadModel.setText("&Load model")
@@ -498,6 +469,7 @@ class UserInterface(object):
         self.ActionSaveModel.setText("&Save model")
 
         self.ActionAboutThatProject.setShortcut("F1")
+        self.ActionAboutQt.setShortcut("F2")
         self.ActionCV.setShortcut("Ctrl+V")
         self.ActionExport.setShortcut("Ctrl+E")
         self.ActionLoadModel.setShortcut("Ctrl+L")
@@ -512,6 +484,27 @@ class UserInterface(object):
 
         self.plsda_model = None
         self.current_mode = 'start'
+
+    @property
+    def drop_down_menu(self):
+        """Return a generator iterator over drop down menu item properties.
+
+           https://docs.python.org/3/glossary.html#term-generator-iterator
+        """
+        tmp = (('Scree', 'plot_scree'),
+               ('Cumulative explained variance', 'plot_explained_variance'),
+               ('Inner relationships', 'plot_inner_relations'),
+               ('Scores', 'plot_scores'),
+               ('Loadings', 'plot_loadings'),
+               ('Biplot', 'plot_biplot'),
+               ('Scores & Loadings', 'plot_scores_and_loadings'),
+               ('Calculated Y', 'plot_calculated_y'),
+               ('Predicted Y', 'plot_predicted_y'),
+               ('T² – Q', 'plot_t_square_q'),
+               ('Residuals – Leverage', 'plot_residuals_leverage'),
+               ('Regression coefficients', 'plot_regression_coefficients'))
+        for index, (text, method) in enumerate(tmp):
+            yield {'index': index, 'text': text, 'method': method}
 
     @property
     def current_mode(self):
@@ -569,6 +562,10 @@ class UserInterface(object):
         else:
             IO.Log.debug('NO (not replacing current model)')
             return False
+
+    def setattr(self, name, widget, parent=None):
+        """Wrapper of qt5 module function and setattr over self."""
+        setattr(self, name, new_qt(widget=widget, name=name, parent=parent))
 
     def add_label(self, lane, row, name, text, word_wrap=True,
                   text_format=QtCore.Qt.AutoText,
@@ -657,6 +654,52 @@ class UserInterface(object):
         layout = getattr(self, lane.value + 'PlotFormLayout')
         layout.setWidget(row, role, new_spin_box)
 
+    def call_plot_method(self, lane, index=None, text=None):
+        if index is None and text is None:
+            IO.Log.warning('UserInterface.call_plot_method() got None index '
+                           'and None text!')
+            return
+        for entry in self.drop_down_menu:
+            if index == entry['index'] or text == entry['text']:
+                method = getattr(self, entry['method'])
+                return method(lane)
+
+    def plot_scree(self, lane):
+        pass
+
+    def plot_explained_variance(self, lane):
+        pass
+
+    def plot_inner_relations(self, lane):
+        pass
+
+    def plot_scores(self, lane):
+        pass
+
+    def plot_loadings(self, lane):
+        pass
+
+    def plot_biplot(self, lane):
+        pass
+
+    def plot_scores_and_loadings(self, lane):
+        pass
+
+    def plot_calculated_y(self, lane):
+        pass
+
+    def plot_predicted_y(self, lane):
+        pass
+
+    def plot_t_square_q(self, lane):
+        pass
+
+    def plot_residuals_leverage(self, lane):
+        pass
+
+    def plot_regression_coefficients(self, lane):
+        pass
+
     def new_model(self):
         """Initialize plsda_model attribute from csv."""
         if not self._replace_current_model():
@@ -740,15 +783,6 @@ class UserInterface(object):
         self.current_mode = 'model'
 
     def connect_handlers(self):
-        self.ActionModel.triggered.connect(
-                lambda: setattr(self, 'current_mode', 'model'))
-
-        self.ActionCV.triggered.connect(
-                lambda: setattr(self, 'current_mode', 'cv'))
-
-        self.ActionPrediction.triggered.connect(
-                lambda: setattr(self, 'current_mode', 'prediction'))
-
         self.ActionNewModel.triggered.connect(self.new_model)
         self.ActionSaveModel.triggered.connect(self.save_model)
         self.ActionLoadModel.triggered.connect(self.load_model)
@@ -756,10 +790,27 @@ class UserInterface(object):
         self.ActionExport.triggered.connect(
                 lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
 
-#        self.LeftComboBox.currentIndexChanged.connect(
-#                lambda index: print(repr(index)))
-#        self.CentralComboBox.currentTextChanged.connect(
-#                lambda text: print(repr(text)))
+        self.ActionQuit.triggered.connect(self.quit)
+
+        self.ActionModel.triggered.connect(
+                lambda: setattr(self, 'current_mode', 'model'))
+        self.ActionCV.triggered.connect(
+                lambda: setattr(self, 'current_mode', 'cv'))
+        self.ActionPrediction.triggered.connect(
+                lambda: setattr(self, 'current_mode', 'prediction'))
+
+        self.ActionAboutQt.triggered.connect(QtWidgets.QApplication.aboutQt)
+
+        self.LeftComboBox.currentIndexChanged.connect(
+                lambda idx: self.call_plot_method(Lane.Left, index=idx))
+        self.CentralComboBox.currentTextChanged.connect(
+                lambda txt: self.call_plot_method(Lane.Central, text=txt))
+
+    def quit(self):
+        """Ask for confirmation with a popup and quit returning 0."""
+        if popup_question('Would you really like to quit?', title='Quit',
+                          parent=self.MainWindow):
+            QtCore.QCoreApplication.quit()
 
     def show(self):
         self.MainWindow.show()
