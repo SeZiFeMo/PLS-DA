@@ -5,7 +5,6 @@ import math
 import numpy as np
 
 import IO
-import plot
 import utility
 
 
@@ -149,7 +148,7 @@ class Model(object):
         self.y_eigenvalues = np.empty((max_lv))
         self.Y_modeled = np.empty((self.n, self.p))
         self.Y_modeled_dummy = np.empty((self.n, self.p))
-        self.B = np.empty((self.n, self.m))
+        self.B = np.empty((self.m, self.p))
         self.E_x = np.empty((self.n, self.m))
         self.E_y = np.empty((self.n, self.p))
 

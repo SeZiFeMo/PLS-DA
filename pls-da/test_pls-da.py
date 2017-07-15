@@ -279,7 +279,7 @@ class nipals_abstract(object):
                                    atol=absolute_tolerance)
 
     def test_nipals_inner_relation(self):
-        """The relation in U = TD + H"""
+        """The relation in U = TB + H"""
         np.testing.assert_allclose(self.nipals.U,
                                    np.dot(self.nipals.T,
                                           np.diag(self.nipals.b)),
@@ -295,6 +295,61 @@ class nipals_abstract(object):
                                    np.dot(self.nipals.U, self.nipals.Q.T),
                                    err_msg="Y != UQ'", atol=absolute_tolerance)
 
+    def test_predicted_y(self):
+        y_pred = self.preproc.dataset.dot(self.nipals.W.T).dot(
+                 np.diag(self.nipals.b)).dot(self.nipals.Q.T)
+        np.testing.assert_allclose(self.preproc.dummy_y, y_pred,
+                                   atol=absolute_tolerance)
+        y_pred = self.preproc.dataset.dot(self.nipals.B)
+        np.testing.assert_allclose(self.preproc.dummy_y, y_pred,
+                                   atol=absolute_tolerance)
+
+    def test_p_unit_length(self):
+        for i in range(self.nipals.m):
+            np.testing.assert_allclose(np.linalg.norm(self.nipals.P[:, i]),
+                                       1.0, atol=absolute_tolerance)
+
+    def test_q_unit_length(self):
+        for i in range(self.nipals.m):
+            np.testing.assert_allclose(np.linalg.norm(self.nipals.Q[:, i]),
+                                       1.0, atol=absolute_tolerance)
+
+    @unittest.skip("Property which must hold")
+    def test_t_centered_around_zero(self):
+        for i in range(self.nipals.n):
+            np.testing.assert_allclose(sum(self.nipals.T[i, :]), 0,
+                                       atol=absolute_tolerance)
+
+    @unittest.skip("Property which must hold")
+    def test_u_centered_around_zero(self):
+        for i in range(self.nipals.n):
+            np.testing.assert_allclose(sum(self.nipals.U[i, :]), 0,
+                                       atol=absolute_tolerance)
+
+    @unittest.skip("Property which must hold")
+    def test_w_orthogonal(self):
+        for i in range(self.nipals.m):
+            with self.subTest(i=i):
+                for j in range(self.nipals.m):
+                    with self.subTest(j=j):
+                        w_i = self.nipals.W[i, :]
+                        w_j = self.nipals.W[i, :]
+                        norm = np.linalg.norm(w_i)**2 if i == j else 0
+                        np.testing.assert_allclose(w_i.T.dot(w_j), norm,
+                                                   atol=absolute_tolerance)
+
+    @unittest.skip("Property which must hold")
+    def test_t_orthogonal(self):
+        for i in range(self.nipals.m):
+            with self.subTest(i=i):
+                for j in range(self.nipals.m):
+                    with self.subTest(j=j):
+                        t_i = self.nipals.T[i, :]
+                        t_j = self.nipals.T[i, :]
+                        norm = np.linalg.norm(t_i)**2 if i == j else 0
+                        np.testing.assert_allclose(t_i.T.dot(t_j), norm,
+                                                   atol=absolute_tolerance)
+
     def test_coef(self):
         np.testing.assert_allclose(self.preproc.dummy_y,
                                    self.nipals.Y_modeled_dummy,
@@ -302,9 +357,6 @@ class nipals_abstract(object):
 
 
 class test_nipals_method(nipals_abstract, unittest.TestCase):
-
-    def calculate_nipals(self, j):
-        self.nipals.run(nr_lv=j)
 
     @unittest.skip("Different algorithm")
     def test_nipals_y_weights(self):
