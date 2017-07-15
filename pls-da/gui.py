@@ -204,39 +204,60 @@ class Lane(enum.Enum):
 
 class UserInterface(object):
 
-    def __init__(self):
-        self.setattr('MainWindow', 'QMainWindow')
+    def __init__(self, main_window_title):
+        self.setattr('MainWindow', 'QMainWindow',
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(800, 600), maximum=(7680, 4320)))
+        self.MainWindow.setUnifiedTitleAndToolBarOnMac(True)
+        self.MainWindow.setWindowTitle(main_window_title)
         self.MainWindow.setEnabled(True)
         self.MainWindow.resize(800, 600)
-        set_policy(self.MainWindow, 'Expanding', 'Expanding', 0, 0)
-        set_size(self.MainWindow, minimum=(800, 600), maximum=(7680, 4320))
-        self.MainWindow.setUnifiedTitleAndToolBarOnMac(True)
 
-        # Previously in setupUi()
-        self.setattr('MainWidget', 'QWidget', parent=self.MainWindow)
-        set_policy(self.MainWidget, 'Preferred', 'Preferred', 0, 0)
-        set_size(self.MainWidget, minimum=(800, 600), maximum=(7680, 4300))
+        self.setattr('MainWidget', 'QWidget', parent=self.MainWindow,
+                     policy=('Preferred', 'Preferred', 0, 0),
+                     size=dict(minimum=(800, 600), maximum=(7680, 4300)))
 
-        self.setattr('MainSplitter', 'QSplitter', parent=self.MainWidget)
-        set_policy(self.MainSplitter, 'Expanding', 'Expanding', 0, 0)
-        set_size(self.MainSplitter, minimum=(800, 600), maximum=(7680, 4300))
+        self.setattr('MainGridLayout', 'QGridLayout', parent=self.MainWidget)
+        self.MainGridLayout.setContentsMargins(0, 0, 0, 0)
+        self.MainGridLayout.setSpacing(0)
+        self.MainWindow.setCentralWidget(self.MainWidget)
+
+        self.setattr('MainSplitter', 'QSplitter', parent=self.MainWidget,
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(800, 600), maximum=(7680, 4300)))
+        self.MainGridLayout.addWidget(self.MainSplitter, 0, 0, 1, 1)
         self.MainSplitter.setOrientation(QtCore.Qt.Horizontal)
         self.MainSplitter.setHandleWidth(3)
 
-        # Start creating widgets to put inside LeftWidget
-        self.setattr('LeftScrollAreaWidgetContents', 'QWidget')
-        self.LeftScrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0,
-                                                                   291, 565))
-        set_policy(self.LeftScrollAreaWidgetContents,
-                   'Expanding', 'Expanding', 0, 0)
-        set_size(self.LeftScrollAreaWidgetContents,
-                 minimum=(174, 427), maximum=(3611, 4147))
+        # Lane.Left
+        self.setattr('LeftWidget', 'QWidget', parent=self.MainSplitter,
+                     size=dict(minimum=(200, 580), maximum=(3637, 4300)))
+
+        self.setattr('LeftGridLayout', 'QGridLayout', parent=self.LeftWidget)
+        self.LeftGridLayout.setContentsMargins(3, 3, 3, 3)
+        self.LeftGridLayout.setSpacing(5)
+
+        self.setattr('LeftComboBox', 'QComboBox', parent=self.LeftWidget,
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(194, 22), maximum=(3631, 22)))
+        self.LeftGridLayout.addWidget(self.LeftComboBox, 0, 0, 1, 1)
+
+        self.setattr('LeftScrollArea', 'QScrollArea', parent=self.LeftWidget,
+                     size=dict(minimum=(194, 547), maximum=(3631, 4267)))
+        self.LeftScrollArea.setWidgetResizable(True)
+        self.LeftGridLayout.addWidget(self.LeftScrollArea, 1, 0, 1, 1)
+
+        self.setattr('LeftScrollAreaWidgetContents', 'QWidget',
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(174, 427), maximum=(3611, 4147)))
+        self.LeftScrollArea.setWidget(self.LeftScrollAreaWidgetContents)
+        self.LeftScrollAreaWidgetContents.setGeometry(
+                QtCore.QRect(0, 0, 290, 565))
         self.LeftScrollAreaWidgetContents.setLayoutDirection(
                 QtCore.Qt.LeftToRight)
 
         self.setattr('LeftPlotFormLayout', 'QFormLayout',
                      parent=self.LeftScrollAreaWidgetContents)
-
         self.LeftPlotFormLayout.setSizeConstraint(
                 QtWidgets.QLayout.SetMaximumSize)
         self.LeftPlotFormLayout.setFieldGrowthPolicy(
@@ -262,32 +283,32 @@ class UserInterface(object):
                              role=QtWidgets.QFormLayout.LabelRole)
         self.add_push_button(Lane.Left, row=3, name='Plot')
 
-        self.setattr('LeftWidget', 'QWidget', parent=self.MainSplitter)
-        set_size(self.LeftWidget, minimum=(200, 580), maximum=(3637, 4300))
+        # Lane.Central
+        self.setattr('CentralWidget', 'QWidget', parent=self.MainSplitter,
+                     size=dict(minimum=(200, 580), maximum=(3637, 4300)))
 
-        self.setattr('LeftComboBox', 'QComboBox', parent=self.LeftWidget)
-        set_policy(self.LeftComboBox, 'Expanding', 'Expanding', 0, 0)
-        set_size(self.LeftComboBox, minimum=(194, 22), maximum=(3631, 22))
+        self.setattr('CentralGridLayout', 'QGridLayout',
+                     parent=self.CentralWidget)
+        self.CentralGridLayout.setContentsMargins(3, 3, 3, 3)
+        self.CentralGridLayout.setSpacing(5)
 
-        self.setattr('LeftScrollArea', 'QScrollArea', parent=self.LeftWidget)
-        set_size(self.LeftScrollArea, minimum=(194, 547), maximum=(3631, 4267))
-        self.LeftScrollArea.setWidgetResizable(True)
-        self.LeftScrollArea.setWidget(self.LeftScrollAreaWidgetContents)
+        self.setattr('CentralComboBox', 'QComboBox', parent=self.CentralWidget,
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(194, 22), maximum=(3631, 22)))
+        self.CentralGridLayout.addWidget(self.CentralComboBox, 0, 0, 1, 1)
 
-        self.setattr('LeftGridLayout', 'QGridLayout', parent=self.LeftWidget)
-        self.LeftGridLayout.setContentsMargins(3, 3, 3, 3)
-        self.LeftGridLayout.setSpacing(5)
-        self.LeftGridLayout.addWidget(self.LeftComboBox, 0, 0, 1, 1)
-        self.LeftGridLayout.addWidget(self.LeftScrollArea, 1, 0, 1, 1)
+        self.setattr('CentralScrollArea', 'QScrollArea',
+                     parent=self.CentralWidget,
+                     size=dict(minimum=(194, 547), maximum=(3631, 4267)))
+        self.CentralScrollArea.setWidgetResizable(True)
+        self.CentralGridLayout.addWidget(self.CentralScrollArea, 1, 0, 1, 1)
 
-        # Start creating widgets to put inside CentralWidget
-        self.setattr('CentralScrollAreaWidgetContents', 'QWidget')
+        self.setattr('CentralScrollAreaWidgetContents', 'QWidget',
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(174, 427), maximum=(3611, 4147)))
+        self.CentralScrollArea.setWidget(self.CentralScrollAreaWidgetContents)
         self.CentralScrollAreaWidgetContents.setGeometry(
                 QtCore.QRect(0, 0, 290, 565))
-        set_policy(self.CentralScrollAreaWidgetContents,
-                   'Expanding', 'Expanding', 0, 0)
-        set_size(self.CentralScrollAreaWidgetContents,
-                 minimum=(174, 427), maximum=(3611, 4147))
         self.CentralScrollAreaWidgetContents.setLayoutDirection(
                 QtCore.Qt.LeftToRight)
 
@@ -319,165 +340,85 @@ class UserInterface(object):
                              role=QtWidgets.QFormLayout.LabelRole)
         self.add_push_button(Lane.Central, row=3, name='Plot')
 
-        self.setattr('CentralWidget', 'QWidget', parent=self.MainSplitter)
-        set_size(self.CentralWidget, minimum=(200, 580), maximum=(3637, 4300))
-
-        self.setattr('CentralComboBox', 'QComboBox', parent=self.CentralWidget)
-        set_policy(self.CentralComboBox, 'Expanding', 'Expanding', 0, 0)
-        set_size(self.CentralComboBox, minimum=(194, 22), maximum=(3631, 22))
-
-        self.setattr('CentralScrollArea', 'QScrollArea',
-                     parent=self.CentralWidget)
-        set_size(self.CentralScrollArea,
-                 minimum=(194, 547), maximum=(3631, 4267))
-        self.CentralScrollArea.setWidgetResizable(True)
-        self.CentralScrollArea.setWidget(self.CentralScrollAreaWidgetContents)
-
-        self.setattr('CentralGridLayout', 'QGridLayout',
-                     parent=self.CentralWidget)
-        self.CentralGridLayout.setContentsMargins(3, 3, 3, 3)
-        self.CentralGridLayout.setSpacing(5)
-        self.CentralGridLayout.addWidget(self.CentralComboBox, 0, 0, 1, 1)
-        self.CentralGridLayout.addWidget(self.CentralScrollArea, 1, 0, 1, 1)
-
-        # Start creating widgets to put inside RightWidget
-        self.setattr('RightScrollAreaWidgetContents', 'QWidget')
-        self.RightScrollAreaWidgetContents.setGeometry(
-                QtCore.QRect(0, 0, 189, 565))
-        set_policy(self.RightScrollAreaWidgetContents,
-                   'Expanding', 'Expanding', 0, 0)
-        set_size(self.RightScrollAreaWidgetContents,
-                 minimum=(138, 534), maximum=(388, 4259))
-
-        self.setattr('DetailsLabel', 'QLabel',
-                     parent=self.RightScrollAreaWidgetContents)
-        set_policy(self.DetailsLabel, 'Expanding', 'Expanding', 0, 0)
-        set_size(self.DetailsLabel, minimum=(138, 534), maximum=(388, 4259))
-        self.DetailsLabel.setAlignment(QtCore.Qt.AlignHCenter
-                                       | QtCore.Qt.AlignTop)
-        self.DetailsLabel.setWordWrap(True)
-        self.DetailsLabel.setTextInteractionFlags(
-                QtCore.Qt.TextSelectableByKeyboard
-                | QtCore.Qt.TextSelectableByMouse)
-
-        self.setattr('gridLayout', 'QGridLayout',
-                     parent=self.RightScrollAreaWidgetContents)
-        self.gridLayout.setContentsMargins(3, 3, 3, 3)
-        self.gridLayout.setSpacing(5)
-        self.gridLayout.addWidget(self.DetailsLabel, 0, 0, 1, 1)
-
-        self.setattr('RightWidget', 'QWidget', parent=self.MainSplitter)
-        set_policy(self.RightWidget, 'Expanding', 'Expanding', 0, 0)
-        set_size(self.RightWidget, minimum=(150, 580), maximum=(400, 4300))
-
-        self.setattr('RightScrollArea', 'QScrollArea', parent=self.RightWidget)
-        set_size(self.RightScrollArea,
-                 minimum=(144, 547), maximum=(394, 4272))
-        self.RightScrollArea.setWidgetResizable(True)
-        self.RightScrollArea.setWidget(self.RightScrollAreaWidgetContents)
-
-        self.setattr('CurrentModeLabel', 'QLabel', parent=self.RightWidget)
-        set_policy(self.CurrentModeLabel, 'Expanding', 'Expanding', 0, 0)
-        set_size(self.CurrentModeLabel, minimum=(144, 22), maximum=(394, 22))
-        self.CurrentModeLabel.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.CurrentModeLabel.setFrameShadow(QtWidgets.QFrame.Plain)
-        self.CurrentModeLabel.setLineWidth(1)
-        self.CurrentModeLabel.setTextFormat(QtCore.Qt.AutoText)
-        self.CurrentModeLabel.setAlignment(QtCore.Qt.AlignCenter)
+        # Lane on the right
+        self.setattr('RightWidget', 'QWidget', parent=self.MainSplitter,
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(150, 580), maximum=(400, 4300)))
 
         self.setattr('RightGridLayout', 'QGridLayout', parent=self.RightWidget)
         self.RightGridLayout.setContentsMargins(3, 3, 3, 3)
         self.RightGridLayout.setSpacing(5)
-        self.RightGridLayout.addWidget(self.RightScrollArea, 1, 0, 1, 1)
+
+        self.setattr('CurrentModeLabel', 'QLabel', parent=self.RightWidget,
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(144, 22), maximum=(394, 22)))
+        self.CurrentModeLabel.setLineWidth(1)
+        self.CurrentModeLabel.setTextFormat(QtCore.Qt.AutoText)
+        self.CurrentModeLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.CurrentModeLabel.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.CurrentModeLabel.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.RightGridLayout.addWidget(self.CurrentModeLabel, 0, 0, 1, 1)
 
-        self.setattr('MainGridLayout', 'QGridLayout', parent=self.MainWidget)
-        self.MainGridLayout.setContentsMargins(0, 0, 0, 0)
-        self.MainGridLayout.setSpacing(0)
-        self.MainGridLayout.addWidget(self.MainSplitter, 0, 0, 1, 1)
-        self.MainWindow.setCentralWidget(self.MainWidget)
+        self.setattr('RightScrollArea', 'QScrollArea', parent=self.RightWidget,
+                     size=dict(minimum=(144, 547), maximum=(394, 4272)))
+        self.RightScrollArea.setWidgetResizable(True)
+        self.RightGridLayout.addWidget(self.RightScrollArea, 1, 0, 1, 1)
 
-        self.setattr('TopMenuBar', 'QMenuBar', parent=self.MainWindow)
+        self.setattr('RightScrollAreaWidgetContents', 'QWidget',
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(138, 534), maximum=(388, 4259)))
+        self.RightScrollArea.setWidget(self.RightScrollAreaWidgetContents)
+        self.RightScrollAreaWidgetContents.setGeometry(
+                QtCore.QRect(0, 0, 189, 565))
+
+        self.setattr('RightDetailsGridLayout', 'QGridLayout',
+                     parent=self.RightScrollAreaWidgetContents)
+        self.RightDetailsGridLayout.setContentsMargins(3, 3, 3, 3)
+        self.RightDetailsGridLayout.setSpacing(5)
+
+        self.setattr('DetailsLabel', 'QLabel',
+                     parent=self.RightScrollAreaWidgetContents,
+                     policy=('Expanding', 'Expanding', 0, 0),
+                     size=dict(minimum=(138, 534), maximum=(388, 4259)))
+        self.RightDetailsGridLayout.addWidget(self.DetailsLabel, 0, 0, 1, 1)
+        self.DetailsLabel.setAlignment(QtCore.Qt.AlignHCenter
+                                       | QtCore.Qt.AlignTop)
+        self.DetailsLabel.setTextInteractionFlags(
+                QtCore.Qt.TextSelectableByKeyboard
+                | QtCore.Qt.TextSelectableByMouse)
+        self.DetailsLabel.setText("Details")
+        self.DetailsLabel.setWordWrap(True)
+
+        # MenuBar
+        self.setattr('TopMenuBar', 'QMenuBar', parent=self.MainWindow,
+                     size=dict(minimum=(800, 20), maximum=(7680, 20)))
         self.TopMenuBar.setGeometry(QtCore.QRect(0, 0, 800, 20))
-        set_size(self.TopMenuBar, minimum=(800, 20), maximum=(7680, 20))
-
-        self.setattr('MenuOptions', 'QMenu', parent=self.TopMenuBar)
-        set_size(self.MenuOptions, minimum=(100, 20), maximum=(960, 4300))
-
-        self.setattr('MenuChangeMode', 'QMenu', parent=self.TopMenuBar)
-        set_size(self.MenuChangeMode, minimum=(100, 20), maximum=(960, 4300))
-
-        self.setattr('MenuAbout', 'QMenu', parent=self.TopMenuBar)
-        set_size(self.MenuAbout, minimum=(100, 20), maximum=(960, 4300))
-
         self.MainWindow.setMenuBar(self.TopMenuBar)
 
-        self.setattr('ActionNewModel', 'QAction', self.MenuOptions)
-        self.setattr('ActionSaveModel', 'QAction', self.MenuOptions)
-        self.setattr('ActionLoadModel', 'QAction', self.MenuOptions)
-        self.setattr('ActionExport', 'QAction', self.MenuOptions)
-        self.setattr('ActionQuit', 'QAction', parent=self.MenuOptions)
+        for menu in self.menu_bar:
+            self.setattr(menu['name'], 'QMenu', parent=self.TopMenuBar,
+                         size=dict(minimum=(100, 20), maximum=(960, 4300)))
+            menu_obj = getattr(self, menu['name'])
+            self.TopMenuBar.addAction(menu_obj.menuAction())
+            menu_obj.setTitle(menu['title'])
 
-        self.setattr('ActionModel', 'QAction', self.MenuChangeMode)
-        self.setattr('ActionCV', 'QAction', parent=self.MenuChangeMode)
-        self.setattr('ActionPrediction', 'QAction', self.MenuChangeMode)
-
-        self.setattr('ActionAboutThatProject', 'QAction', self.MenuAbout)
-        self.setattr('ActionAboutQt', 'QAction', self.MenuAbout)
-
-        self.MenuOptions.addAction(self.ActionNewModel)
-        self.MenuOptions.addAction(self.ActionSaveModel)
-        self.MenuOptions.addAction(self.ActionLoadModel)
-        self.MenuOptions.addSeparator()
-        self.MenuOptions.addAction(self.ActionExport)
-        self.MenuOptions.addSeparator()
-        self.MenuOptions.addAction(self.ActionQuit)
-
-        self.MenuChangeMode.addAction(self.ActionModel)
-        self.MenuChangeMode.addAction(self.ActionCV)
-        self.MenuChangeMode.addAction(self.ActionPrediction)
-
-        self.MenuAbout.addAction(self.ActionAboutThatProject)
-        self.MenuAbout.addAction(self.ActionAboutQt)
-
-        self.TopMenuBar.addAction(self.MenuOptions.menuAction())
-        self.TopMenuBar.addAction(self.MenuChangeMode.menuAction())
-        self.TopMenuBar.addAction(self.MenuAbout.menuAction())
+            for action in self.menu_action(menu['name']):
+                print(action['name'])
+                self.setattr(action['name'], 'QAction', parent=menu_obj)
+                action_obj = getattr(self, action['name'])
+                if action['shortcut'] is None:
+                    action_obj.setSeparator(True)
+                    action_obj.setText('')
+                else:
+                    action_obj.setText(action['text'])
+                    action_obj.setShortcut(action['shortcut'])
+                menu_obj.addAction(action_obj)
 
         # Previously in retranslateUi()
-        self.MainWindow.setWindowTitle("PLS-DA")
-
         for entry in self.drop_down_menu:
             self.LeftComboBox.addItem(entry['text'])
             self.CentralComboBox.addItem(entry['text'])
 
-        self.DetailsLabel.setText("Details")
-
-        self.MenuAbout.setTitle("&About")
-        self.MenuChangeMode.setTitle("&Change mode")
-        self.MenuOptions.setTitle("&Options")
-
-        self.ActionAboutThatProject.setText("A&bout this project")
-        self.ActionAboutQt.setText("Abo&ut Qt")
-        self.ActionCV.setText("Cross&Validation")
-        self.ActionExport.setText("&Export matrices")
-        self.ActionLoadModel.setText("&Load model")
-        self.ActionModel.setText("&Model")
-        self.ActionNewModel.setText("&New model")
-        self.ActionPrediction.setText("&Prediction")
-        self.ActionQuit.setText("&Quit")
-        self.ActionSaveModel.setText("&Save model")
-
-        self.ActionAboutThatProject.setShortcut("F1")
-        self.ActionAboutQt.setShortcut("F2")
-        self.ActionCV.setShortcut("Ctrl+V")
-        self.ActionExport.setShortcut("Ctrl+E")
-        self.ActionLoadModel.setShortcut("Ctrl+L")
-        self.ActionModel.setShortcut("Ctrl+M")
-        self.ActionNewModel.setShortcut("Ctrl+N")
-        self.ActionPrediction.setShortcut("Ctrl+P")
-        self.ActionQuit.setShortcut("Ctrl+Q")
-        self.ActionSaveModel.setShortcut("Ctrl+S")
         QtCore.QMetaObject.connectSlotsByName(self.MainWindow)
 
         self.connect_handlers()
@@ -507,9 +448,40 @@ class UserInterface(object):
             yield {'index': index, 'text': text, 'method': method}
 
     @property
+    def menu_bar(self):
+        """Return a generator iterator over menu items properties.
+
+           https://docs.python.org/3/glossary.html#term-generator-iterator
+        """
+        for name in ('Options', 'Change Mode', 'About'):
+            yield {'name': 'Menu' + name.replace(' ', ''), 'title': '&' + name}
+
+    def menu_action(self, menu):
+        menu = menu.lstrip('Menu').replace(' ', '').replace('&', '')
+        if menu == 'Options':
+            tmp = (('&New model', 'Ctrl+N'),
+                   ('&Save model', 'Ctrl+S'),
+                   ('&Load model', 'Ctrl+L'),
+                   ('Separator1', None),
+                   ('&Export matrices', 'Ctrl+E'),
+                   ('Separator2', None),
+                   ('&Quit', 'Ctrl+Q'))
+        elif menu == 'ChangeMode':
+            tmp = (('&Model', 'Ctrl+M'),
+                   ('Cross&Validation', 'Ctrl+V'),
+                   ('&Prediction', 'Ctrl+P'))
+        elif menu == 'About':
+            tmp = (('A&bout this project', 'F1'),
+                   ('Abo&ut Qt', 'F2'))
+        for text, shortcut in tmp:
+            l = [word.capitalize() for word in text.replace('&', '').split()]
+            yield {'name': 'Action' + ''.join(l).replace('sv', 'sV'),
+                   'text': text, 'shortcut': shortcut}
+
+    @property
     def current_mode(self):
         """Get value of CurrentModeLabel."""
-        return self._current_mode.capitalize() + ' mode'
+        return self._current_mode.capitalize().replace('sv', 'sV') + ' mode'
 
     @current_mode.setter
     def current_mode(self, value):
@@ -536,15 +508,15 @@ class UserInterface(object):
             model_flag, cv_flag = True, True
 
         self.ActionModel.setEnabled(model_flag)
-        self.ActionCV.setEnabled(cv_flag)
+        self.ActionCrossValidation.setEnabled(cv_flag)
         self.ActionPrediction.setEnabled(pred_flag)
 
         if self._current_mode == 'start':
             self.ActionSaveModel.setEnabled(False)
-            self.ActionExport.setEnabled(False)
+            self.ActionExportMatrices.setEnabled(False)
         else:
             self.ActionSaveModel.setEnabled(True)
-            self.ActionExport.setEnabled(True)
+            self.ActionExportMatrices.setEnabled(True)
 
 
     def _replace_current_model(self):
@@ -563,13 +535,18 @@ class UserInterface(object):
             IO.Log.debug('NO (not replacing current model)')
             return False
 
-    def setattr(self, name, widget, parent=None):
+    def setattr(self, name, widget, parent=None, policy=None, size=None):
         """Wrapper of qt5 module function and setattr over self."""
-        setattr(self, name, new_qt(widget=widget, name=name, parent=parent))
+        new_widget = new_qt(widget=widget, name=name, parent=parent)
+        setattr(self, name, new_widget)
+        if policy is not None and isinstance(policy, tuple):
+            set_policy(new_widget, *policy)
+        if size is not None and isinstance(size, dict):
+            set_size(new_widget, **size)
 
     def add_label(self, lane, row, name, text, word_wrap=True,
                   text_format=QtCore.Qt.AutoText,
-                  alignment=QtCore.Qt.AlignCenter,
+                  alignment=QtCore.Qt.AlignLeft,
                   role=QtWidgets.QFormLayout.LabelRole):
         """Add to [Left|Central]PlotFormLayout a QLabel in row/role position.
         """
@@ -589,6 +566,7 @@ class UserInterface(object):
 
         layout = getattr(self, lane.value + 'PlotFormLayout')
         layout.setWidget(row, role, new_label)
+        return new_label
 
     def add_push_button(self, lane, row, name, text=None,
                         role=QtWidgets.QFormLayout.FieldRole):
@@ -607,6 +585,7 @@ class UserInterface(object):
 
         layout = getattr(self, lane.value + 'PlotFormLayout')
         layout.setWidget(row, role, new_push_button)
+        return new_push_button
 
     def add_radio_button(self, lane, row, name, group_name, text=None,
                          role=QtWidgets.QFormLayout.LabelRole):
@@ -634,6 +613,7 @@ class UserInterface(object):
 
         layout = getattr(self, lane.value + 'PlotFormLayout')
         layout.setWidget(row, role, new_radio_button)
+        return new_radio_button
 
     def add_spin_box(self, lane, row, name, minimum=1, maximum=99,
                      role=QtWidgets.QFormLayout.FieldRole):
@@ -653,6 +633,7 @@ class UserInterface(object):
 
         layout = getattr(self, lane.value + 'PlotFormLayout')
         layout.setWidget(row, role, new_spin_box)
+        return new_spin_box
 
     def call_plot_method(self, lane, index=None, text=None):
         if index is None and text is None:
@@ -661,8 +642,10 @@ class UserInterface(object):
             return
         for entry in self.drop_down_menu:
             if index == entry['index'] or text == entry['text']:
-                method = getattr(self, entry['method'])
-                return method(lane)
+                # clear layouts from previous widget
+                # clear(getattr(self, lane.value + 'PlotFormLayout'))
+                # populate layouts with necessary widget
+                return getattr(self, entry['method'])(lane)
 
     def plot_scree(self, lane):
         pass
@@ -787,14 +770,14 @@ class UserInterface(object):
         self.ActionSaveModel.triggered.connect(self.save_model)
         self.ActionLoadModel.triggered.connect(self.load_model)
 
-        self.ActionExport.triggered.connect(
+        self.ActionExportMatrices.triggered.connect(
                 lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
 
         self.ActionQuit.triggered.connect(self.quit)
 
         self.ActionModel.triggered.connect(
                 lambda: setattr(self, 'current_mode', 'model'))
-        self.ActionCV.triggered.connect(
+        self.ActionCrossValidation.triggered.connect(
                 lambda: setattr(self, 'current_mode', 'cv'))
         self.ActionPrediction.triggered.connect(
                 lambda: setattr(self, 'current_mode', 'prediction'))
@@ -818,7 +801,7 @@ class UserInterface(object):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    ui = UserInterface()
+    ui = UserInterface('PLS-DA')
     ui.show()
     if utility.CLI.args().verbose:
         ui.MainWindow.dumpObjectTree()
