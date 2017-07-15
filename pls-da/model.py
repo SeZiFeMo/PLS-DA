@@ -152,6 +152,50 @@ class Model(object):
         self.E_x = np.empty((self.n, self.m))
         self.E_y = np.empty((self.n, self.p))
 
+    def predict(self, test_set, nr_lv):
+        """Return Y predicted over this model."""
+#        T_cap = np.empty((test_set.shape[0], self.m))
+#        E_x = test_set.copy()
+#        Y = np.zeros((test_set.shape[0], self.p))
+
+#        T_cap = np.dot(test_set, self.W)
+        return np.dot(test_set, self.B)
+
+
+class Statistics(object):
+    """Calculate statistics tied only to Y over the results of a prediction."""
+
+    def __init__(self, y_real, y_pred):
+        """Save the real and the predicted Y."""
+
+        assert y_real.shape == y_pred.shape, "Y real and Y predicted" \
+                                             "must have the same dimension"
+        self.y_real = y_real
+        self.y_pred = y_pred
+
+    @property
+    def ess(self):
+        return np.linalg.norm(self.y_pred - self.y_real.mean(axis=0),
+                              axis=0)**2
+
+    @property
+    def rss(self):
+        return np.linalg.norm(self.y_real - self.y_pred, axis=0)**2
+
+    @property
+    def tss(self):
+        return self.ess + self.rss
+
+    @property
+    def rmsec(self):
+        return np.sqrt(self.rss / self.y_real.shape[-1])
+
+    @property
+    def r_squared(self):
+        r_squared = 1 - self.rss / self.tss
+        assert r_squared > 0, "Negative r_squared found"
+        return r_squared
+
 
 def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
     """Find the Principal Components with the NIPALS algorithm."""
@@ -248,6 +292,37 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
     IO.Log.info('NIPALS x_eigenvalues', model.x_eigenvalues)
 
     return model
+
+
+def cross_validation(preproc, split, max_lv):
+    """Perform a cross-validation procedure on a Preprocessing dataset.
+
+    Return a list of dictionaries of Statistics object. Every dictionary
+    corresponds to a split, while every element in a dictionary corresponds
+    to the model predicted with a specific lv. The key of the dictionary
+    element is the lv used for that prediction.
+    """
+    results = []
+    for train, test in venetian_blind_split(preproc, split):
+        model = nipals(*train)
+        res = dict()
+        for lv in range(max_lv):
+            y_pred = model.predict(test[0], lv)
+            res[lv] = Statistics(test[1], y_pred)
+        results.append(res)
+    return results
+
+
+def venetian_blind_split(preproc, split):
+    """Split the dataset in train and test using the venetian blind algo."""
+    for offset in range(split, 0, -1):  # order result logically
+        mask = np.arange(offset, preproc.n + offset) % split == 0
+        test_x = preproc.dataset[mask]
+        train_x = preproc.dataset[~mask]
+        test_y = preproc.dummy_y[mask]
+        train_y = preproc.dummy_y[~mask]
+
+        yield ((train_x, train_y), (test_x, test_y))
 
 
 def integer_bounds(P, T, col):
