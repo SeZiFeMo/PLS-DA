@@ -3,8 +3,14 @@
 
 import copy
 import enum
-import PyQt5.QtCore as QtCore
-import PyQt5.QtWidgets as QtWidgets
+from PyQt5.QtCore import QCoreApplication, QMetaObject, QRect, QSize, Qt
+from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QComboBox,
+                             QDialog, QFileDialog, QFormLayout, QGridLayout,
+                             QFrame, QInputDialog, QLabel, QLayout,
+                             QMainWindow, QMenu, QMenuBar, QMessageBox,
+                             QPushButton, QRadioButton, QScrollArea,
+                             QSizePolicy as Policy, QSpinBox, QSplitter,
+                             QWidget)
 import sys
 
 import IO
@@ -13,19 +19,9 @@ import plot
 import utility
 
 
-def new_qt(widget, name, parent=None):
-    """Return a widget of type specified with 1st argument (a string).
-
-       Also set the object name and optionally the parent widjet.
-    """
-    ret = getattr(QtWidgets, widget)(parent)
-    ret.setObjectName(name)
-    return ret
-
-
 def clear(layout):
     """Recursively call deleteLayer() over all widgets in layout."""
-    if not isinstance(layout, QtWidgets.QLayout):
+    if not isinstance(layout, QLayout):
         return
     while layout.count():
         child = layout.takeAt(0)
@@ -52,23 +48,22 @@ def _popup_choose(parent, filter_csv=False,
     obj = 'file' if _file else 'directory'
 
     IO.Log.debug('Choose an {} {}'.format(mode, obj))
-    dialog = new_qt('QFileDialog',
-                 'popupChoose' + mode.capitalize() + obj.capitalize(),
-                 parent=parent)
+    dialog = QFileDialog(parent)
+    dialog.setObjectName('popupChoose' + mode.capitalize() + obj.capitalize())
     dialog.setWindowTitle('Choose an {} {}'.format(mode, obj))
 
     if _input:
-        dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
+        dialog.setAcceptMode(QFileDialog.AcceptOpen)
     else:  # _output
-        dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
 
     if _file:
-        dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+        dialog.setFileMode(QFileDialog.ExistingFile)
         if filter_csv:
             dialog.setNameFilter("Comma-separated values files (*.csv *.txt)")
     else:  # _directory
-        dialog.setFileMode(QtWidgets.QFileDialog.Directory)
-        dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly)
+        dialog.setFileMode(QFileDialog.Directory)
+        dialog.setOption(QFileDialog.ShowDirsOnly)
 
     if not dialog.exec():
         IO.Log.debug('CANCEL (not chosen {} {})'.format(mode, obj))
@@ -107,24 +102,23 @@ def popup_choose_item(message, item_list, parent, title=None):
          True on Ok answer, False otherwise
          index of the chosen item in item_list.
     """
-    dialog = new_qt('QInputDialog', 'popup_choose_item', parent=parent)
-    if title is not None:
-        dialog.setWindowTitle(title)
+    dialog = QInputDialog(parent)
+    dialog.setObjectName('popup_choose_item')
+    dialog.setWindowTitle(title if title is not None else '')
     dialog.setLabelText(message)
-    dialog.setInputMode(QtWidgets.QInputDialog.TextInput)
+    dialog.setInputMode(QInputDialog.TextInput)
     dialog.setComboBoxItems(item_list)
-    ok_answer = dialog.exec() == QtWidgets.QDialog.Accepted
+    ok_answer = dialog.exec() == QDialog.Accepted
     return ok_answer, item_list.index(dialog.textValue())
 
 
 def popup_error(message, parent):
     """Display a dialog with an informative message and an Ok button."""
-    dialog = new_qt('QMessageBox', 'popup_error', parent=parent)
-    dialog.setIcon(QtWidgets.QMessageBox.Critical)
-    if not isinstance(message, str):
-        message = str(message)
-    dialog.setText(message)
-    dialog.setStandardButtons(QtWidgets.QMessageBox.Ok)
+    dialog = QMessageBox(parent)
+    dialog.setObjectName('popup_error')
+    dialog.setIcon(QMessageBox.Critical)
+    dialog.setText(str(message))
+    dialog.setStandardButtons(QMessageBox.Ok)
     dialog.exec()
 
 
@@ -133,22 +127,21 @@ def popup_question(message, parent, title=None):
 
        Return True on Yes answer, False otherwise.
     """
-    dialog = new_qt('QMessageBox', 'popup_question', parent=parent)
-    if title is not None:
-        dialog.setWindowTitle(title)
+    dialog = QMessageBox(parent)
+    dialog.setObjectName('popup_question')
+    dialog.setWindowTitle(title if title is not None else '')
     dialog.setText(message)
-    dialog.setStandardButtons(QtWidgets.QMessageBox.Yes
-                              | QtWidgets.QMessageBox.No)
+    dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     choice = dialog.exec()
-    return choice == QtWidgets.QMessageBox.Yes
+    return choice == QMessageBox.Yes
 
 
 class Column(enum.Enum):
-    """Enumerate to identify the columns of the QtWidgets.QFormLayout."""
+    """Enumerate to identify the columns of the QFormLayout."""
 
-    Left = QtWidgets.QFormLayout.LabelRole
-    Right = QtWidgets.QFormLayout.FieldRole
-    Both = QtWidgets.QFormLayout.SpanningRole
+    Left = QFormLayout.LabelRole
+    Right = QFormLayout.FieldRole
+    Both = QFormLayout.SpanningRole
 
 
 class Lane(enum.Enum):
@@ -162,142 +155,138 @@ class Lane(enum.Enum):
 class UserInterface(object):
 
     def __init__(self, main_window_title):
-        main_window = self.set_attr('', 'QMainWindow', policy='Expanding',
-                                    min_size=(800, 600), max_size=(7680, 4320))
+        main_window = self.set_attr('', QMainWindow, parent=None,
+                                    size=(800, 600, 7680, 4320))
         main_window.setUnifiedTitleAndToolBarOnMac(True)
         main_window.setWindowTitle(main_window_title)
         main_window.setEnabled(True)
         main_window.resize(800, 600)
 
-        main_widget = self.set_attr(
-                'Main', 'QWidget', parent=main_window, policy='Preferred',
-                min_size=(800, 600), max_size=(7680, 4300))
+        main_widget = self.set_attr('Main', QWidget, parent=main_window,
+                                    policy=Policy.Preferred,
+                                    size=(800, 600, 7680, 4300))
 
-        main_layout = self.set_attr('Main', 'QGridLayout', parent=main_widget)
+        main_layout = self.set_attr('Main', QGridLayout, parent=main_widget,
+                                    policy=None)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         main_window.setCentralWidget(main_widget)
 
-        main_splitter = self.set_attr(
-                'Main', 'QSplitter', parent=main_widget, policy='Expanding',
-                min_size=(800, 600), max_size=(7680, 4300))
+        main_splitter = self.set_attr('Main', QSplitter, parent=main_widget,
+                                      size=(800, 600, 7680, 4300))
         main_layout.addWidget(main_splitter, 0, 0, 1, 1)
-        main_splitter.setOrientation(QtCore.Qt.Horizontal)
+        main_splitter.setOrientation(Qt.Horizontal)
         main_splitter.setHandleWidth(3)
 
         for lane in (Lane.Left, Lane.Central):
-            parent = self.set_attr(lane.value, 'QWidget', parent=main_splitter,
-                                   min_size=(200, 580), max_size=(3637, 4300))
+            parent = self.set_attr(lane.value, QWidget, parent=main_splitter,
+                                   policy=None, size=(200, 580, 3637, 4300))
 
-            layout = self.set_attr(lane.value, 'QGridLayout', parent=parent)
+            layout = self.set_attr(lane.value, QGridLayout, parent=parent,
+                                   policy=None)
             layout.setContentsMargins(3, 3, 3, 3)
             layout.setSpacing(5)
 
-            drop_down = self.set_attr(
-                    lane.value, 'QComboBox', parent=parent, policy='Expanding',
-                    min_size=(194, 22), max_size=(3631, 22))
+            drop_down = self.set_attr(lane.value, QComboBox, parent=parent,
+                                      size=(194, 22, 3631, 22))
             layout.addWidget(drop_down, 0, 0, 1, 1)
             for entry in self.drop_down_menu:
                 drop_down.addItem(entry['text'])
             drop_down.setCurrentIndex(-1)
 
             scroll_area = self.set_attr(
-                    lane.value, 'QScrollArea', parent=parent,
-                    min_size=(194, 547), max_size=(3631, 4267))
+                    lane.value, QScrollArea, parent=parent, policy=None,
+                    size=(194, 547, 3631, 4267))
             scroll_area.setWidgetResizable(True)
             layout.addWidget(scroll_area, 1, 0, 1, 1)
 
             scroll_area_widget = self.set_attr(
-                    lane.value + 'ScrollArea', 'QWidget', policy='Expanding',
-                    min_size=(174, 427), max_size=(3611, 4147))
+                    lane.value + 'ScrollArea', QWidget, parent=None,
+                    size=(174, 427, 3611, 4147))
             scroll_area.setWidget(scroll_area_widget)
-            scroll_area_widget.setGeometry(QtCore.QRect(0, 0, 290, 565))
-            scroll_area_widget.setLayoutDirection(QtCore.Qt.LeftToRight)
+            scroll_area_widget.setGeometry(QRect(0, 0, 290, 565))
+            scroll_area_widget.setLayoutDirection(Qt.LeftToRight)
 
-            form_layout = self.set_attr(lane.value + 'Plot', 'QFormLayout',
-                                        parent=scroll_area_widget)
-            form_layout.setSizeConstraint(QtWidgets.QLayout.SetMaximumSize)
-            form_layout.setFieldGrowthPolicy(
-                    QtWidgets.QFormLayout.ExpandingFieldsGrow)
-            form_layout.setLabelAlignment(QtCore.Qt.AlignCenter)
-            form_layout.setFormAlignment(QtCore.Qt.AlignHCenter
-                                         | QtCore.Qt.AlignTop)
+            form_layout = self.set_attr(lane.value + 'Plot', QFormLayout,
+                                        parent=scroll_area_widget, policy=None)
+            form_layout.setSizeConstraint(QLayout.SetMaximumSize)
+            form_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+            form_layout.setLabelAlignment(Qt.AlignCenter)
+            form_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
             form_layout.setContentsMargins(10, 10, 10, 10)
             form_layout.setSpacing(10)
 
-            self.add('QLabel', lane, Column.Left, row=0, name='LVs',
+            self.add(QLabel, lane, Column.Left, row=0, name='LVs',
                      text='Latent Variables')
-            self.add('QSpinBox', lane, Column.Right, row=0, name='LVs',)
-            self.add('QRadioButton', lane, Column.Left, row=1, name='X',
+            self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',)
+            self.add(QRadioButton, lane, Column.Left, row=1, name='X',
                      group_name=lane.value + 'ButtonGroup')
-            self.add('QSpinBox', lane, Column.Right, row=1, name='X')
-            self.add('QRadioButton', lane, Column.Left, row=2, name='Y',
+            self.add(QSpinBox, lane, Column.Right, row=1, name='X')
+            self.add(QRadioButton, lane, Column.Left, row=2, name='Y',
                      group_name=lane.value + 'ButtonGroup')
-            self.add('QSpinBox', lane, Column.Right, row=2, name='Y')
-            self.add('QPushButton', lane, Column.Left, row=3, name='Back')
-            self.add('QPushButton', lane, Column.Right, row=3, name='Plot')
+            self.add(QSpinBox, lane, Column.Right, row=2, name='Y')
+            self.add(QPushButton, lane, Column.Left, row=3, name='Back')
+            self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
 
         lane = Lane.Right
-        parent = self.set_attr(
-                lane.value, 'QWidget', parent=main_splitter,
-                policy='Expanding', min_size=(150, 580), max_size=(400, 4300))
+        parent = self.set_attr(lane.value, QWidget, parent=main_splitter,
+                               size=(150, 580, 400, 4300))
 
-        layout = self.set_attr(lane.value, 'QGridLayout', parent=parent)
+        layout = self.set_attr(lane.value, QGridLayout, parent=parent,
+                               policy=None)
         layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(5)
 
         current_mode_label = self.set_attr(
-                'CurrentMode', 'QLabel', parent=parent, policy='Expanding',
-                min_size=(144, 22), max_size=(394, 22))
+                'CurrentMode', QLabel, parent=parent,
+                size=(144, 22, 394, 22))
         current_mode_label.setLineWidth(1)
-        current_mode_label.setTextFormat(QtCore.Qt.AutoText)
-        current_mode_label.setAlignment(QtCore.Qt.AlignCenter)
-        current_mode_label.setFrameShadow(QtWidgets.QFrame.Plain)
-        current_mode_label.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        current_mode_label.setTextFormat(Qt.AutoText)
+        current_mode_label.setAlignment(Qt.AlignCenter)
+        current_mode_label.setFrameShadow(QFrame.Plain)
+        current_mode_label.setFrameShape(QFrame.StyledPanel)
         layout.addWidget(current_mode_label, 0, 0, 1, 1)
 
-        scroll_area = self.set_attr('Right', 'QScrollArea', parent=parent,
-                                    min_size=(144, 547), max_size=(394, 4272))
+        scroll_area = self.set_attr(lane.value, QScrollArea, parent=parent,
+                                    policy=None, size=(144, 547, 394, 4272))
         scroll_area.setWidgetResizable(True)
         layout.addWidget(scroll_area, 1, 0, 1, 1)
 
         scroll_area_widget = self.set_attr(
-                'RightScrollArea', 'QWidget', policy='Expanding',
-                min_size=(138, 534), max_size=(388, 4259))
+                lane.value + 'ScrollArea', QWidget, parent=None,
+                size=(138, 534, 388, 4259))
         scroll_area.setWidget(scroll_area_widget)
-        scroll_area_widget.setGeometry(QtCore.QRect(0, 0, 189, 565))
+        scroll_area_widget.setGeometry(QRect(0, 0, 189, 565))
 
-        details_layout = self.set_attr('RightDetails', 'QGridLayout',
-                                       parent=self.RightScrollAreaWidget)
+        details_layout = self.set_attr(lane.value + 'Details', QGridLayout,
+                                       parent=scroll_area_widget, policy=None)
         details_layout.setContentsMargins(3, 3, 3, 3)
         details_layout.setSpacing(5)
 
         details_label = self.set_attr(
-                'Details', 'QLabel', parent=scroll_area_widget,
-                policy='Expanding', min_size=(138, 534), max_size=(388, 4259))
-        details_layout.addWidget(self.DetailsLabel, 0, 0, 1, 1)
-        details_label.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
-        details_label.setTextInteractionFlags(
-                QtCore.Qt.TextSelectableByKeyboard
-                | QtCore.Qt.TextSelectableByMouse)
-        details_label.setText("Details")
+                'Details', QLabel, parent=scroll_area_widget,
+                size=(138, 534, 388, 4259))
+        details_layout.addWidget(details_label, 0, 0, 1, 1)
+        details_label.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        details_label.setTextInteractionFlags(Qt.TextSelectableByKeyboard
+                                              | Qt.TextSelectableByMouse)
         details_label.setWordWrap(True)
+        self.details_label = 'Details'
 
-        top_menu_bar = self.set_attr('Top', 'QMenuBar', parent=main_window,
-                                     min_size=(800, 20), max_size=(7680, 20))
-        top_menu_bar.setGeometry(QtCore.QRect(0, 0, 800, 20))
+        top_menu_bar = self.set_attr('Top', QMenuBar, parent=main_window,
+                                     policy=None, size=(800, 20, 7680, 20))
+        top_menu_bar.setGeometry(QRect(0, 0, 800, 20))
         main_window.setMenuBar(top_menu_bar)
 
         for menu in self.menu_bar:
-            self.set_attr(menu['name'], 'QMenu', parent=top_menu_bar,
-                          min_size=(100, 20), max_size=(960, 4300))
-            menu_obj = getattr(self, menu['name'] + 'Menu')
+            menu_obj = self.set_attr(menu['name'], QMenu, parent=top_menu_bar,
+                                     policy=None, size=(100, 20, 960, 4300))
             top_menu_bar.addAction(menu_obj.menuAction())
             menu_obj.setTitle(menu['title'])
 
             for action in self.menu_action(menu['name']):
-                self.set_attr(action['name'], 'QAction', parent=menu_obj)
-                action_obj = getattr(self, action['name'] + 'Action')
+                action_obj = self.set_attr(action['name'], QAction,
+                                           parent=menu_obj, policy=None)
                 if action['shortcut'] is None:
                     action_obj.setSeparator(True)
                     action_obj.setText('')
@@ -306,7 +295,7 @@ class UserInterface(object):
                     action_obj.setText(action['text'])
                 menu_obj.addAction(action_obj)
 
-        QtCore.QMetaObject.connectSlotsByName(main_window)
+        QMetaObject.connectSlotsByName(main_window)
         self.connect_handlers()
 
         self.plsda_model = None
@@ -337,6 +326,7 @@ class UserInterface(object):
             yield {'name': name.replace(' ', ''), 'title': '&' + name}
 
     def menu_action(self, menu):
+        """Return a generator iterator over action items properties."""
         menu = menu.lstrip('Menu').replace(' ', '').replace('&', '')
         if menu == 'Options':
             tmp = (('&New model', 'Ctrl+N'),
@@ -399,6 +389,16 @@ class UserInterface(object):
             self.ExportMatricesAction.setEnabled(True)
 
 
+    @property
+    def details_label(self):
+        """Get text of DetailsLabel."""
+        return self.DetailsLabel.text()
+
+    @details_label.setter
+    def details_label(self, value):
+        """Set text of DetailsLabel."""
+        return self.DetailsLabel.setText(str(value))
+
     def _replace_current_model(self):
         """Show a popup to ask if plsda_model should be replaced."""
         if self.plsda_model is None:
@@ -416,63 +416,55 @@ class UserInterface(object):
             return False
 
     def set_attr(self, name, widget, parent=None, lane=None,
-                 policy=None, min_size=None, max_size=None):
-        """Wrapper of qt5 module function and setattr over self."""
+                 policy=Policy.Expanding, size=None):
+        """Wrapper of setattr over self to add a widget."""
         attr_name = lane.value if lane is not None else ''
-        attr_name += str(name) + widget.lstrip('Q')
+        attr_name += str(name) + widget.__name__.lstrip('Q')
 
-        new_widget = new_qt(widget, attr_name, parent=parent)
+        new_widget = widget(parent)
+        new_widget.setObjectName(attr_name)
         setattr(self, attr_name, new_widget)
 
         if policy is not None:
-            tmp = QtWidgets.QSizePolicy(getattr(QtWidgets.QSizePolicy, policy),
-                                        getattr(QtWidgets.QSizePolicy, policy))
+            tmp = Policy(policy, policy)
             tmp.setHeightForWidth(new_widget.sizePolicy().hasHeightForWidth())
             tmp.setHorizontalStretch(0)
             tmp.setVerticalStretch(0)
             new_widget.setSizePolicy(tmp)
-        if min_size is not None and max_size is not None:
-            for sizes, attr in ((min_size, 'setMinimumSize'),
-                                (max_size, 'setMaximumSize')):
-                if sizes is not None and \
-                   (isinstance(sizes, tuple) or isinstance(sizes, list)) and \
-                   len(sizes) == 2:
-                    sizes = tuple(map(int, sizes))
-                    if sizes[0] in range(0, 7681) and \
-                       sizes[1] in range(0, 4321):
-                        getattr(new_widget, attr)(QtCore.QSize(*sizes))
-                    else:
-                        func = '.'.join(new_widget.objectName(), attr)
-                        func = func.lstrip('.')
-                        IO.Log.warning('{}({},{}) '.format(func, *sizes)
-                                       'failed! Width not in [0; 7680] '
-                                       'or height not in [0; 4320]')
+        if size is not None:
+            size = tuple(map(int, map(max, size, [0, 0, 0, 0])))
+            min_w, min_h, max_w, max_h = size
+            min_w, max_w = min(7680, min_w), min(7680, max_w)
+            min_h, max_h = min(4320, min_h), min(4320, max_h)
+            new_widget.setMinimumSize(QSize(min_w, min_h))
+            new_widget.setMaximumSize(QSize(max_w, max_h))
         return new_widget
 
     def add(self, widget, lane, column, row, name, text=None, word_wrap=True,
-            text_format=QtCore.Qt.AutoText, alignment=QtCore.Qt.AlignLeft,
+            text_format=Qt.AutoText, alignment=Qt.AlignLeft,
             group_name=None, minimum=1, maximum=99):
         """Add to the specified lane the widget in (row, column) position."""
         parent_widget = getattr(self, lane.value + 'ScrollAreaWidget')
         new_widget = self.set_attr(name, widget, parent=parent_widget,
-                                   lane=lane, policy='Preferred',
-                                   min_size=(70, 22), max_size=(1310, 170))
+                                   lane=lane, policy=Policy.Preferred,
+                                   size=(70, 22, 1310, 170))
 
-        if widget == 'QLabel':
+        if widget == QLabel:
             new_widget.setTextFormat(text_format)
             new_widget.setAlignment(alignment)
             new_widget.setWordWrap(word_wrap)
-        elif widget == 'QRadioButton':
+        elif widget == QRadioButton:
             group = getattr(self, group_name, None)
             if group is None:
-                group = new_qt('QButtonGroup', group_name, parent=parent_widget)
+                group = QButtonGroup(parent_widget)
+                group.setObjectName(group_name)
                 setattr(self, group_name, group)
             group.addButton(new_widget)
-        elif widget == 'QSpinBox':
+        elif widget == QSpinBox:
             new_widget.setMinimum(minimum)
             new_widget.setMaximum(maximum)
 
-        if widget in ('QLabel', 'QPushButton', 'QRadioButton'):
+        if widget in (QLabel, QPushButton, QRadioButton):
             new_widget.setText(str(text if text is not None else str(name)))
 
         layout = getattr(self, lane.value + 'PlotFormLayout')
@@ -626,7 +618,7 @@ class UserInterface(object):
         self.PredictionAction.triggered.connect(
                 lambda: setattr(self, 'current_mode', 'prediction'))
 
-        self.AboutQtAction.triggered.connect(QtWidgets.QApplication.aboutQt)
+        self.AboutQtAction.triggered.connect(QApplication.aboutQt)
 
         self.LeftComboBox.currentIndexChanged.connect(
                 lambda idx: self.call_plot_method(Lane.Left, index=idx))
@@ -637,14 +629,14 @@ class UserInterface(object):
         """Ask for confirmation with a popup and quit returning 0."""
         if popup_question('Would you really like to quit?', title='Quit',
                           parent=self.MainWindow):
-            QtCore.QCoreApplication.quit()
+            QCoreApplication.quit()
 
     def show(self):
         self.MainWindow.show()
 
 
 if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     ui = UserInterface('PLS-DA')
     ui.show()
     if utility.CLI.args().verbose:
