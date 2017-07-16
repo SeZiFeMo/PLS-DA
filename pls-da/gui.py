@@ -151,6 +151,10 @@ class Lane(enum.Enum):
     Central = 'Central'
     Right = 'Right'
 
+    def __str__(self):
+        """The str() builtin will return enumerate value."""
+        return self.value
+
 
 class UserInterface(object):
 
@@ -179,35 +183,34 @@ class UserInterface(object):
         main_splitter.setHandleWidth(3)
 
         for lane in (Lane.Left, Lane.Central):
-            parent = self.set_attr(lane.value, QWidget, parent=main_splitter,
+            parent = self.set_attr(lane, QWidget, parent=main_splitter,
                                    policy=None, size=(200, 580, 3637, 4300))
 
-            layout = self.set_attr(lane.value, QGridLayout, parent=parent,
+            layout = self.set_attr(lane, QGridLayout, parent=parent,
                                    policy=None)
             layout.setContentsMargins(3, 3, 3, 3)
             layout.setSpacing(5)
 
-            drop_down = self.set_attr(lane.value, QComboBox, parent=parent,
+            drop_down = self.set_attr(lane, QComboBox, parent,
                                       size=(194, 22, 3631, 22))
             layout.addWidget(drop_down, 0, 0, 1, 1)
             for entry in self.drop_down_menu:
                 drop_down.addItem(entry['text'])
             drop_down.setCurrentIndex(-1)
 
-            scroll_area = self.set_attr(
-                    lane.value, QScrollArea, parent=parent, policy=None,
-                    size=(194, 547, 3631, 4267))
+            scroll_area = self.set_attr(lane, QScrollArea, parent, policy=None,
+                                        size=(194, 547, 3631, 4267))
             scroll_area.setWidgetResizable(True)
             layout.addWidget(scroll_area, 1, 0, 1, 1)
 
-            scroll_area_widget = self.set_attr(
-                    lane.value + 'ScrollArea', QWidget, parent=None,
-                    size=(174, 427, 3611, 4147))
+            scroll_area_widget = self.set_attr(str(lane) + 'ScrollArea',
+                                               QWidget,
+                                               size=(174, 427, 3611, 4147))
             scroll_area.setWidget(scroll_area_widget)
             scroll_area_widget.setGeometry(QRect(0, 0, 290, 565))
             scroll_area_widget.setLayoutDirection(Qt.LeftToRight)
 
-            form_layout = self.set_attr(lane.value + 'Plot', QFormLayout,
+            form_layout = self.set_attr(str(lane) + 'Plot', QFormLayout,
                                         parent=scroll_area_widget, policy=None)
             form_layout.setSizeConstraint(QLayout.SetMaximumSize)
             form_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
@@ -220,20 +223,19 @@ class UserInterface(object):
                      text='Latent Variables')
             self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',)
             self.add(QRadioButton, lane, Column.Left, row=1, name='X',
-                     group_name=lane.value + 'ButtonGroup')
+                     group_name=str(lane) + 'ButtonGroup')
             self.add(QSpinBox, lane, Column.Right, row=1, name='X')
             self.add(QRadioButton, lane, Column.Left, row=2, name='Y',
-                     group_name=lane.value + 'ButtonGroup')
+                     group_name=str(lane) + 'ButtonGroup')
             self.add(QSpinBox, lane, Column.Right, row=2, name='Y')
             self.add(QPushButton, lane, Column.Left, row=3, name='Back')
             self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
 
         lane = Lane.Right
-        parent = self.set_attr(lane.value, QWidget, parent=main_splitter,
+        parent = self.set_attr(lane, QWidget, parent=main_splitter,
                                size=(150, 580, 400, 4300))
 
-        layout = self.set_attr(lane.value, QGridLayout, parent=parent,
-                               policy=None)
+        layout = self.set_attr(lane, QGridLayout, parent=parent, policy=None)
         layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(5)
 
@@ -247,18 +249,17 @@ class UserInterface(object):
         current_mode_label.setFrameShape(QFrame.StyledPanel)
         layout.addWidget(current_mode_label, 0, 0, 1, 1)
 
-        scroll_area = self.set_attr(lane.value, QScrollArea, parent=parent,
+        scroll_area = self.set_attr(lane, QScrollArea, parent=parent,
                                     policy=None, size=(144, 547, 394, 4272))
         scroll_area.setWidgetResizable(True)
         layout.addWidget(scroll_area, 1, 0, 1, 1)
 
-        scroll_area_widget = self.set_attr(
-                lane.value + 'ScrollArea', QWidget, parent=None,
-                size=(138, 534, 388, 4259))
+        scroll_area_widget = self.set_attr(lane + 'ScrollArea', QWidget,
+                                           size=(138, 534, 388, 4259))
         scroll_area.setWidget(scroll_area_widget)
         scroll_area_widget.setGeometry(QRect(0, 0, 189, 565))
 
-        details_layout = self.set_attr(lane.value + 'Details', QGridLayout,
+        details_layout = self.set_attr(str(lane) + 'Details', QGridLayout,
                                        parent=scroll_area_widget, policy=None)
         details_layout.setContentsMargins(3, 3, 3, 3)
         details_layout.setSpacing(5)
@@ -351,7 +352,7 @@ class UserInterface(object):
     @property
     def current_mode(self):
         """Get value of CurrentModeLabel."""
-        return self._current_mode.capitalize().replace('sv', 'sV') + ' mode'
+        return self.CurrentModeLabel.text()
 
     @current_mode.setter
     def current_mode(self, value):
@@ -367,7 +368,8 @@ class UserInterface(object):
             self._current_mode = 'crossvalidation'
 
         IO.Log.debug('Current mode changed to: ' + self._current_mode.upper())
-        self.CurrentModeLabel.setText(self.current_mode)
+        self.CurrentModeLabel.setText(
+                self._current_mode.capitalize().replace('sv', 'sV') + ' mode')
 
         model_flag, cv_flag, pred_flag = False, False, False
         if self._current_mode == 'crossvalidation':
@@ -415,11 +417,10 @@ class UserInterface(object):
             IO.Log.debug('NO (not replacing current model)')
             return False
 
-    def set_attr(self, name, widget, parent=None, lane=None,
-                 policy=Policy.Expanding, size=None):
+    def set_attr(self, name, widget, parent=None, policy=Policy.Expanding,
+                 size=None):
         """Wrapper of setattr over self to add a widget."""
-        attr_name = lane.value if lane is not None else ''
-        attr_name += str(name) + widget.__name__.lstrip('Q')
+        attr_name = str(name) + widget.__name__.lstrip('Q')
 
         new_widget = widget(parent)
         new_widget.setObjectName(attr_name)
@@ -444,7 +445,7 @@ class UserInterface(object):
             text_format=Qt.AutoText, alignment=Qt.AlignLeft,
             group_name=None, minimum=1, maximum=99):
         """Add to the specified lane the widget in (row, column) position."""
-        parent_widget = getattr(self, lane.value + 'ScrollAreaWidget')
+        parent_widget = getattr(self, str(lane) + 'ScrollAreaWidget')
         new_widget = self.set_attr(name, widget, parent=parent_widget,
                                    lane=lane, policy=Policy.Preferred,
                                    size=(70, 22, 1310, 170))
@@ -467,7 +468,7 @@ class UserInterface(object):
         if widget in (QLabel, QPushButton, QRadioButton):
             new_widget.setText(str(text if text is not None else str(name)))
 
-        layout = getattr(self, lane.value + 'PlotFormLayout')
+        layout = getattr(self, str(lane) + 'PlotFormLayout')
         layout.setWidget(row, column.value, new_widget)
         return new_widget
 
@@ -479,7 +480,7 @@ class UserInterface(object):
         for entry in self.drop_down_menu:
             if index == entry['index'] or text == entry['text']:
                 # clear layouts from previous widget
-                clear(getattr(self, lane.value + 'PlotFormLayout'))
+                clear(getattr(self, str(lane) + 'PlotFormLayout'))
                 # populate layouts with necessary widget
                 return getattr(self, entry['method'])(lane)
 
