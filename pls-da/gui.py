@@ -197,7 +197,6 @@ class UserInterface(object):
                     lane.value, 'QComboBox', parent=parent, policy='Expanding',
                     min_size=(194, 22), max_size=(3631, 22))
             layout.addWidget(drop_down, 0, 0, 1, 1)
-            # Previously in retranslateUi()
             for entry in self.drop_down_menu:
                 drop_down.addItem(entry['text'])
             drop_down.setCurrentIndex(-1)
@@ -284,7 +283,6 @@ class UserInterface(object):
         details_label.setText("Details")
         details_label.setWordWrap(True)
 
-        # MenuBar
         top_menu_bar = self.set_attr('Top', 'QMenuBar', parent=main_window,
                                      min_size=(800, 20), max_size=(7680, 20))
         top_menu_bar.setGeometry(QtCore.QRect(0, 0, 800, 20))
@@ -316,10 +314,7 @@ class UserInterface(object):
 
     @property
     def drop_down_menu(self):
-        """Return a generator iterator over drop down menu item properties.
-
-           https://docs.python.org/3/glossary.html#term-generator-iterator
-        """
+        """Return a generator iterator over drop down menu item properties."""
         tmp = (('Scree', 'plot_scree'),
                ('Cumulative explained variance', 'plot_explained_variance'),
                ('Inner relationships', 'plot_inner_relations'),
@@ -337,10 +332,7 @@ class UserInterface(object):
 
     @property
     def menu_bar(self):
-        """Return a generator iterator over menu items properties.
-
-           https://docs.python.org/3/glossary.html#term-generator-iterator
-        """
+        """Return a generator iterator over menu items properties."""
         for name in ('Options', 'Change Mode', 'About'):
             yield {'name': name.replace(' ', ''), 'title': '&' + name}
 
@@ -495,7 +487,7 @@ class UserInterface(object):
         for entry in self.drop_down_menu:
             if index == entry['index'] or text == entry['text']:
                 # clear layouts from previous widget
-                # clear(getattr(self, lane.value + 'PlotFormLayout'))
+                clear(getattr(self, lane.value + 'PlotFormLayout'))
                 # populate layouts with necessary widget
                 return getattr(self, entry['method'])(lane)
 
