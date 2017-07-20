@@ -295,15 +295,6 @@ class nipals_abstract(object):
                                    np.dot(self.nipals.U, self.nipals.Q.T),
                                    err_msg="Y != UQ'", atol=absolute_tolerance)
 
-    def test_predicted_y(self):
-        y_pred = self.preproc.dataset.dot(self.nipals.W.T).dot(
-                 np.diag(self.nipals.b)).dot(self.nipals.Q.T)
-        np.testing.assert_allclose(self.preproc.dummy_y, y_pred,
-                                   atol=absolute_tolerance)
-        y_pred = self.preproc.dataset.dot(self.nipals.B)
-        np.testing.assert_allclose(self.preproc.dummy_y, y_pred,
-                                   atol=absolute_tolerance)
-
     def test_p_unit_length(self):
         for i in range(self.nipals.m):
             np.testing.assert_allclose(np.linalg.norm(self.nipals.P[:, i]),
@@ -314,19 +305,19 @@ class nipals_abstract(object):
             np.testing.assert_allclose(np.linalg.norm(self.nipals.Q[:, i]),
                                        1.0, atol=absolute_tolerance)
 
-    @unittest.skip("Property which must hold")
+#    @unittest.skip("Property which must hold")
     def test_t_centered_around_zero(self):
         for i in range(self.nipals.n):
             np.testing.assert_allclose(sum(self.nipals.T[i, :]), 0,
                                        atol=absolute_tolerance)
 
-    @unittest.skip("Property which must hold")
+#    @unittest.skip("Property which must hold")
     def test_u_centered_around_zero(self):
         for i in range(self.nipals.n):
             np.testing.assert_allclose(sum(self.nipals.U[i, :]), 0,
                                        atol=absolute_tolerance)
 
-    @unittest.skip("Property which must hold")
+#    @unittest.skip("Property which must hold")
     def test_w_orthogonal(self):
         for i in range(self.nipals.m):
             with self.subTest(i=i):
@@ -338,7 +329,7 @@ class nipals_abstract(object):
                         np.testing.assert_allclose(w_i.T.dot(w_j), norm,
                                                    atol=absolute_tolerance)
 
-    @unittest.skip("Property which must hold")
+#    @unittest.skip("Property which must hold")
     def test_t_orthogonal(self):
         for i in range(self.nipals.m):
             with self.subTest(i=i):
