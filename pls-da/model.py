@@ -135,26 +135,94 @@ class Model(object):
         # max_lv is the number of lv in which the model was calculated
         # nr_lv is the number of lv used for prediction
         self.max_lv = max_lv
-        self.nr_lv = max_lv
+        self._nr_lv = max_lv
 
-        self.T = np.empty((self.n, max_lv))
-        self.P = np.empty((self.m, max_lv))
-        self.W = np.empty((self.m, max_lv))
-        self.U = np.empty((self.n, max_lv))
-        self.Q = np.empty((self.p, max_lv))
+        self._T = np.zeros((self.n, max_lv))
+        self._P = np.zeros((self.m, max_lv))
+        self._W = np.zeros((self.m, max_lv))
+        self._U = np.zeros((self.n, max_lv))
+        self._Q = np.zeros((self.p, max_lv))
 
-        self.b = np.empty((max_lv))
-        self.x_eigenvalues = np.empty((max_lv))
-        self.y_eigenvalues = np.empty((max_lv))
-        self.Y_modeled = np.empty((self.n, self.p))
-        self.Y_modeled_dummy = np.empty((self.n, self.p))
-        self.B = np.empty((self.m, self.p))
-        self.E_x = np.empty((self.n, self.m))
-        self.E_y = np.empty((self.n, self.p))
+        self._b = np.zeros((max_lv))
+        self._x_eigenvalues = np.zeros((max_lv))
+        self._y_eigenvalues = np.zeros((max_lv))
+        self._Y_modeled = np.zeros((self.n, self.p))
+        self._Y_modeled_dummy = np.zeros((self.n, self.p))
+
+    @property
+    def nr_lv(self):
+        return self._nr_lv
+
+    @nr_lv.setter
+    def nr_lv(self, value):
+        assert value <= self.max_lv and value > 0, "Chosen latent variable" \
+                                    " number {} out of bounds [0, {}]".format(
+                                            value, self.max_lv)
+        self._nr_lv = value
+
+    @property
+    def T(self):
+        return self._T[:, :self.nr_lv]
+
+    @property
+    def P(self):
+        return self._P[:, :self.nr_lv]
+
+    @property
+    def W(self):
+        return self._W[:, :self.nr_lv]
+
+    @property
+    def U(self):
+        return self._U[:, :self.nr_lv]
+
+    @property
+    def Q(self):
+        return self._Q[:, :self.nr_lv]
+
+    @property
+    def b(self):
+        return self._b[:self.nr_lv]
+
+    @property
+    def x_eigenvalues(self):
+        return self._x_eigenvalues[:self.nr_lv]
+
+    @property
+    def y_eigenvalues(self):
+        return self._y_eigenvalues[:self.nr_lv]
+
+    @property
+    def Y_modeled(self):
+        Y_modeled = self.X.dot(self.B)
+        IO.Log.debug('Modeled Y prior to the discriminant classification',
+                     Y_modeled)
+        return Y_modeled
+
+    @property
+    def Y_modeled_dummy(self):
+        Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
+                   for row in self.Y_modeled]
+        return np.array(Y_dummy)
+
+    @property
+    def E_x(self):
+        return self.X - np.dot(self.T, self.P.T)
+
+    @property
+    def E_y(self):
+        return self.Y - (self.T.dot(np.diag(self.b))).dot(self.Q.T)
+
+    @property
+    def B(self):
+        # Compute regression parameters B
+        # tmp = (P'W)^{-1}
+        tmp = np.linalg.inv(self.P.T.dot(self.W))
+        return ((self.W.dot(tmp)).dot(np.diag(self.b))).dot(self.Q.T)
 
     def predict(self, test_set, nr_lv):
         """Return Y predicted over this model."""
-#        T_cap = np.empty((test_set.shape[0], self.m))
+#        T_cap = np.zeros((test_set.shape[0], self.m))
 #        E_x = test_set.copy()
 #        Y = np.zeros((test_set.shape[0], self.p))
 
@@ -231,14 +299,17 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
         for it in range(int(max_iter) + 2):
             # Evaluate w as projection of u in X and normalize it
             w = np.dot(E_x.T, u) / np.dot(u, u)
-            w = w / np.linalg.norm(w)
+            w /= np.linalg.norm(w)
             # Evaluate t as projection of w in X
-            t = np.dot(E_x, w) / np.dot(w, w)
+            # t = np.dot(E_x, w) / np.dot(w, w)
+            t = np.dot(E_x, w)
 
             # Y part
             # Evaluate q as projection of t in Y and normalize it
-            q = np.dot(E_y.T, t) / np.dot(t, t)
-            q = q / np.linalg.norm(q)
+            # q = np.dot(E_y.T, t) / np.dot(t, t)
+            q = np.dot(E_y.T, t)
+            q /= np.linalg.norm(q)
+
             # Evaluate u_star as projection of c in Y
             u_star = np.dot(E_y, q) / np.dot(q, q)
 
@@ -256,11 +327,9 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
         # Save the evaluated values
         p = np.dot(E_x.T, t) / np.dot(t, t)
         p_norm = np.linalg.norm(p)
-        model.P[:, i] = p / p_norm
-        model.T[:, i] = t * p_norm
-        model.W[:, i] = w * p_norm
-        model.U[:, i] = u
-        model.Q[:, i] = q
+        p = p / p_norm
+        t = t * p_norm
+        w = w * p_norm
 
         s_list_x.append(np.linalg.norm(t))
         s_list_y.append(np.linalg.norm(u))
@@ -268,25 +337,19 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
         model.b[i] = np.dot(u.T, t) / np.dot(t, t)
 
         # Calculate residuals
-        E_x = E_x - np.dot(np.row_stack(t), np.column_stack(model.P[:, i]))
-        E_y = E_y - model.b[i] * np.dot(np.row_stack(t),
-                                        np.column_stack(q.T))
+        E_x -= np.dot(np.row_stack(t), np.column_stack(p))
+        E_y -= model.b[i] * np.dot(np.row_stack(t),
+                                   np.column_stack(q.T))
 
-    model.x_eigenvalues = np.power(np.array(s_list_x), 2) / (model.n - 1)
-    model.y_eigenvalues = np.power(np.array(s_list_y), 2) / (model.n - 1)
+        model.P[:, i] = p
+        model.T[:, i] = t
+        model.W[:, i] = w
+        model.U[:, i] = u
+        model.Q[:, i] = q
 
-    # Compute regression parameters B
-    # tmp = (P'W)^{-1}
-    tmp = np.linalg.inv(model.P.T.dot(model.W))
-    model.B = model.W.dot(tmp).dot(np.diag(model.b)).dot(model.Q.T)
-    model.Y_modeled = X.dot(model.B)
-    IO.Log.debug('Modeled Y prior to the discriminant classification',
-                 model.Y_modeled)
-    Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
-               for row in model.Y_modeled]
-    model.Y_modeled_dummy = np.array(Y_dummy)
+    model._x_eigenvalues = np.power(np.array(s_list_x), 2) / (model.n - 1)
+    model._y_eigenvalues = np.power(np.array(s_list_y), 2) / (model.n - 1)
 
-    model.E_y = E_y
     IO.Log.info('NIPALS loadings shape', model.P.shape)
     IO.Log.info('NIPALS scores shape', model.T.shape)
     IO.Log.info('NIPALS x_eigenvalues', model.x_eigenvalues)
@@ -306,7 +369,8 @@ def cross_validation(preproc, split, max_lv):
     for train, test in venetian_blind_split(preproc, split):
         model = nipals(*train)
         res = dict()
-        for lv in range(max_lv):
+        for lv in range(1, max_lv):
+            model.nr_lv = lv
             y_pred = model.predict(test[0], lv)
             res[lv] = Statistics(test[1], y_pred)
         results.append(res)
