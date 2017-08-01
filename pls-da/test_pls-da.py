@@ -14,6 +14,7 @@ import IO
 import model
 import plot
 import utility
+import copy
 
 absolute_tolerance = 0.1
 
@@ -210,8 +211,8 @@ class nipals_abstract(object):
         j = 2
         self.preproc = model.Preprocessing()
 
-        X = np.array([[1, 1.9], [1.9, 1], [3.8, 4.2], [4, 3.6]])
-        Y = np.array([[1, 0], [1, 0], [0, 1], [0, 1]])
+        X = np.array([[1, 1.9], [1.9, 1], [3.8, 4.2], [4, 3.6], [3.6, 4.4]])
+        Y = np.array([[1, 0], [1, 0], [0, 1], [0, 1], [0, 1]])
         self.preproc.dataset = X.copy()
         self.preproc.dummy_y = Y.copy()
 
@@ -305,19 +306,19 @@ class nipals_abstract(object):
             np.testing.assert_allclose(np.linalg.norm(self.nipals.Q[:, i]),
                                        1.0, atol=absolute_tolerance)
 
-#    @unittest.skip("Property which must hold")
+    @unittest.skip("Property which should hold")
     def test_t_centered_around_zero(self):
         for i in range(self.nipals.n):
             np.testing.assert_allclose(sum(self.nipals.T[i, :]), 0,
                                        atol=absolute_tolerance)
 
-#    @unittest.skip("Property which must hold")
+    @unittest.skip("Property which should hold")
     def test_u_centered_around_zero(self):
         for i in range(self.nipals.n):
             np.testing.assert_allclose(sum(self.nipals.U[i, :]), 0,
                                        atol=absolute_tolerance)
 
-#    @unittest.skip("Property which must hold")
+    @unittest.skip("Property which should hold")
     def test_w_orthogonal(self):
         for i in range(self.nipals.m):
             with self.subTest(i=i):
@@ -329,7 +330,7 @@ class nipals_abstract(object):
                         np.testing.assert_allclose(w_i.T.dot(w_j), norm,
                                                    atol=absolute_tolerance)
 
-#    @unittest.skip("Property which must hold")
+    @unittest.skip("Property which should hold")
     def test_t_orthogonal(self):
         for i in range(self.nipals.m):
             with self.subTest(i=i):
@@ -345,6 +346,24 @@ class nipals_abstract(object):
         np.testing.assert_allclose(self.preproc.dummy_y,
                                    self.nipals.Y_modeled_dummy,
                                    atol=absolute_tolerance)
+
+    def test_nr_lv_implementation_all_matrices(self):
+        mdl = copy.deepcopy(self.nipals)
+        n = mdl.n
+        m = mdl.m
+        p = mdl.p
+        lv = 1
+        mdl.nr_lv = lv
+        self.assertEqual(mdl.T.shape, (n, lv))
+        self.assertEqual(mdl.U.shape, (n, lv))
+        self.assertEqual(mdl.P.shape, (m, lv))
+        self.assertEqual(mdl.W.shape, (m, lv))
+        self.assertEqual(mdl.Q.shape, (p, lv))
+        self.assertEqual(mdl.b.shape, (lv, ))
+        self.assertEqual(mdl.x_eigenvalues.shape, (lv, ))
+        self.assertEqual(mdl.y_eigenvalues.shape, (lv, ))
+        self.assertEqual(mdl.Y_modeled.shape, (n, p))
+        self.assertEqual(mdl.Y_modeled_dummy.shape, (n, p))
 
 
 class test_nipals_method(nipals_abstract, unittest.TestCase):
