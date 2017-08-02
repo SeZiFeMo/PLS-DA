@@ -222,11 +222,6 @@ class Model(object):
 
     def predict(self, test_set, nr_lv):
         """Return Y predicted over this model."""
-#        T_cap = np.zeros((test_set.shape[0], self.m))
-#        E_x = test_set.copy()
-#        Y = np.zeros((test_set.shape[0], self.p))
-
-#        T_cap = np.dot(test_set, self.W)
         return np.dot(test_set, self.B)
 
 

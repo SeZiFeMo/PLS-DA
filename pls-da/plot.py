@@ -204,7 +204,7 @@ def scores(ax, pc_a, pc_b, x=False, y=False, normalize=False):
 def loadings(ax, pc_a, pc_b, x=False, y=False):
     """Plot the loadings on the pc_a, pc_b components for the x or y matrix.
 
-       Points of each category have a different color/shape.
+       Annotate every point with the corresponding variable name.
 
        Raise ValueError if x and y does not differ.
        Raise ValueError if pc_a and pc_b are the same component.
@@ -280,41 +280,41 @@ def regression_coefficients(ax):
     ax.set_ylabel('inner relation variable')
 
 
-def w_w1_weights(ax, lv_1, lv_2):
-    if lv_1 == lv_2:
+def weights(ax, lv_a, lv_b):
+    """Plot the weights regarding the given principal components.
+
+       Annotate every point with the corresponding variable name.
+
+       Raise ValueError if pc_a and pc_b are the same component.
+    """
+    if lv_a == lv_b:
         raise ValueError('Principal components must be different!')
 
-    lv_1, lv_2 = min(lv_1, lv_2), max(lv_1, lv_2)
+    lv_a, lv_b = min(lv_a, lv_b), max(lv_a, lv_b)
 
-    scatter_wrapper(ax, MODEL.W[:, lv_1], MODEL.W[:, lv_2])
+    scatter_wrapper(ax, MODEL.W[:, lv_a], MODEL.W[:, lv_b])
 
     for n in range(MODEL.W.shape[0]):
         ax.annotate(PREPROC.header[n + 1],
                     horizontalalignment='center',
                     textcoords='offset points',
                     verticalalignment='bottom',
-                    xy=(MODEL.W[n, lv_1], MODEL.W[n, lv_2]),
+                    xy=(MODEL.W[n, lv_a], MODEL.W[n, lv_b]),
                     xycoords='data',
                     xytext=(0, 5))
 
-    ax.set_xlabel('LV{}'.format(lv_1 + 1))
-    ax.set_ylabel('LV{}'.format(lv_2 + 1))
+    ax.set_title('Weights plot')
+    ax.set_xlabel('LV{}'.format(lv_a + 1))
+    ax.set_ylabel('LV{}'.format(lv_b + 1))
     ax.axvline(0, linestyle='dashed', color='black')
     ax.axhline(0, linestyle='dashed', color='black')
 
 
-def w_weights_line_plot(ax, lv):
+def weights_line(ax, lv):
+    """Plot all the weights used by the model."""
     line_wrapper(ax, range(MODEL.W.shape[0]), MODEL.W[:, lv])
 
-    for n in range(MODEL.W.shape[0]):
-        ax.annotate(PREPROC.header[n + 1],
-                    horizontalalignment='center',
-                    textcoords='offset points',
-                    verticalalignment='bottom',
-                    xy=(range(MODEL.W.shape[0]), MODEL.W[n, lv]),
-                    xycoords='data',
-                    xytext=(0, 5))
-
+    ax.set_title('Weights line plot')
     ax.set_xlabel('Sample')
     ax.set_ylabel('LV{}'.format(lv + 1))
     ax.axvline(0, linestyle='dashed', color='black')

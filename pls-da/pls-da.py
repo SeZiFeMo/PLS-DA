@@ -47,9 +47,9 @@ fig = plt.figure(tight_layout=True)
 # plot.cumulative_explained_variance(ax, x=True)
 # plot.scree(ax, y=True)
 
-plot.scores(fig.add_subplot(2, 2, 1), pc_a=0, pc_b=1, x=True)
-plot.inner_relations(fig.add_subplot(2, 2, 2), num=0)
-plot.scores(fig.add_subplot(2, 2, 3), pc_a=1, pc_b=2, x=True)
-plot.inner_relations(fig.add_subplot(2, 2, 4), num=1)
+plot.weights(fig.add_subplot(2, 2, 1), lv_a=0, lv_b=1)
+plot.weights_line(fig.add_subplot(2, 2, 2), lv=0)
+plot.weights(fig.add_subplot(2, 2, 3), lv_a=1, lv_b=2)
+plot.loadings(fig.add_subplot(2, 2, 4), pc_a=0, pc_b=1, x=True)
 plt.show()
 
