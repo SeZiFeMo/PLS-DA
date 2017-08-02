@@ -32,12 +32,16 @@ plot.update_global_preproc(preproc)
 nipals_model = model.nipals(preproc.dataset, preproc.dummy_y)
 plot.update_global_model(nipals_model)
 test_set = np.arange(10 * nipals_model.m).reshape(10, nipals_model.m)
-nipals_model.predict(test_set, None)
+test_preproc = model.Preprocessing(input_file='datasets/olive_test.csv')
+test_x, test_y = preproc.preprocess_test(test_preproc.dataset,
+                                         test_preproc.dummy_y)
+y_pred = nipals_model.predict(test_x)
+pred = model.Statistics(test_y, y_pred)
 
 results = model.cross_validation(preproc, 4, 6)
-for res in results:
-    for stat_id in res:
-        print(res[stat_id].rss)
+# for res in results:
+#    for stat_id in res:
+#        print(res[stat_id].rss)
 
 fig = plt.figure(tight_layout=True)
 

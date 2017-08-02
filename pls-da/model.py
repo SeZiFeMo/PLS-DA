@@ -40,6 +40,10 @@ class Preprocessing(object):
                                  for cat in CATEGORIES]).T
         IO.Log.debug('Dummy y', self.dummy_y)
 
+        self.mean_dataset = np.zeros(self.m)
+        self.mean_y = np.zeros(self.p)
+        self.sigma_dataset = np.ones(self.m)
+        self.sigma_y = np.ones(self.p)
         self.axis = 0
         self._centered = False
         self._normalized = False
@@ -85,11 +89,13 @@ class Preprocessing(object):
             IO.Log.warning('Already centered dataset')
             return
 
-        self.dataset = self.dataset - self.dataset.mean(axis=self.axis)
+        self.mean_dataset = self.dataset.mean(axis=self.axis)
+        self.dataset = self.dataset - self.mean_dataset
         if not quiet:
             IO.Log.debug('Centered dataset', self.dataset)
 
-        self.dummy_y = self.dummy_y - self.dummy_y.mean(axis=self.axis)
+        self.mean_y = self.dummy_y.mean(axis=self.axis)
+        self.dummy_y = self.dummy_y - self.mean_y
         self._centered = True
 
     def normalize(self, quiet=False):
@@ -98,11 +104,13 @@ class Preprocessing(object):
             IO.Log.warning('Already normalized dataset')
             return
 
-        self.dataset = self.dataset / self.dataset.std(axis=self.axis)
+        self.sigma_dataset = self.dataset.std(axis=self.axis)
+        self.dataset = self.dataset / self.sigma_dataset
         if not quiet:
             IO.Log.debug('Normalized dataset', self.dataset)
 
-        self.dummy_y = self.dummy_y / self.dummy_y.std(axis=self.axis)
+        self.sigma_y = self.dummy_y.std(axis=self.axis)
+        self.dummy_y = self.dummy_y / self.sigma_y
         self._normalized = True
 
     def autoscale(self):
@@ -118,6 +126,16 @@ class Preprocessing(object):
     def empty_method(self):
         """Do not remove this method, it is needed by the GUI."""
         pass
+
+    def preprocess_test(self, test_x, test_y):
+        """Apply the preprocessing of the train set to the given test set."""
+        x = test_x.copy()
+        y = test_y.copy()
+
+        x = (x - self.mean_dataset) / self.sigma_dataset
+        y = (y - self.mean_y) / self.sigma_y
+
+        return (x, y)
 
 
 class Model(object):
@@ -220,8 +238,8 @@ class Model(object):
         tmp = np.linalg.inv(self.P.T.dot(self.W))
         return ((self.W.dot(tmp)).dot(np.diag(self.b))).dot(self.Q.T)
 
-    def predict(self, test_set, nr_lv):
-        """Return Y predicted over this model."""
+    def predict(self, test_set):
+        """Return Y predicted for the given test set over this model."""
         return np.dot(test_set, self.B)
 
 
@@ -366,7 +384,7 @@ def cross_validation(preproc, split, max_lv):
         res = dict()
         for lv in range(1, max_lv):
             model.nr_lv = lv
-            y_pred = model.predict(test[0], lv)
+            y_pred = model.predict(test[0])
             res[lv] = Statistics(test[1], y_pred)
         results.append(res)
     return results
