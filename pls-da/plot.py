@@ -280,6 +280,21 @@ def y_residuals_leverage(ax):
     ax.set_ylabel('Y residuals')
 
 
+def leverage(ax):
+    """Plot leverage over the sample."""
+    temp = np.linalg.inv(np.dot(MODEL.U.T, MODEL.U))
+    leverage = np.empty(MODEL.n)
+
+    for i in range(MODEL.n):
+        leverage[i] = MODEL.U[i].dot(temp).dot(MODEL.U[i].T)
+        scatter_wrapper(ax, i, leverage[i],
+                        PREPROC.categories[i])
+
+    ax.set_title('Leverage')
+    ax.set_xlabel('sample')
+    ax.set_ylabel('leverage')
+
+
 def regression_coefficients(ax):
     """Plot the regression coefficients."""
     for i in range(MODEL.b.shape[0]):
