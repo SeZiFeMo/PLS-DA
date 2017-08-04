@@ -38,22 +38,32 @@ def symbol(category=None):
 
 
 def update_global_model(value):
-    """Set value to MODEL."""
+    """Set MODEL to value."""
     if isinstance(value, model.Model):
         global MODEL
         MODEL = value
     else:
-        IO.Log.Error('Wrong type in update_global_model() '
+        IO.Log.error('Wrong type in update_global_model() '
                      '({}).'.format(type(value)))
 
 
 def update_global_preproc(value):
-    """Set value to MODEL."""
+    """Set PREPROC to value."""
     if isinstance(value, model.Preprocessing):
         global PREPROC
         PREPROC = value
     else:
-        IO.Log.Error('Wrong type in update_global_model() '
+        IO.Log.error('Wrong type in update_global_model() '
+                     '({}).'.format(type(value)))
+
+
+def update_global_statistics(value):
+    """Set STATS to value."""
+    if isinstance(value, model.Statistics):
+        global STATS
+        STATS = value
+    else:
+        IO.Log.error('Wrong type in update_global_model() '
                      '({}).'.format(type(value)))
 
 

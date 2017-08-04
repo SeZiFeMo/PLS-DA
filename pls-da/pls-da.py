@@ -37,6 +37,7 @@ test_x, test_y = preproc.preprocess_test(test_preproc.dataset,
                                          test_preproc.dummy_y)
 y_pred = nipals_model.predict(test_x)
 pred = model.Statistics(test_y, y_pred)
+plot.update_global_statistics(pred)
 
 results = model.cross_validation(preproc, 4, 6)
 # for res in results:
