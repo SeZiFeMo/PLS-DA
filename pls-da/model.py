@@ -238,6 +238,15 @@ class Model(object):
         tmp = np.linalg.inv(self.P.T.dot(self.W))
         return ((self.W.dot(tmp)).dot(np.diag(self.b))).dot(self.Q.T)
 
+    @property
+    def t_square(self):
+        lambda_inv = 1 / self.x_eigenvalues
+        return np.diag(self.T.dot(np.diag(lambda_inv)).dot(self.T.T))
+
+    @property
+    def q_residuals_x(self):
+        return np.diag(self.E_x.dot(self.E_x.T))
+
     def predict(self, test_set):
         """Return Y predicted for the given test set over this model."""
         return np.dot(test_set, self.B)

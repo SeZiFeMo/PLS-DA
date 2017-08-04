@@ -5,6 +5,7 @@ import collections
 import functools
 import math
 import numpy as np
+import scipy as sp
 import sklearn.cross_decomposition as sklCD
 
 import IO
@@ -261,7 +262,28 @@ def predicted_y(ax):
 
 
 def t_square_q(ax):
-    raise NotImplementedError
+    """Plot the q statistic over the Hotelling's t^2 with confidence levels."""
+    MODEL.nr_lv = 3
+    ax.set_title('T^2 - Q')
+    ax.set_xlabel('Hotelling\'s T^2')
+    ax.set_ylabel('Q residuals')
+
+    t_square = MODEL.t_square
+    q_res = MODEL.q_residuals_x
+    for i in range(MODEL.n):
+        scatter_wrapper(ax, t_square[i], q_res[i], PREPROC.categories[i])
+
+    t_square_confidence_level = sp.stats.norm.interval(0.95, np.mean(t_square),
+                                                       np.std(t_square))[1]
+    q_confidence_level = sp.stats.norm.interval(0.95, np.mean(q_res),
+                                                np.std(q_res))[1]
+
+    ax.axvline(t_square_confidence_level, linestyle='dashed', color='black')
+    ax.axhline(q_confidence_level, linestyle='dashed', color='black')
+
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
 
 
 def y_residuals_leverage(ax):
