@@ -30,7 +30,7 @@ class Preprocessing(object):
 
         self.categories = [row[0] for row in body]
         global CATEGORIES
-        CATEGORIES = set(self.categories)
+        CATEGORIES = utility.get_unique_list(self.categories)
 
         self.dataset = np.array([np.array(row[1:]) for row in body])
         IO.Log.debug('Loaded dataset', self.dataset)

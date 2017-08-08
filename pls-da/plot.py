@@ -34,7 +34,7 @@ def symbol(category=None):
                )
     index = 0
     if category in model.CATEGORIES:
-        index = sorted(list(model.CATEGORIES)).index(category) % len(records)
+        index = sorted(model.CATEGORIES).index(category) % len(records)
     return [dict(zip(('hex', 'marker'), rec)) for rec in records][index]
 
 

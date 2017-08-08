@@ -20,6 +20,12 @@ def check_python_version():
         return True
 
 
+def get_unique_list(seq):
+    """Return a list with duplicates removed, preserving order."""
+    seen = set()
+    return [x for x in seq if x not in seen and not seen.add(x)]
+
+
 class CLI(object):
 
     _args = None
