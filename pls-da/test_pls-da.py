@@ -89,68 +89,68 @@ class test_model_module(unittest.TestCase):
     null_3x2 = np.array([[0.0 for c in range(2)] for r in range(3)])
 
     def setUp(self):
-        self.preproc = model.Preprocessing()
+        self.train_set = model.TrainingSet()
 
     def tearDown(self):
-        self.preproc = None
+        self.train_set = None
 
     def test_Preprocessing_init(self):
-        self.assertEqual(len(self.preproc.header), self.preproc.m + 1)
-        self.assertEqual(len(self.preproc.categories), self.preproc.n)
-        self.assertEqual(len(self.preproc.dummy_y), self.preproc.n)
-        self.assertEqual(len(self.preproc.dummy_y[0]),
-                         len(set(self.preproc.categories)))
-        self.assertFalse(self.preproc.centered)
-        self.assertFalse(self.preproc.normalized)
-        self.assertFalse(self.preproc.autoscaled)
+        self.assertEqual(len(self.train_set.header), self.train_set.m + 1)
+        self.assertEqual(len(self.train_set.categories), self.train_set.n)
+        self.assertEqual(len(self.train_set.y), self.train_set.n)
+        self.assertEqual(len(self.train_set.y[0]),
+                         len(set(self.train_set.categories)))
+        self.assertFalse(self.train_set.centered)
+        self.assertFalse(self.train_set.normalized)
+        self.assertFalse(self.train_set.autoscaled)
 
     def test_Preprocessing_center(self):
-        self.preproc.dataset = self.matrix_3x3.copy()
-        self.preproc.dummy_y = self.matrix_3x2.copy()
+        self.train_set.x = self.matrix_3x3.copy()
+        self.train_set.y = self.matrix_3x2.copy()
 
-        self.preproc.center()
+        self.train_set.center()
 
-        self.assertTrue(self.preproc.centered)
-        self.assertFalse(self.preproc.normalized)
-        self.assertFalse(self.preproc.autoscaled)
-        np.testing.assert_allclose(self.preproc.dataset, self.null_3x3,
+        self.assertTrue(self.train_set.centered)
+        self.assertFalse(self.train_set.normalized)
+        self.assertFalse(self.train_set.autoscaled)
+        np.testing.assert_allclose(self.train_set.x, self.null_3x3,
                                    atol=absolute_tolerance)
-        np.testing.assert_allclose(self.preproc.dummy_y, self.null_3x2,
+        np.testing.assert_allclose(self.train_set.y, self.null_3x2,
                                    atol=absolute_tolerance)
 
     def test_Preprocessing_normalize(self):
-        self.preproc.dataset = self.matrix_A.copy()
-        self.preproc.dummy_y = self.matrix_A.copy()
+        self.train_set.x = self.matrix_A.copy()
+        self.train_set.y = self.matrix_A.copy()
 
-        self.preproc.normalize()
+        self.train_set.normalize()
 
-        self.assertFalse(self.preproc.centered)
-        self.assertTrue(self.preproc.normalized)
-        self.assertFalse(self.preproc.autoscaled)
-        np.testing.assert_allclose(self.preproc.dataset, self.normalized_A)
-        np.testing.assert_allclose(self.preproc.dummy_y, self.normalized_A)
+        self.assertFalse(self.train_set.centered)
+        self.assertTrue(self.train_set.normalized)
+        self.assertFalse(self.train_set.autoscaled)
+        np.testing.assert_allclose(self.train_set.x, self.normalized_A)
+        np.testing.assert_allclose(self.train_set.y, self.normalized_A)
 
     def test_Preprocess_autoscale(self):
-        dataset_copy = self.preproc.dataset.copy()
-        dummy_y_copy = self.preproc.dummy_y.copy()
+        dataset_copy = self.train_set.x.copy()
+        dummy_y_copy = self.train_set.y.copy()
 
-        self.preproc.center()
-        self.preproc.normalize()
+        self.train_set.center()
+        self.train_set.normalize()
 
-        dataset_autoscaled = self.preproc.dataset
-        dummy_y_autoscaled = self.preproc.dummy_y
-        self.assertTrue(self.preproc.autoscaled)
+        dataset_autoscaled = self.train_set.x
+        dummy_y_autoscaled = self.train_set.y
+        self.assertTrue(self.train_set.autoscaled)
 
-        self.preproc.dataset = dataset_copy
-        self.preproc.dummy_y = dummy_y_copy
-        self.preproc._centered = False
-        self.preproc._normalized = False
+        self.train_set.x = dataset_copy
+        self.train_set.y = dummy_y_copy
+        self.train_set._centered = False
+        self.train_set._normalized = False
 
-        self.preproc.autoscale()
+        self.train_set.autoscale()
 
-        self.assertTrue(self.preproc.autoscaled)
-        np.testing.assert_allclose(self.preproc.dataset, dataset_autoscaled)
-        np.testing.assert_allclose(self.preproc.dummy_y, dummy_y_autoscaled)
+        self.assertTrue(self.train_set.autoscaled)
+        np.testing.assert_allclose(self.train_set.x, dataset_autoscaled)
+        np.testing.assert_allclose(self.train_set.y, dummy_y_autoscaled)
 
 
 class test_eigen_module(unittest.TestCase):
@@ -163,16 +163,16 @@ class test_eigen_module(unittest.TestCase):
                            [0.5 + 1e-8, 0.5 - 1e-8]])
 
     def setUp(self):
-        self.preproc = model.Preprocessing()
-        self.preproc.dataset = self.matrix_3x3.copy()
-        self.preproc.dummy_y = self.matrix_3x2.copy()
+        self.train_set = model.TrainingSet()
+        self.train_set.x = self.matrix_3x3.copy()
+        self.train_set.y = self.matrix_3x2.copy()
 
-        cov_x = np.dot(self.preproc.dataset.T,
-                       self.preproc.dataset) / (self.preproc.n - 1)
-        cov_y = np.dot(self.preproc.dummy_y.T,
-                       self.preproc.dummy_y) / (self.preproc.n - 1)
+        cov_x = np.dot(self.train_set.x.T,
+                       self.train_set.x) / (self.train_set.n - 1)
+        cov_y = np.dot(self.train_set.y.T,
+                       self.train_set.y) / (self.train_set.n - 1)
 
-        self.nipals = model.nipals(self.preproc.dataset, self.preproc.dummy_y)
+        self.nipals = model.nipals(self.train_set.x, self.train_set.y)
         self.wx, vx = scipy.linalg.eig(cov_x)
         self.wy, vy = scipy.linalg.eig(cov_y)
         self.wx = np.real(self.wx)
@@ -183,7 +183,7 @@ class test_eigen_module(unittest.TestCase):
         self.y_variance = 100 * self.wy / np.sum(self.wy)
 
     def tearDown(self):
-        self.preproc = None
+        self.train_set = None
         self.nipals = None
 
     def test_nipals_eigenvectors_x_eigen(self):
@@ -209,17 +209,17 @@ class nipals_abstract(object):
 
     def setUp(self):
         j = 2
-        self.preproc = model.Preprocessing()
+        self.train_set = model.TrainingSet()
 
         X = np.array([[1, 1.9], [1.9, 1], [3.8, 4.2], [4, 3.6], [3.6, 4.4]])
         Y = np.array([[1, 0], [1, 0], [0, 1], [0, 1], [0, 1]])
-        self.preproc.dataset = X.copy()
-        self.preproc.dummy_y = Y.copy()
+        self.train_set.x = X.copy()
+        self.train_set.y = Y.copy()
 
-        self.preproc.autoscale()
+        self.train_set.autoscale()
         # autoscale also matrices for sklearn
-        X = self.preproc.dataset.copy()
-        Y = self.preproc.dummy_y.copy()
+        X = self.train_set.x.copy()
+        Y = self.train_set.y.copy()
         self.nipals = model.nipals(X, Y)
 
         self.sklearn_pls = sklCD.PLSRegression(n_components=j, scale=True,
@@ -240,7 +240,7 @@ class nipals_abstract(object):
         IO.Log.debug('sklearn y weights', self.sklearn_pls.y_weights_)
 
     def tearDown(self):
-        self.preproc = None
+        self.train_set = None
         self.nipals = None
         self.sklearn_pls = None
 
@@ -287,12 +287,12 @@ class nipals_abstract(object):
                                    atol=1)
 
     def test_x_component(self):
-        np.testing.assert_allclose(self.preproc.dataset,
+        np.testing.assert_allclose(self.train_set.x,
                                    np.dot(self.nipals.T, self.nipals.P.T),
                                    err_msg="X != TP'", atol=absolute_tolerance)
 
     def test_y_component(self):
-        np.testing.assert_allclose(self.preproc.dummy_y,
+        np.testing.assert_allclose(self.train_set.y,
                                    np.dot(self.nipals.U, self.nipals.Q.T),
                                    err_msg="Y != UQ'", atol=absolute_tolerance)
 
@@ -343,7 +343,7 @@ class nipals_abstract(object):
                                                    atol=absolute_tolerance)
 
     def test_coef(self):
-        np.testing.assert_allclose(self.preproc.dummy_y,
+        np.testing.assert_allclose(self.train_set.y,
                                    self.nipals.Y_modeled_dummy,
                                    atol=absolute_tolerance)
 
@@ -381,9 +381,9 @@ class test_plot_module(unittest.TestCase):
     y = [0, 3, -1, 3, 10]
 
     def setUp(self):
-        preproc = model.Preprocessing()
-        plot.update_global_preproc(preproc)
-        model_nipals = model.nipals(preproc.dataset, preproc.dummy_y)
+        train_set = model.TrainingSet()
+        plot.update_global_train_set(train_set)
+        model_nipals = model.nipals(train_set.x, train_set.y)
         plot.update_global_model(model_nipals)
 
     def test_symbol(self):

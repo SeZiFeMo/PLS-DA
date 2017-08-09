@@ -25,21 +25,21 @@ if __name__ != '__main__':
 
 utility.check_python_version()
 
-preproc = model.Preprocessing()
-preproc.autoscale()
-plot.update_global_preproc(preproc)
+train_set = model.TrainingSet()
+train_set.autoscale()
+plot.update_global_train_set(train_set)
 
-nipals_model = model.nipals(preproc.dataset, preproc.dummy_y)
+nipals_model = model.nipals(train_set.x, train_set.y)
 plot.update_global_model(nipals_model)
-test_set = np.arange(10 * nipals_model.m).reshape(10, nipals_model.m)
-test_preproc = model.Preprocessing(input_file='datasets/olive_test.csv')
-test_x, test_y = preproc.preprocess_test(test_preproc.dataset,
-                                         test_preproc.dummy_y)
+# train_set = np.arange(10 * nipals_model.m).reshape(10, nipals_model.m)
+test_preproc = model.TrainingSet(input_file='datasets/olive_test.csv')
+test_x, test_y = train_set.preprocess_test(test_preproc.x,
+                                         test_preproc.y)
 y_pred = nipals_model.predict(test_x)
 pred = model.Statistics(test_y, y_pred)
 plot.update_global_statistics(pred)
 
-results = model.cross_validation(preproc, 4, 6)
+results = model.cross_validation(train_set, 4, 6)
 # for res in results:
 #    for stat_id in res:
 #        print(res[stat_id].rss)

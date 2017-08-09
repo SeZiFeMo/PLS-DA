@@ -538,7 +538,7 @@ class UserInterface(object):
             return
 
         try:
-            preproc = model.Preprocessing(input_file)
+            train_set = model.TrainingSet(input_file)
         except Exception as e:
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
@@ -556,21 +556,21 @@ class UserInterface(object):
         for i, (method, name) in enumerate(choices):
             if ok and index == i:
                 IO.Log.debug('OK (chosen preprocessing: {})'.format(name))
-                getattr(preproc, method)()
+                getattr(train_set, method)()
                 break
         else:
             IO.Log.debug('CANCEL (not chosen any preprocessing)')
 
         try:
-            plsda_model = model.nipals(preproc.dataset, preproc.dummy_y)
+            plsda_model = model.nipals(train_set.x, train_set.y)
         except Exception as e:
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
             return
 
-        self.preproc, self.plsda_model = preproc, plsda_model
+        self.train_set, self.plsda_model = train_set, plsda_model
 
-        plot.update_global_preproc(self.preproc)
+        plot.update_global_train_set(self.train_set)
         plot.update_global_model(self.plsda_model)
 
         IO.Log.debug('Model created correctly')

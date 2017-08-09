@@ -8,9 +8,9 @@ import IO
 import utility
 
 
+CATEGORIES = None
 
-
-class Preprocessing(object):
+class TrainingSet(object):
     """Class to preprocess csv input data."""
 
     def __init__(self, input_file=None):
@@ -18,8 +18,8 @@ class Preprocessing(object):
 
            self.header      list of samples' properties (text)
            self.categories  list of samples' labels (text)
-           self.dataset     list of samples' values (float)
-           self.dummy_y     list of samples' labels (1 or 0)
+           self.x           list of samples' values (float)
+           self.y           list of samples' labels (1 or 0)
 
            self.axis        axis to compute std and mean
         """
@@ -32,17 +32,17 @@ class Preprocessing(object):
         global CATEGORIES
         CATEGORIES = utility.get_unique_list(self.categories)
 
-        self.dataset = np.array([np.array(row[1:]) for row in body])
-        IO.Log.debug('Loaded dataset', self.dataset)
+        self.x = np.array([np.array(row[1:]) for row in body])
+        IO.Log.debug('Loaded dataset', self.x)
 
-        self.dummy_y = np.array([[1.0 if c == cat else 0.0
-                                  for c in self.categories]
-                                 for cat in CATEGORIES]).T
-        IO.Log.debug('Dummy y', self.dummy_y)
+        self.y = np.array([[1.0 if c == cat else 0.0
+                            for c in self.categories]
+                           for cat in CATEGORIES]).T
+        IO.Log.debug('Dummy y', self.y)
 
-        self.mean_dataset = np.zeros(self.m)
+        self.mean_x = np.zeros(self.m)
         self.mean_y = np.zeros(self.p)
-        self.sigma_dataset = np.ones(self.m)
+        self.sigma_x = np.ones(self.m)
         self.sigma_y = np.ones(self.p)
         self.axis = 0
         self._centered = False
@@ -50,18 +50,18 @@ class Preprocessing(object):
 
     @property
     def n(self):
-        """Return number of rows of dataset (or of dummy y)."""
-        return self.dataset.shape[0]
+        """Return number of rows of x (or of dummy y)."""
+        return self.x.shape[0]
 
     @property
     def m(self):
-        """Return number of columns of dataset."""
-        return self.dataset.shape[1]
+        """Return number of columns of x."""
+        return self.x.shape[1]
 
     @property
     def p(self):
         """Return number of columns in dummy y."""
-        return self.dummy_y.shape[1]
+        return self.y.shape[1]
 
     @property
     def centered(self):
@@ -89,13 +89,13 @@ class Preprocessing(object):
             IO.Log.warning('Already centered dataset')
             return
 
-        self.mean_dataset = self.dataset.mean(axis=self.axis)
-        self.dataset = self.dataset - self.mean_dataset
+        self.mean_x = self.x.mean(axis=self.axis)
+        self.x = self.x - self.mean_x
         if not quiet:
-            IO.Log.debug('Centered dataset', self.dataset)
+            IO.Log.debug('Centered x', self.x)
 
-        self.mean_y = self.dummy_y.mean(axis=self.axis)
-        self.dummy_y = self.dummy_y - self.mean_y
+        self.mean_y = self.y.mean(axis=self.axis)
+        self.y = self.y - self.mean_y
         self._centered = True
 
     def normalize(self, quiet=False):
@@ -104,24 +104,24 @@ class Preprocessing(object):
             IO.Log.warning('Already normalized dataset')
             return
 
-        self.sigma_dataset = self.dataset.std(axis=self.axis)
-        self.dataset = self.dataset / self.sigma_dataset
+        self.sigma_x = self.x.std(axis=self.axis)
+        self.x = self.x / self.sigma_x
         if not quiet:
-            IO.Log.debug('Normalized dataset', self.dataset)
+            IO.Log.debug('Normalized dataset', self.x)
 
-        self.sigma_y = self.dummy_y.std(axis=self.axis)
-        self.dummy_y = self.dummy_y / self.sigma_y
+        self.sigma_y = self.y.std(axis=self.axis)
+        self.y = self.y / self.sigma_y
         self._normalized = True
 
     def autoscale(self):
-        """Center and normalize the dataset and the dummy y."""
+        """Center and normalize the x and the dummy y."""
         if self.normalized:
             IO.Log.warning('Already autoscaled dataset')
             return
 
         self.center(quiet=True)
         self.normalize(quiet=True)
-        IO.Log.debug('Autoscaled dataset', self.dataset)
+        IO.Log.debug('Autoscaled dataset', self.x)
 
     def empty_method(self):
         """Do not remove this method, it is needed by the GUI."""
@@ -132,7 +132,7 @@ class Preprocessing(object):
         x = test_x.copy()
         y = test_y.copy()
 
-        x = (x - self.mean_dataset) / self.sigma_dataset
+        x = (x - self.mean_x) / self.sigma_x
         y = (y - self.mean_y) / self.sigma_y
 
         return (x, y)
@@ -173,7 +173,7 @@ class Model(object):
 
     @nr_lv.setter
     def nr_lv(self, value):
-        assert value <= self.max_lv and value > 0, "Chosen latent variable" \
+        assert 0 < value <= self.max_lv, "Chosen latent variable" \
                                     " number {} out of bounds [0, {}]".format(
                                             value, self.max_lv)
         self._nr_lv = value
@@ -219,9 +219,9 @@ class Model(object):
 
     @property
     def Y_modeled_dummy(self):
-        Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
+        dummy = [[1 if elem == max(row) else -1 for elem in row]
                    for row in self.Y_modeled]
-        return np.array(Y_dummy)
+        return np.array(dummy)
 
     @property
     def E_x(self):
@@ -247,9 +247,9 @@ class Model(object):
     def q_residuals_x(self):
         return np.diag(self.E_x.dot(self.E_x.T))
 
-    def predict(self, test_set):
+    def predict(self, train_set):
         """Return Y predicted for the given test set over this model."""
-        return np.dot(test_set, self.B)
+        return np.dot(train_set, self.B)
 
 
 class Statistics(object):
@@ -379,8 +379,8 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
     return model
 
 
-def cross_validation(preproc, split, max_lv):
-    """Perform a cross-validation procedure on a Preprocessing dataset.
+def cross_validation(train_set, split, max_lv):
+    """Perform a cross-validation procedure on a TrainingSet dataset.
 
     Return a list of dictionaries of Statistics object. Every dictionary
     corresponds to a split, while every element in a dictionary corresponds
@@ -388,7 +388,7 @@ def cross_validation(preproc, split, max_lv):
     element is the lv used for that prediction.
     """
     results = []
-    for train, test in venetian_blind_split(preproc, split):
+    for train, test in venetian_blind_split(train_set, split):
         model = nipals(*train)
         res = dict()
         for lv in range(1, max_lv):
@@ -399,14 +399,14 @@ def cross_validation(preproc, split, max_lv):
     return results
 
 
-def venetian_blind_split(preproc, split):
+def venetian_blind_split(train_set, split):
     """Split the dataset in train and test using the venetian blind algo."""
     for offset in range(split, 0, -1):  # order result logically
-        mask = np.arange(offset, preproc.n + offset) % split == 0
-        test_x = preproc.dataset[mask]
-        train_x = preproc.dataset[~mask]
-        test_y = preproc.dummy_y[mask]
-        train_y = preproc.dummy_y[~mask]
+        mask = np.arange(offset, train_set.n + offset) % split == 0
+        test_x = train_set.x[mask]
+        train_x = train_set.x[~mask]
+        test_y = train_set.y[mask]
+        train_y = train_set.y[~mask]
 
         yield ((train_x, train_y), (test_x, test_y))
 

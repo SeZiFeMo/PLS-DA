@@ -12,6 +12,8 @@ import IO
 import model
 
 
+MODEL = None
+TRAIN_SET = None
 
 
 @functools.lru_cache(maxsize=32, typed=False)
@@ -48,11 +50,11 @@ def update_global_model(value):
                      '({}).'.format(type(value)))
 
 
-def update_global_preproc(value):
-    """Set PREPROC to value."""
-    if isinstance(value, model.Preprocessing):
-        global PREPROC
-        PREPROC = value
+def update_global_train_set(value):
+    """Set TRAIN_SET to value."""
+    if isinstance(value, model.TrainingSet):
+        global TRAIN_SET
+        TRAIN_SET = value
     else:
         IO.Log.error('Wrong type in update_global_model() '
                      '({}).'.format(type(value)))
@@ -141,7 +143,7 @@ def inner_relations(ax, num):
 
     for i in range(MODEL.T.shape[0]):
         scatter_wrapper(ax, MODEL.T[i, num], MODEL.U[i, num],
-                        PREPROC.categories[i])
+                        TRAIN_SET.categories[i])
 
     ax.set_title('Inner relation for LV {}'.format(num))
     ax.set_xlabel('t{}'.format(num))
@@ -193,7 +195,7 @@ def scores(ax, pc_a, pc_b, x=False, y=False, normalize=False):
         scores_b = scores_b / max(abs(scores_b))
 
     for n in range(scores_matrix.shape[0]):
-        scatter_wrapper(ax, scores_a[n], scores_b[n], PREPROC.categories[n])
+        scatter_wrapper(ax, scores_a[n], scores_b[n], TRAIN_SET.categories[n])
 
     ax.set_title('Scores plot for {}'.format('x' if x else 'y'))
     ax.set_xlabel('LV{}'.format(pc_a + 1))
@@ -231,7 +233,7 @@ def loadings(ax, pc_a, pc_b, x=False, y=False):
     scatter_wrapper(ax, loadings_matrix[:, pc_a], loadings_matrix[:, pc_b])
 
     for n in range(loadings_matrix.shape[0]):
-        ax.annotate(PREPROC.header[n + 1],
+        ax.annotate(TRAIN_SET.header[n + 1],
                     horizontalalignment='center',
                     textcoords='offset points',
                     verticalalignment='bottom',
@@ -254,7 +256,7 @@ def calculated_y(ax):
     for j in range(MODEL.p):
         for i in range(MODEL.n):
             scatter_wrapper(ax, i, MODEL.Y_modeled[i, j],
-                            PREPROC.categories[i])
+                            TRAIN_SET.categories[i])
 
 
 def predicted_y(ax):
@@ -271,7 +273,7 @@ def t_square_q(ax):
     t_square = MODEL.t_square
     q_res = MODEL.q_residuals_x
     for i in range(MODEL.n):
-        scatter_wrapper(ax, t_square[i], q_res[i], PREPROC.categories[i])
+        scatter_wrapper(ax, t_square[i], q_res[i], TRAIN_SET.categories[i])
 
     t_square_confidence_level = sp.stats.norm.interval(0.95, np.mean(t_square),
                                                        np.std(t_square))[1]
@@ -295,7 +297,7 @@ def y_residuals_leverage(ax):
         for i in range(MODEL.n):
             leverage[i] = MODEL.U[i].dot(temp).dot(MODEL.U[i].T)
             scatter_wrapper(ax, leverage[i], MODEL.E_y[i, j],
-                            PREPROC.categories[i])
+                            TRAIN_SET.categories[i])
 
     ax.set_title('Leverage')
     ax.set_xlabel('leverage')
@@ -310,7 +312,7 @@ def leverage(ax):
     for i in range(MODEL.n):
         leverage[i] = MODEL.U[i].dot(temp).dot(MODEL.U[i].T)
         scatter_wrapper(ax, i, leverage[i],
-                        PREPROC.categories[i])
+                        TRAIN_SET.categories[i])
 
     ax.set_title('Leverage')
     ax.set_xlabel('sample')
@@ -320,7 +322,7 @@ def leverage(ax):
 def regression_coefficients(ax):
     """Plot the regression coefficients."""
     for i in range(MODEL.b.shape[0]):
-        scatter_wrapper(ax, i, MODEL.b[i], PREPROC.categories[i])
+        scatter_wrapper(ax, i, MODEL.b[i], TRAIN_SET.categories[i])
 
     ax.set_title('Inner relation (variable b)')
     ax.set_xlabel('LV number')
@@ -342,7 +344,7 @@ def weights(ax, lv_a, lv_b):
     scatter_wrapper(ax, MODEL.W[:, lv_a], MODEL.W[:, lv_b])
 
     for n in range(MODEL.W.shape[0]):
-        ax.annotate(PREPROC.header[n + 1],
+        ax.annotate(TRAIN_SET.header[n + 1],
                     horizontalalignment='center',
                     textcoords='offset points',
                     verticalalignment='bottom',
@@ -371,8 +373,8 @@ def weights_line(ax, lv):
 def data(ax):
     """Plot the dataset distinguishing with colors the categories."""
     for i in range(MODEL.n):
-        line_wrapper(ax, range(MODEL.m), PREPROC.dataset[i],
-                     PREPROC.categories[i])
+        line_wrapper(ax, range(MODEL.m), TRAIN_SET.x[i],
+                     TRAIN_SET.categories[i])
 
     ax.set_title('Data by category')
     ax.set_xlabel('sample')
@@ -390,7 +392,7 @@ def sklearn_inner_relations(ax, num):
         raise ValueError('In sklearn_inner_relations() num of latent variables'
                          ' is out of bounds')
 
-    X, Y = PREPROC.dataset.copy(), PREPROC.dummy_y.copy()
+    X, Y = TRAIN_SET.x.copy(), TRAIN_SET.y.copy()
     sklearn_pls = sklCD.PLSRegression(n_components=min(MODEL.n, MODEL.m),
                                       scale=True, max_iter=1e4, tol=1e-6,
                                       copy=True)
@@ -399,7 +401,7 @@ def sklearn_inner_relations(ax, num):
     for i in range(MODEL.T.shape[0]):
         scatter_wrapper(ax, sklearn_pls.x_scores_[i, num],
                         sklearn_pls.y_scores_[i, num],
-                        PREPROC.categories[i])
+                        TRAIN_SET.categories[i])
 
     ax.set_title('Inner relation for LV {} (sklearn)'.format(num))
     ax.set_xlabel('t{}'.format(num))
