@@ -31,12 +31,10 @@ plot.update_global_train_set(train_set)
 
 nipals_model = model.nipals(train_set.x, train_set.y)
 plot.update_global_model(nipals_model)
-# train_set = np.arange(10 * nipals_model.m).reshape(10, nipals_model.m)
-test_preproc = model.TrainingSet(input_file='datasets/olive_test.csv')
-test_x, test_y = train_set.preprocess_test(test_preproc.x,
-                                         test_preproc.y)
-y_pred = nipals_model.predict(test_x)
-pred = model.Statistics(test_y, y_pred)
+test_set = model.TestSet('datasets/olive_test.csv', train_set)
+
+y_pred = nipals_model.predict(test_set.x)
+pred = model.Statistics(test_set.y, y_pred)
 plot.update_global_statistics(pred)
 
 results = model.cross_validation(train_set, 4, 6)

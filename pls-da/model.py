@@ -10,9 +10,9 @@ import utility
 
 CATEGORIES = None
 
-class TrainingSet(object):
-    """Class to preprocess csv input data."""
 
+class Dataset(object):
+    """Represent a chemometrics dataset."""
     def __init__(self, input_file=None):
         """Load and parse csv input file.
 
@@ -83,6 +83,10 @@ class TrainingSet(object):
         """Return whether dataset has been preprocessed"""
         return not (self._centered or self._normalized)
 
+
+class TrainingSet(Dataset):
+    """Class to preprocess csv input data."""
+
     def center(self, quiet=False):
         """Center the dataset and the dummy y to their mean."""
         if self.centered:
@@ -127,15 +131,27 @@ class TrainingSet(object):
         """Do not remove this method, it is needed by the GUI."""
         pass
 
-    def preprocess_test(self, test_x, test_y):
-        """Apply the preprocessing of the train set to the given test set."""
-        x = test_x.copy()
-        y = test_y.copy()
 
-        x = (x - self.mean_x) / self.sigma_x
-        y = (y - self.mean_y) / self.sigma_y
+class TestSet(Dataset):
+    """Model a test set."""
+    def __init__(self, filename, train_set):
+        super().__init__(filename)
 
-        return (x, y)
+        # apply the same transformation used on the test set
+        assert isinstance(train_set, TrainingSet), 'argument train_set' \
+                          'must be of type TrainingSet, is instead of ' \
+                          'type {}'.format(type(train_set))
+
+        self.mean_x = train_set.mean_x
+        self.sigma_x = train_set.sigma_x
+        self.mean_y = train_set.mean_y
+        self.sigma_y = train_set.sigma_y
+        self.x -= self.mean_x
+        self.x /= self.sigma_x
+        self.y -= self.mean_y
+        self.y /= self.sigma_y
+        self._centered = train_set.centered
+        self._normalized = train_set.normalized
 
 
 class Model(object):
@@ -161,9 +177,9 @@ class Model(object):
         self._U = np.zeros((self.n, max_lv))
         self._Q = np.zeros((self.p, max_lv))
 
-        self._b = np.zeros((max_lv))
-        self._x_eigenvalues = np.zeros((max_lv))
-        self._y_eigenvalues = np.zeros((max_lv))
+        self._b = np.zeros(max_lv)
+        self._x_eigenvalues = np.zeros(max_lv)
+        self._y_eigenvalues = np.zeros(max_lv)
         self._Y_modeled = np.zeros((self.n, self.p))
         self._Y_modeled_dummy = np.zeros((self.n, self.p))
 
