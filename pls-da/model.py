@@ -262,6 +262,16 @@ class Model(object):
             IO.Log.warning('Q residuals with max number of components are 0')
         return np.diag(self.E_x.dot(self.E_x.T))
 
+    @property
+    def leverage(self):
+        temp = np.linalg.inv(np.dot(self.U.T, self.U))
+        leverage = np.empty(self.n)
+
+        for j in range(self.p):
+            for i in range(self.n):
+                leverage[i] = self.U[i].dot(temp).dot(self.U[i].T)
+        return leverage
+
     def predict(self, train_set):
         """Return Y predicted for the given test set over this model."""
         return np.dot(train_set, self.B)

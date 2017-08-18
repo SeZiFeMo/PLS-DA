@@ -330,13 +330,9 @@ def t_square_q(ax):
 
 def y_residuals_leverage(ax):
     """Plot Y residuals over the leverage."""
-    temp = np.linalg.inv(np.dot(MODEL.U.T, MODEL.U))
-    leverage = np.empty(MODEL.n)
-
     for j in range(MODEL.p):
         for i in range(MODEL.n):
-            leverage[i] = MODEL.U[i].dot(temp).dot(MODEL.U[i].T)
-            scatter_wrapper(ax, leverage[i], MODEL.E_y[i, j],
+            scatter_wrapper(ax, MODEL.leverage[i], MODEL.E_y[i, j],
                             TRAIN_SET.categorical_y[i])
 
     ax.set_title('Leverage')
@@ -346,12 +342,8 @@ def y_residuals_leverage(ax):
 
 def leverage(ax):
     """Plot leverage over the sample."""
-    temp = np.linalg.inv(np.dot(MODEL.U.T, MODEL.U))
-    leverage = np.empty(MODEL.n)
-
     for i in range(MODEL.n):
-        leverage[i] = MODEL.U[i].dot(temp).dot(MODEL.U[i].T)
-        scatter_wrapper(ax, i, leverage[i],
+        scatter_wrapper(ax, i, MODEL.leverage[i],
                         TRAIN_SET.categorical_y[i])
 
     ax.set_title('Leverage')
