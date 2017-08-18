@@ -32,6 +32,7 @@ plot.update_global_train_set(train_set)
 nipals_model = model.nipals(train_set.x, train_set.y)
 plot.update_global_model(nipals_model)
 test_set = model.TestSet('datasets/olive_test.csv', train_set)
+plot.update_global_test_set(test_set)
 
 y_pred = nipals_model.predict(test_set.x)
 pred = model.Statistics(test_set.y, y_pred)
@@ -55,4 +56,6 @@ plot.weights_line(fig.add_subplot(2, 2, 2), lv=0)
 plot.weights(fig.add_subplot(2, 2, 3), lv_a=1, lv_b=2)
 plot.loadings(fig.add_subplot(2, 2, 4), pc_a=0, pc_b=1, x=True)
 plt.show()
+
+print(test_set.categories)
 

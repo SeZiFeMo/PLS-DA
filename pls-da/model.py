@@ -8,16 +8,13 @@ import IO
 import utility
 
 
-CATEGORIES = None
-
-
 class Dataset(object):
     """Represent a chemometrics dataset."""
     def __init__(self, input_file=None):
         """Load and parse csv input file.
 
            self.header      list of samples' properties (text)
-           self.categories  list of samples' labels (text)
+           self.categorical_y  list of samples' labels (text)
            self.x           list of samples' values (float)
            self.y           list of samples' labels (1 or 0)
 
@@ -28,16 +25,15 @@ class Dataset(object):
         self.header, body = IO.CSV.parse(input_file)
         IO.Log.debug('Successfully parsed {} input file.'.format(input_file))
 
-        self.categories = [row[0] for row in body]
-        global CATEGORIES
-        CATEGORIES = utility.get_unique_list(self.categories)
+        self.categorical_y = [row[0] for row in body]
+        self.categories = utility.get_unique_list(self.categorical_y)
 
         self.x = np.array([np.array(row[1:]) for row in body])
         IO.Log.debug('Loaded dataset', self.x)
 
         self.y = np.array([[1.0 if c == cat else 0.0
-                            for c in self.categories]
-                           for cat in CATEGORIES]).T
+                            for c in self.categorical_y]
+                           for cat in self.categories]).T
         IO.Log.debug('Dummy y', self.y)
 
         self.mean_x = np.zeros(self.m)
@@ -236,7 +232,7 @@ class Model(object):
     @property
     def Y_modeled_dummy(self):
         dummy = [[1 if elem == max(row) else -1 for elem in row]
-                   for row in self.Y_modeled]
+                 for row in self.Y_modeled]
         return np.array(dummy)
 
     @property

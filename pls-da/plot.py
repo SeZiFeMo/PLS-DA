@@ -14,6 +14,8 @@ import model
 
 MODEL = None
 TRAIN_SET = None
+TEST_SET = None
+STATS = None
 
 
 @functools.lru_cache(maxsize=32, typed=False)
@@ -35,8 +37,8 @@ def symbol(category=None):
                ('#000000', 'p'),  #           pentagon
                )
     index = 0
-    if category in model.CATEGORIES:
-        index = sorted(model.CATEGORIES).index(category) % len(records)
+    if category in TRAIN_SET.categories:
+        index = sorted(TRAIN_SET.categories).index(category) % len(records)
     return [dict(zip(('hex', 'marker'), rec)) for rec in records][index]
 
 
@@ -55,6 +57,16 @@ def update_global_train_set(value):
     if isinstance(value, model.TrainingSet):
         global TRAIN_SET
         TRAIN_SET = value
+    else:
+        IO.Log.error('Wrong type in update_global_model() '
+                     '({}).'.format(type(value)))
+
+
+def update_global_test_set(value):
+    """Set TEST_SET to value."""
+    if isinstance(value, model.TestSet):
+        global TEST_SET
+        TEST_SET = value
     else:
         IO.Log.error('Wrong type in update_global_model() '
                      '({}).'.format(type(value)))
@@ -143,7 +155,7 @@ def inner_relations(ax, num):
 
     for i in range(MODEL.T.shape[0]):
         scatter_wrapper(ax, MODEL.T[i, num], MODEL.U[i, num],
-                        TRAIN_SET.categories[i])
+                        TRAIN_SET.categorical_y[i])
 
     ax.set_title('Inner relation for LV {}'.format(num))
     ax.set_xlabel('t{}'.format(num))
@@ -195,7 +207,8 @@ def scores(ax, pc_a, pc_b, x=False, y=False, normalize=False):
         scores_b = scores_b / max(abs(scores_b))
 
     for n in range(scores_matrix.shape[0]):
-        scatter_wrapper(ax, scores_a[n], scores_b[n], TRAIN_SET.categories[n])
+        scatter_wrapper(ax, scores_a[n], scores_b[n],
+                        TRAIN_SET.categorical_y[n])
 
     ax.set_title('Scores plot for {}'.format('x' if x else 'y'))
     ax.set_xlabel('LV{}'.format(pc_a + 1))
@@ -256,7 +269,7 @@ def calculated_y(ax):
     for j in range(MODEL.p):
         for i in range(MODEL.n):
             scatter_wrapper(ax, i, MODEL.Y_modeled[i, j],
-                            TRAIN_SET.categories[i])
+                            TRAIN_SET.categorical_y[i])
 
 
 def predicted_y(ax):
@@ -273,7 +286,7 @@ def t_square_q(ax):
     t_square = MODEL.t_square
     q_res = MODEL.q_residuals_x
     for i in range(MODEL.n):
-        scatter_wrapper(ax, t_square[i], q_res[i], TRAIN_SET.categories[i])
+        scatter_wrapper(ax, t_square[i], q_res[i], TRAIN_SET.categorical_y[i])
 
     t_square_confidence_level = sp.stats.norm.interval(0.95, np.mean(t_square),
                                                        np.std(t_square))[1]
@@ -297,7 +310,7 @@ def y_residuals_leverage(ax):
         for i in range(MODEL.n):
             leverage[i] = MODEL.U[i].dot(temp).dot(MODEL.U[i].T)
             scatter_wrapper(ax, leverage[i], MODEL.E_y[i, j],
-                            TRAIN_SET.categories[i])
+                            TRAIN_SET.categorical_y[i])
 
     ax.set_title('Leverage')
     ax.set_xlabel('leverage')
@@ -312,7 +325,7 @@ def leverage(ax):
     for i in range(MODEL.n):
         leverage[i] = MODEL.U[i].dot(temp).dot(MODEL.U[i].T)
         scatter_wrapper(ax, i, leverage[i],
-                        TRAIN_SET.categories[i])
+                        TRAIN_SET.categorical_y[i])
 
     ax.set_title('Leverage')
     ax.set_xlabel('sample')
@@ -322,7 +335,7 @@ def leverage(ax):
 def regression_coefficients(ax):
     """Plot the regression coefficients."""
     for i in range(MODEL.b.shape[0]):
-        scatter_wrapper(ax, i, MODEL.b[i], TRAIN_SET.categories[i])
+        scatter_wrapper(ax, i, MODEL.b[i], TRAIN_SET.categorical_y[i])
 
     ax.set_title('Inner relation (variable b)')
     ax.set_xlabel('LV number')
@@ -374,7 +387,7 @@ def data(ax):
     """Plot the dataset distinguishing with colors the categories."""
     for i in range(MODEL.n):
         line_wrapper(ax, range(MODEL.m), TRAIN_SET.x[i],
-                     TRAIN_SET.categories[i])
+                     TRAIN_SET.categorical_y[i])
 
     ax.set_title('Data by category')
     ax.set_xlabel('sample')
@@ -401,7 +414,7 @@ def sklearn_inner_relations(ax, num):
     for i in range(MODEL.T.shape[0]):
         scatter_wrapper(ax, sklearn_pls.x_scores_[i, num],
                         sklearn_pls.y_scores_[i, num],
-                        TRAIN_SET.categories[i])
+                        TRAIN_SET.categorical_y[i])
 
     ax.set_title('Inner relation for LV {} (sklearn)'.format(num))
     ax.set_xlabel('t{}'.format(num))

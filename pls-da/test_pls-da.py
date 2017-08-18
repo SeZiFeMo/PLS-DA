@@ -96,10 +96,10 @@ class test_model_module(unittest.TestCase):
 
     def test_Preprocessing_init(self):
         self.assertEqual(len(self.train_set.header), self.train_set.m + 1)
-        self.assertEqual(len(self.train_set.categories), self.train_set.n)
+        self.assertEqual(len(self.train_set.categorical_y), self.train_set.n)
         self.assertEqual(len(self.train_set.y), self.train_set.n)
         self.assertEqual(len(self.train_set.y[0]),
-                         len(set(self.train_set.categories)))
+                         len(set(self.train_set.categorical_y)))
         self.assertFalse(self.train_set.centered)
         self.assertFalse(self.train_set.normalized)
         self.assertFalse(self.train_set.autoscaled)
@@ -381,13 +381,13 @@ class test_plot_module(unittest.TestCase):
     y = [0, 3, -1, 3, 10]
 
     def setUp(self):
-        train_set = model.TrainingSet()
-        plot.update_global_train_set(train_set)
-        model_nipals = model.nipals(train_set.x, train_set.y)
+        self.train_set = model.TrainingSet()
+        plot.update_global_train_set(self.train_set)
+        model_nipals = model.nipals(self.train_set.x, self.train_set.y)
         plot.update_global_model(model_nipals)
 
     def test_symbol(self):
-        categories = list(model.CATEGORIES)
+        categories = list(self.train_set.categories)
         categories.append(None)
         categories.append('')
         for cat in categories:
@@ -398,7 +398,7 @@ class test_plot_module(unittest.TestCase):
                 self.assertIsInstance(cat_symbols[key], str)
 
     def test_scatter_wrapper(self):
-        for cat in model.CATEGORIES:
+        for cat in self.train_set.categories:
             self.assertIsNone(plot.scatter_wrapper(plt.gca(), self.x, self.y,
                                                    cat))
             plt.clf()  # clear current figure
