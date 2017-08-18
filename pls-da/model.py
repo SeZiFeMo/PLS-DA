@@ -134,9 +134,10 @@ class TestSet(Dataset):
         super().__init__(filename)
 
         # apply the same transformation used on the test set
-        assert isinstance(train_set, TrainingSet), 'argument train_set' \
-                          'must be of type TrainingSet, is instead of ' \
-                          'type {}'.format(type(train_set))
+        assert isinstance(train_set,
+                          TrainingSet), 'argument train_set must be of type' \
+                                        'TrainingSet, is instead of ' \
+                                        'type {}'.format(type(train_set))
 
         self.mean_x = train_set.mean_x
         self.sigma_x = train_set.sigma_x
@@ -257,6 +258,8 @@ class Model(object):
 
     @property
     def q_residuals_x(self):
+        if self.nr_lv == self.max_lv:
+            IO.Log.warning('Q residuals with max number of components are 0')
         return np.diag(self.E_x.dot(self.E_x.T))
 
     def predict(self, train_set):

@@ -306,7 +306,6 @@ def y_predicted(ax):
 
 def t_square_q(ax):
     """Plot the q statistic over the Hotelling's t^2 with confidence levels."""
-    MODEL.nr_lv = 3
     ax.set_title('T^2 - Q')
     ax.set_xlabel('Hotelling\'s T^2')
     ax.set_ylabel('Q residuals')
