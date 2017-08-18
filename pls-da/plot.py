@@ -351,6 +351,22 @@ def leverage(ax):
     ax.set_ylabel('leverage')
 
 
+def q_over_leverage(ax):
+    """Plot the Q statistics over the leverage."""
+    q_res = MODEL.q_residuals_x
+    for i in range(MODEL.n):
+        scatter_wrapper(ax, q_res[i], MODEL.leverage[i],
+                        TRAIN_SET.categorical_y[i])
+
+    q_confidence_level = sp.stats.norm.interval(0.95, np.mean(q_res),
+                                                np.std(q_res))[1]
+
+    ax.axvline(q_confidence_level, linestyle='dashed', color='black')
+
+    ax.set_xlabel('Q residuals')
+    ax.set_ylabel('leverage')
+
+
 def regression_coefficients(ax):
     """Plot the regression coefficients."""
     for i in range(MODEL.b.shape[0]):
