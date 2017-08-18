@@ -272,8 +272,36 @@ def calculated_y(ax):
                             TRAIN_SET.categorical_y[i])
 
 
-def predicted_y(ax):
-    raise NotImplementedError
+def y_predicted_y_real(ax):
+    """Plot the y predicted over the y measured."""
+
+    ax.set_xlabel('Y measured')
+    ax.set_ylabel('Y predicted')
+
+    for j in range(MODEL.p):
+        for i in range(MODEL.m):
+            scatter_wrapper(ax, STATS.y_real[i, j], STATS.y_pred[i, j],
+                            TEST_SET.categories[j])
+
+
+def y_predicted(ax):
+    """Plot the y predicted, with color representing the current y."""
+
+    ax.set_xlabel('Sample')
+    ax.set_ylabel('Y predicted')
+
+    for j in range(MODEL.p):
+        scatter_wrapper(ax, range(STATS.y_pred.shape[0]), STATS.y_pred[:, j],
+                        TEST_SET.categories[j])
+        # Add a vertical line at the beginning of each category
+        ax.axvline(TEST_SET.categorical_y.index(TEST_SET.categories[j]),
+                   linestyle='dashed', color='gray')
+
+    ylim = ax.get_ylim()[1]
+    ax.set_xlim(0, ax.get_xlim()[1])
+    for j in range(MODEL.p):
+        ax.text(TEST_SET.categorical_y.index(TEST_SET.categories[j]) + 1,
+                ylim - .25, TEST_SET.categories[j])
 
 
 def t_square_q(ax):
