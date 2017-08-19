@@ -189,6 +189,16 @@ class Model(object):
         assert 0 < value <= self.max_lv, "Chosen latent variable" \
                                     " number {} out of bounds [0, {}]".format(
                                             value, self.max_lv)
+
+        utility.clear_property_cache(self, 'Y_modeled')
+        utility.clear_property_cache(self, 'Y_modeled_dummy')
+        utility.clear_property_cache(self, 'E_x')
+        utility.clear_property_cache(self, 'E_y')
+        utility.clear_property_cache(self, 'B')
+        utility.clear_property_cache(self, 't_square')
+        utility.clear_property_cache(self, 'q_residuals_x')
+        utility.clear_property_cache(self, 'leverage')
+
         self._nr_lv = value
 
     @property
@@ -223,46 +233,46 @@ class Model(object):
     def y_eigenvalues(self):
         return self._y_eigenvalues[:self.nr_lv]
 
-    @property
+    @utility.cached_property
     def Y_modeled(self):
         Y_modeled = self.X.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
                      Y_modeled)
         return Y_modeled
 
-    @property
+    @utility.cached_property
     def Y_modeled_dummy(self):
         dummy = [[1 if elem == max(row) else -1 for elem in row]
                  for row in self.Y_modeled]
         return np.array(dummy)
 
-    @property
+    @utility.cached_property
     def E_x(self):
         return self.X - np.dot(self.T, self.P.T)
 
-    @property
+    @utility.cached_property
     def E_y(self):
         return self.Y - (self.T.dot(np.diag(self.b))).dot(self.Q.T)
 
-    @property
+    @utility.cached_property
     def B(self):
         # Compute regression parameters B
         # tmp = (P'W)^{-1}
         tmp = np.linalg.inv(self.P.T.dot(self.W))
         return ((self.W.dot(tmp)).dot(np.diag(self.b))).dot(self.Q.T)
 
-    @property
+    @utility.cached_property
     def t_square(self):
         lambda_inv = 1 / self.x_eigenvalues
         return np.diag(self.T.dot(np.diag(lambda_inv)).dot(self.T.T))
 
-    @property
+    @utility.cached_property
     def q_residuals_x(self):
         if self.nr_lv == self.max_lv:
             IO.Log.warning('Q residuals with max number of components are 0')
         return np.diag(self.E_x.dot(self.E_x.T))
 
-    @property
+    @utility.cached_property
     def leverage(self):
         temp = np.linalg.inv(np.dot(self.U.T, self.U))
         leverage = np.empty(self.n)
