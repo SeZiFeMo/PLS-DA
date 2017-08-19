@@ -162,46 +162,46 @@ def inner_relations(ax, num):
     ax.set_ylabel('u{}'.format(num))
 
 
-def biplot(ax, pc_a, pc_b, x=False, y=False, normalize=True):
-    """Plot loadings and scores on pc_a, pc_b components for the x or y matrix.
+def biplot(ax, lv_a, lv_b, x=False, y=False, normalize=True):
+    """Plot loadings and scores on lv_a, lv_b components for the x or y matrix.
 
        Setting normalize force axes ends to -1 and 1.
 
        Raise ValueError if x and y does not differ.
-       Raise ValueError if pc_a and pc_b are the same component.
+       Raise ValueError if lv_a and lv_b are the same component.
     """
     if bool(x) == bool(y):
         raise ValueError('In plot.biplot() x, y matrix flags must differ')
-    if pc_a == pc_b:
+    if lv_a == lv_b:
         raise ValueError('Principal components must be different!')
 
-    scores(ax, pc_a, pc_b, x=x, y=y, normalize=normalize)
-    loadings(ax, pc_a, pc_b, x=x, y=y)
+    scores(ax, lv_a, lv_b, x=x, y=y, normalize=normalize)
+    loadings(ax, lv_a, lv_b, x=x, y=y)
 
     ax.set_title('Biplot for {}'.format('x' if x else 'y'))
-    ax.set_xlabel('LV{}'.format(pc_a + 1))
-    ax.set_ylabel('LV{}'.format(pc_b + 1))
+    ax.set_xlabel('LV{}'.format(lv_a + 1))
+    ax.set_ylabel('LV{}'.format(lv_b + 1))
 
 
-def scores(ax, pc_a, pc_b, x=False, y=False, normalize=False):
-    """Plot the scores on the pc_a, pc_b components for the x or y matrix.
+def scores(ax, lv_a, lv_b, x=False, y=False, normalize=False):
+    """Plot the scores on the lv_a, lv_b components for the x or y matrix.
 
        Setting normalize force axes ends to -1 and 1.
        Points of each category have a different color/shape.
 
        Raise ValueError if x and y does not differ.
-       Raise ValueError if pc_a and pc_b are the same component.
+       Raise ValueError if lv_a and lv_b are the same component.
     """
     if bool(x) == bool(y):
         raise ValueError('In plot.scores() x, y matrix flags must differ')
-    if pc_a == pc_b:
+    if lv_a == lv_b:
         raise ValueError('Principal components must be different!')
 
-    pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
+    lv_a, lv_b = min(lv_a, lv_b), max(lv_a, lv_b)
 
     scores_matrix = MODEL.T.copy() if x else MODEL.U.copy()
 
-    scores_a, scores_b = scores_matrix[:, pc_a], scores_matrix[:, pc_b]
+    scores_a, scores_b = scores_matrix[:, lv_a], scores_matrix[:, lv_b]
     if normalize:
         scores_a = scores_a / max(abs(scores_a))
         scores_b = scores_b / max(abs(scores_b))
@@ -211,52 +211,52 @@ def scores(ax, pc_a, pc_b, x=False, y=False, normalize=False):
                         TRAIN_SET.categorical_y[n])
 
     ax.set_title('Scores plot for {}'.format('x' if x else 'y'))
-    ax.set_xlabel('LV{}'.format(pc_a + 1))
-    ax.set_ylabel('LV{}'.format(pc_b + 1))
+    ax.set_xlabel('LV{}'.format(lv_a + 1))
+    ax.set_ylabel('LV{}'.format(lv_b + 1))
     ax.axvline(0, linestyle='dashed', color='black')
     ax.axhline(0, linestyle='dashed', color='black')
     if normalize:
         ax.set_xlim(-1.1, 1.1)
         ax.set_ylim(-1.1, 1.1)
     else:
-        ax.set_xlim(model.integer_bounds(MODEL.P, MODEL.T, pc_a))
-        ax.set_ylim(model.integer_bounds(MODEL.P, MODEL.T, pc_b))
+        ax.set_xlim(model.integer_bounds(MODEL.P, MODEL.T, lv_a))
+        ax.set_ylim(model.integer_bounds(MODEL.P, MODEL.T, lv_b))
 
     handles, labels = ax.get_legend_handles_labels()
     by_label = collections.OrderedDict(zip(labels, handles))
     ax.legend(by_label.values(), by_label.keys())
 
 
-def loadings(ax, pc_a, pc_b, x=False, y=False):
-    """Plot the loadings on the pc_a, pc_b components for the x or y matrix.
+def loadings(ax, lv_a, lv_b, x=False, y=False):
+    """Plot the loadings on the lv_a, lv_b components for the x or y matrix.
 
        Annotate every point with the corresponding variable name.
 
        Raise ValueError if x and y does not differ.
-       Raise ValueError if pc_a and pc_b are the same component.
+       Raise ValueError if lv_a and lv_b are the same component.
     """
     if bool(x) == bool(y):
         raise ValueError('In plot.loadings() x, y matrix flags must differ')
-    if pc_a == pc_b:
+    if lv_a == lv_b:
         raise ValueError('Principal components must be different!')
 
-    pc_a, pc_b = min(pc_a, pc_b), max(pc_a, pc_b)
+    lv_a, lv_b = min(lv_a, lv_b), max(lv_a, lv_b)
 
     loadings_matrix = MODEL.P.copy() if x else MODEL.Q.copy()
-    scatter_wrapper(ax, loadings_matrix[:, pc_a], loadings_matrix[:, pc_b])
+    scatter_wrapper(ax, loadings_matrix[:, lv_a], loadings_matrix[:, lv_b])
 
     for n in range(loadings_matrix.shape[0]):
         ax.annotate(TRAIN_SET.header[n + 1],
                     horizontalalignment='center',
                     textcoords='offset points',
                     verticalalignment='bottom',
-                    xy=(loadings_matrix[n, pc_a], loadings_matrix[n, pc_b]),
+                    xy=(loadings_matrix[n, lv_a], loadings_matrix[n, lv_b]),
                     xycoords='data',
                     xytext=(0, 5))
 
     ax.set_title('Loadings plot for {}'.format('x' if x else 'y'))
-    ax.set_xlabel('LV{}'.format(pc_a + 1))
-    ax.set_ylabel('LV{}'.format(pc_b + 1))
+    ax.set_xlabel('LV{}'.format(lv_a + 1))
+    ax.set_ylabel('LV{}'.format(lv_b + 1))
     ax.axvline(0, linestyle='dashed', color='black')
     ax.axhline(0, linestyle='dashed', color='black')
 
@@ -382,7 +382,7 @@ def weights(ax, lv_a, lv_b):
 
        Annotate every point with the corresponding variable name.
 
-       Raise ValueError if pc_a and pc_b are the same component.
+       Raise ValueError if lv_a and lv_b are the same component.
     """
     if lv_a == lv_b:
         raise ValueError('Principal components must be different!')

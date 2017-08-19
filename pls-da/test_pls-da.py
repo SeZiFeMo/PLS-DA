@@ -412,11 +412,11 @@ class test_plot_module(unittest.TestCase):
 
     def test_scores_plot(self):
         self.assertRaises(ValueError, plot.scores, plt.gca(),
-                          pc_a=1, pc_b=1, x=True)
+                          lv_a=1, lv_b=1, x=True)
 
     def test_loadings_plot(self):
         self.assertRaises(ValueError, plot.loadings, plt.gca(),
-                          pc_a=1, pc_b=1, y=True)
+                          lv_a=1, lv_b=1, y=True)
 
     def test_check_consistency(self):
         plot.scatter_wrapper(plt.gca(), self.x, self.y)
