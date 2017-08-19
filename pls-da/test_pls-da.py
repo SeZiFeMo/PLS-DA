@@ -385,6 +385,11 @@ class test_plot_module(unittest.TestCase):
         plot.update_global_train_set(self.train_set)
         model_nipals = model.nipals(self.train_set.x, self.train_set.y)
         plot.update_global_model(model_nipals)
+        test_set = model.TestSet('datasets/olive_test.csv', self.train_set)
+        plot.update_global_test_set(test_set)
+
+        y_pred = model_nipals.predict(test_set.x)
+        plot.update_global_statistics(model.Statistics(test_set.y, y_pred))
 
     def test_symbol(self):
         categories = list(self.train_set.categories)
@@ -430,8 +435,15 @@ class test_plot_module(unittest.TestCase):
         plot.scores(plt.gca(), 0, 1, x=True)
         plot.loadings(plt.gca(), 0, 1, x=True)
         plot.calculated_y(plt.gca())
+        plot.y_predicted_y_real(plt.gca())
+        plot.y_predicted(plt.gca())
+        plot.t_square_q(plt.gca())
         plot.y_residuals_leverage(plt.gca())
+        plot.leverage(plt.gca())
+        plot.q_over_leverage(plt.gca())
         plot.regression_coefficients(plt.gca())
+        plot.weights(plt.gca(), 0, 1)
+        plot.weights_line(plt.gca(), 0)
         plot.data(plt.gca())
         plot.sklearn_inner_relations(plt.gca(), 0)
 
