@@ -58,7 +58,7 @@ def update_global_train_set(value):
         global TRAIN_SET
         TRAIN_SET = value
     else:
-        IO.Log.error('Wrong type in update_global_model() '
+        IO.Log.error('Wrong type in update_global_train_set() '
                      '({}).'.format(type(value)))
 
 
@@ -68,7 +68,7 @@ def update_global_test_set(value):
         global TEST_SET
         TEST_SET = value
     else:
-        IO.Log.error('Wrong type in update_global_model() '
+        IO.Log.error('Wrong type in update_global_test_set() '
                      '({}).'.format(type(value)))
 
 
@@ -78,7 +78,7 @@ def update_global_statistics(value):
         global STATS
         STATS = value
     else:
-        IO.Log.error('Wrong type in update_global_model() '
+        IO.Log.error('Wrong type in update_global_statistics() '
                      '({}).'.format(type(value)))
 
 
