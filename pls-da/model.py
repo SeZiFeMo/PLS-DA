@@ -8,18 +8,15 @@ import IO
 import utility
 
 
-
-
-class Preprocessing(object):
-    """Class to preprocess csv input data."""
-
+class Dataset(object):
+    """Represent a chemometrics dataset."""
     def __init__(self, input_file=None):
         """Load and parse csv input file.
 
            self.header      list of samples' properties (text)
-           self.categories  list of samples' labels (text)
-           self.dataset     list of samples' values (float)
-           self.dummy_y     list of samples' labels (1 or 0)
+           self.categorical_y  list of samples' labels (text)
+           self.x           list of samples' values (float)
+           self.y           list of samples' labels (1 or 0)
 
            self.axis        axis to compute std and mean
         """
@@ -28,36 +25,39 @@ class Preprocessing(object):
         self.header, body = IO.CSV.parse(input_file)
         IO.Log.debug('Successfully parsed {} input file.'.format(input_file))
 
-        self.categories = [row[0] for row in body]
-        global CATEGORIES
-        CATEGORIES = set(self.categories)
+        self.categorical_y = [row[0] for row in body]
+        self.categories = utility.get_unique_list(self.categorical_y)
 
-        self.dataset = np.array([np.array(row[1:]) for row in body])
-        IO.Log.debug('Loaded dataset', self.dataset)
+        self.x = np.array([np.array(row[1:]) for row in body])
+        IO.Log.debug('Loaded dataset', self.x)
 
-        self.dummy_y = np.array([[1.0 if c == cat else 0.0
-                                  for c in self.categories]
-                                 for cat in CATEGORIES]).T
-        IO.Log.debug('Dummy y', self.dummy_y)
+        self.y = np.array([[1.0 if c == cat else 0.0
+                            for c in self.categorical_y]
+                           for cat in self.categories]).T
+        IO.Log.debug('Dummy y', self.y)
 
+        self.mean_x = np.zeros(self.m)
+        self.mean_y = np.zeros(self.p)
+        self.sigma_x = np.ones(self.m)
+        self.sigma_y = np.ones(self.p)
         self.axis = 0
         self._centered = False
         self._normalized = False
 
     @property
     def n(self):
-        """Return number of rows of dataset (or of dummy y)."""
-        return self.dataset.shape[0]
+        """Return number of rows of x (or of dummy y)."""
+        return self.x.shape[0]
 
     @property
     def m(self):
-        """Return number of columns of dataset."""
-        return self.dataset.shape[1]
+        """Return number of columns of x."""
+        return self.x.shape[1]
 
     @property
     def p(self):
         """Return number of columns in dummy y."""
-        return self.dummy_y.shape[1]
+        return self.y.shape[1]
 
     @property
     def centered(self):
@@ -79,17 +79,23 @@ class Preprocessing(object):
         """Return whether dataset has been preprocessed"""
         return not (self._centered or self._normalized)
 
+
+class TrainingSet(Dataset):
+    """Class to preprocess csv input data."""
+
     def center(self, quiet=False):
         """Center the dataset and the dummy y to their mean."""
         if self.centered:
             IO.Log.warning('Already centered dataset')
             return
 
-        self.dataset = self.dataset - self.dataset.mean(axis=self.axis)
+        self.mean_x = self.x.mean(axis=self.axis)
+        self.x = self.x - self.mean_x
         if not quiet:
-            IO.Log.debug('Centered dataset', self.dataset)
+            IO.Log.debug('Centered x', self.x)
 
-        self.dummy_y = self.dummy_y - self.dummy_y.mean(axis=self.axis)
+        self.mean_y = self.y.mean(axis=self.axis)
+        self.y = self.y - self.mean_y
         self._centered = True
 
     def normalize(self, quiet=False):
@@ -98,26 +104,51 @@ class Preprocessing(object):
             IO.Log.warning('Already normalized dataset')
             return
 
-        self.dataset = self.dataset / self.dataset.std(axis=self.axis)
+        self.sigma_x = self.x.std(axis=self.axis)
+        self.x = self.x / self.sigma_x
         if not quiet:
-            IO.Log.debug('Normalized dataset', self.dataset)
+            IO.Log.debug('Normalized dataset', self.x)
 
-        self.dummy_y = self.dummy_y / self.dummy_y.std(axis=self.axis)
+        self.sigma_y = self.y.std(axis=self.axis)
+        self.y = self.y / self.sigma_y
         self._normalized = True
 
     def autoscale(self):
-        """Center and normalize the dataset and the dummy y."""
+        """Center and normalize the x and the dummy y."""
         if self.normalized:
             IO.Log.warning('Already autoscaled dataset')
             return
 
         self.center(quiet=True)
         self.normalize(quiet=True)
-        IO.Log.debug('Autoscaled dataset', self.dataset)
+        IO.Log.debug('Autoscaled dataset', self.x)
 
     def empty_method(self):
         """Do not remove this method, it is needed by the GUI."""
         pass
+
+
+class TestSet(Dataset):
+    """Model a test set."""
+    def __init__(self, filename, train_set):
+        super().__init__(filename)
+
+        # apply the same transformation used on the test set
+        assert isinstance(train_set,
+                          TrainingSet), 'argument train_set must be of type' \
+                                        'TrainingSet, is instead of ' \
+                                        'type {}'.format(type(train_set))
+
+        self.mean_x = train_set.mean_x
+        self.sigma_x = train_set.sigma_x
+        self.mean_y = train_set.mean_y
+        self.sigma_y = train_set.sigma_y
+        self.x -= self.mean_x
+        self.x /= self.sigma_x
+        self.y -= self.mean_y
+        self.y /= self.sigma_y
+        self._centered = train_set.centered
+        self._normalized = train_set.normalized
 
 
 class Model(object):
@@ -143,9 +174,9 @@ class Model(object):
         self._U = np.zeros((self.n, max_lv))
         self._Q = np.zeros((self.p, max_lv))
 
-        self._b = np.zeros((max_lv))
-        self._x_eigenvalues = np.zeros((max_lv))
-        self._y_eigenvalues = np.zeros((max_lv))
+        self._b = np.zeros(max_lv)
+        self._x_eigenvalues = np.zeros(max_lv)
+        self._y_eigenvalues = np.zeros(max_lv)
         self._Y_modeled = np.zeros((self.n, self.p))
         self._Y_modeled_dummy = np.zeros((self.n, self.p))
 
@@ -155,9 +186,19 @@ class Model(object):
 
     @nr_lv.setter
     def nr_lv(self, value):
-        assert value <= self.max_lv and value > 0, "Chosen latent variable" \
+        assert 0 < value <= self.max_lv, "Chosen latent variable" \
                                     " number {} out of bounds [0, {}]".format(
                                             value, self.max_lv)
+
+        utility.clear_property_cache(self, 'Y_modeled')
+        utility.clear_property_cache(self, 'Y_modeled_dummy')
+        utility.clear_property_cache(self, 'E_x')
+        utility.clear_property_cache(self, 'E_y')
+        utility.clear_property_cache(self, 'B')
+        utility.clear_property_cache(self, 't_square')
+        utility.clear_property_cache(self, 'q_residuals_x')
+        utility.clear_property_cache(self, 'leverage')
+
         self._nr_lv = value
 
     @property
@@ -192,42 +233,58 @@ class Model(object):
     def y_eigenvalues(self):
         return self._y_eigenvalues[:self.nr_lv]
 
-    @property
+    @utility.cached_property
     def Y_modeled(self):
         Y_modeled = self.X.dot(self.B)
         IO.Log.debug('Modeled Y prior to the discriminant classification',
                      Y_modeled)
         return Y_modeled
 
-    @property
+    @utility.cached_property
     def Y_modeled_dummy(self):
-        Y_dummy = [[1 if elem == max(row) else -1 for elem in row]
-                   for row in self.Y_modeled]
-        return np.array(Y_dummy)
+        dummy = [[1 if elem == max(row) else -1 for elem in row]
+                 for row in self.Y_modeled]
+        return np.array(dummy)
 
-    @property
+    @utility.cached_property
     def E_x(self):
         return self.X - np.dot(self.T, self.P.T)
 
-    @property
+    @utility.cached_property
     def E_y(self):
         return self.Y - (self.T.dot(np.diag(self.b))).dot(self.Q.T)
 
-    @property
+    @utility.cached_property
     def B(self):
         # Compute regression parameters B
         # tmp = (P'W)^{-1}
         tmp = np.linalg.inv(self.P.T.dot(self.W))
         return ((self.W.dot(tmp)).dot(np.diag(self.b))).dot(self.Q.T)
 
-    def predict(self, test_set, nr_lv):
-        """Return Y predicted over this model."""
-#        T_cap = np.zeros((test_set.shape[0], self.m))
-#        E_x = test_set.copy()
-#        Y = np.zeros((test_set.shape[0], self.p))
+    @utility.cached_property
+    def t_square(self):
+        lambda_inv = 1 / self.x_eigenvalues
+        return np.diag(self.T.dot(np.diag(lambda_inv)).dot(self.T.T))
 
-#        T_cap = np.dot(test_set, self.W)
-        return np.dot(test_set, self.B)
+    @utility.cached_property
+    def q_residuals_x(self):
+        if self.nr_lv == self.max_lv:
+            IO.Log.warning('Q residuals with max number of components are 0')
+        return np.diag(self.E_x.dot(self.E_x.T))
+
+    @utility.cached_property
+    def leverage(self):
+        temp = np.linalg.inv(np.dot(self.U.T, self.U))
+        leverage = np.empty(self.n)
+
+        for j in range(self.p):
+            for i in range(self.n):
+                leverage[i] = self.U[i].dot(temp).dot(self.U[i].T)
+        return leverage
+
+    def predict(self, train_set):
+        """Return Y predicted for the given test set over this model."""
+        return np.dot(train_set, self.B)
 
 
 class Statistics(object):
@@ -357,8 +414,8 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
     return model
 
 
-def cross_validation(preproc, split, max_lv):
-    """Perform a cross-validation procedure on a Preprocessing dataset.
+def cross_validation(train_set, split, max_lv):
+    """Perform a cross-validation procedure on a TrainingSet dataset.
 
     Return a list of dictionaries of Statistics object. Every dictionary
     corresponds to a split, while every element in a dictionary corresponds
@@ -366,25 +423,25 @@ def cross_validation(preproc, split, max_lv):
     element is the lv used for that prediction.
     """
     results = []
-    for train, test in venetian_blind_split(preproc, split):
+    for train, test in venetian_blind_split(train_set, split):
         model = nipals(*train)
         res = dict()
         for lv in range(1, max_lv):
             model.nr_lv = lv
-            y_pred = model.predict(test[0], lv)
+            y_pred = model.predict(test[0])
             res[lv] = Statistics(test[1], y_pred)
         results.append(res)
     return results
 
 
-def venetian_blind_split(preproc, split):
+def venetian_blind_split(train_set, split):
     """Split the dataset in train and test using the venetian blind algo."""
     for offset in range(split, 0, -1):  # order result logically
-        mask = np.arange(offset, preproc.n + offset) % split == 0
-        test_x = preproc.dataset[mask]
-        train_x = preproc.dataset[~mask]
-        test_y = preproc.dummy_y[mask]
-        train_y = preproc.dummy_y[~mask]
+        mask = np.arange(offset, train_set.n + offset) % split == 0
+        test_x = train_set.x[mask]
+        train_x = train_set.x[~mask]
+        test_y = train_set.y[mask]
+        train_y = train_set.y[~mask]
 
         yield ((train_x, train_y), (test_x, test_y))
 
