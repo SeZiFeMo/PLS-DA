@@ -51,8 +51,8 @@ fig = plt.figure(tight_layout=True)
 # plot.biplot(ax, 0, 1, x=True)
 # plot.cumulative_explained_variance(ax, x=True)
 # plot.scree(ax, y=True)
-plot.scores(fig.add_subplot(2, 2, 1), 0, 1, y=True)
-plot.y_residuals_leverage(fig.add_subplot(2, 2, 2))
+plot.loadings(fig.add_subplot(2, 2, 1), 0, 1, x=True)
+plot.biplot(fig.add_subplot(2, 2, 2), 0, 1, x=True)
 plot.MODEL.nr_lv = 7
 plot.y_residuals_leverage(fig.add_subplot(2, 2, 4))
 plot.MODEL.nr_lv = 4
