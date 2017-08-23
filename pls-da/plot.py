@@ -30,13 +30,14 @@ def symbol(category=None):
                ('#FF7F0E', 'D'),  # orange,   diamond
                ('#A00000', 's'),  # dark_red, square
                ('#FFD700', '*'),  # gold,     star
+               ('#0D0099', '.'),  # darkblue, point
 
 
-               ('#000000', '+'),  #           plus
-               ('#000000', 'h'),  #           hexagon
-               ('#000000', 'p'),  #           pentagon
+               # ('#000000', '+'),  #           plus
+               # ('#000000', 'h'),  #           hexagon
+               # ('#000000', 'p'),  #           pentagon
                )
-    index = 0
+    index = -1
     if category in TRAIN_SET.categories:
         index = sorted(TRAIN_SET.categories).index(category) % len(records)
     return [dict(zip(('hex', 'marker'), rec)) for rec in records][index]
@@ -103,7 +104,7 @@ def line_wrapper(ax, x_values, y_values, cat=None, linestyle='solid'):
             marker=symbol(cat)['marker'],
             markerfacecolor=symbol(cat)['hex'],
             markeredgecolor=symbol(cat)['hex'],
-            markersize=5)
+            markersize=5.48)
 
 
 def scree(ax, x=False, y=False):
