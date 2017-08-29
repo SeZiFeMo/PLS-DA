@@ -30,13 +30,14 @@ def symbol(category=None):
                ('#FF7F0E', 'D'),  # orange,   diamond
                ('#A00000', 's'),  # dark_red, square
                ('#FFD700', '*'),  # gold,     star
+               ('#0D0099', '.'),  # darkblue, point
 
 
-               ('#000000', '+'),  #           plus
-               ('#000000', 'h'),  #           hexagon
-               ('#000000', 'p'),  #           pentagon
+               # ('#000000', '+'),  #           plus
+               # ('#000000', 'h'),  #           hexagon
+               # ('#000000', 'p'),  #           pentagon
                )
-    index = 0
+    index = -1
     if category in TRAIN_SET.categories:
         index = sorted(TRAIN_SET.categories).index(category) % len(records)
     return [dict(zip(('hex', 'marker'), rec)) for rec in records][index]
@@ -94,16 +95,16 @@ def scatter_wrapper(ax, x_values, y_values, cat=None):
                s=30)
 
 
-def line_wrapper(ax, x_values, y_values, cat=None):
+def line_wrapper(ax, x_values, y_values, cat=None, linestyle='solid'):
     """Draw a line plot using a different color for each category."""
     ax.plot(x_values, y_values,
             alpha=0.5,
             color=symbol(cat)['hex'],
-            linestyle='solid',
+            linestyle=linestyle,
             marker=symbol(cat)['marker'],
             markerfacecolor=symbol(cat)['hex'],
             markeredgecolor=symbol(cat)['hex'],
-            markersize=5)
+            markersize=5.48)
 
 
 def scree(ax, x=False, y=False):
@@ -243,9 +244,10 @@ def loadings(ax, lv_a, lv_b, x=False, y=False):
     lv_a, lv_b = min(lv_a, lv_b), max(lv_a, lv_b)
 
     loadings_matrix = MODEL.P.copy() if x else MODEL.Q.copy()
-    scatter_wrapper(ax, loadings_matrix[:, lv_a], loadings_matrix[:, lv_b])
 
     for n in range(loadings_matrix.shape[0]):
+        line_wrapper(ax, (0, loadings_matrix[n, lv_a]),
+                     (0, loadings_matrix[n, lv_b]), linestyle='dashed')
         ax.annotate(TRAIN_SET.header[n + 1],
                     horizontalalignment='center',
                     textcoords='offset points',
