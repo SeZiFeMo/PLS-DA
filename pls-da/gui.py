@@ -3,6 +3,9 @@
 
 import copy
 import enum
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Toolbar
 from PyQt5.QtCore import QCoreApplication, QMetaObject, QRect, QSize, Qt
 from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QComboBox,
                              QDialog, QFileDialog, QFormLayout, QGridLayout,
@@ -10,7 +13,7 @@ from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QComboBox,
                              QMainWindow, QMenu, QMenuBar, QMessageBox,
                              QPushButton, QRadioButton, QScrollArea,
                              QSizePolicy as Policy, QSpinBox, QSplitter,
-                             QWidget)
+                             QVBoxLayout, QWidget)
 import sys
 
 import IO
@@ -20,15 +23,46 @@ import utility
 
 
 def clear(layout):
-    """Recursively call deleteLayer() over all widgets in layout."""
+    """Recursively call delete() over all widgets in layout."""
     if not isinstance(layout, QLayout):
         return
-    while layout.count():
-        child = layout.takeAt(0)
-        if child.widget() is not None:
-            child.widget().deleteLater()
-        elif child.layout() is not None:
-            clear(child.layout())
+    try:
+        layout_name = layout.objectName()
+    except RuntimeError as e:
+        if 'wrapped C/C++ object of type' in str(e) and \
+           'has been deleted' in str(e):
+            # layout has already been garbage collected
+            return
+        else:
+            raise e
+    else:
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget() is not None:
+                delete(child.widget())
+            elif child.layout() is not None:
+                clear(child.layout())
+        if layout_name.strip():
+            IO.Log.debug('Cleared {}'.format(layout_name))
+
+
+def delete(widget):
+    """Wrap deleteLater() over the widget and log event on debug."""
+    if not isinstance(widget, QWidget):
+        return
+    try:
+        widget_name = widget.objectName()
+    except RuntimeError as e:
+        if 'wrapped C/C++ object of type' in str(e) and \
+           'has been deleted' in str(e):
+            # widget has already been garbage collected
+            return
+        else:
+            raise e
+    else:
+        widget.deleteLater()
+        if widget_name.strip():
+            IO.Log.debug('Deleted {}'.format(widget_name))
 
 
 def _popup_choose(parent, filter_csv=False,
@@ -141,6 +175,8 @@ class Column(enum.Enum):
 
     Left = QFormLayout.LabelRole
     Right = QFormLayout.FieldRole
+
+    # WARNING: the spanning role breaks the central alignment of QFormLayout !
     Both = QFormLayout.SpanningRole
 
 
@@ -150,6 +186,17 @@ class Lane(enum.Enum):
     Left = 'Left'
     Central = 'Central'
     Right = 'Right'
+
+    def __str__(self):
+        """The str() builtin will return enumerate value."""
+        return self.value
+
+
+class Widget(enum.Enum):
+    """Enumerate to identify the kind of QWigdet to put in a QScrollArea."""
+
+    Form = 'Form'
+    VBox = 'VBox'
 
     def __str__(self):
         """The str() builtin will return enumerate value."""
@@ -203,34 +250,6 @@ class UserInterface(object):
             scroll_area.setWidgetResizable(True)
             layout.addWidget(scroll_area, 1, 0, 1, 1)
 
-            scroll_area_widget = self.set_attr(str(lane) + 'ScrollArea',
-                                               QWidget,
-                                               size=(174, 427, 3611, 4147))
-            scroll_area.setWidget(scroll_area_widget)
-            scroll_area_widget.setGeometry(QRect(0, 0, 290, 565))
-            scroll_area_widget.setLayoutDirection(Qt.LeftToRight)
-
-            form_layout = self.set_attr(str(lane) + 'Plot', QFormLayout,
-                                        parent=scroll_area_widget, policy=None)
-            form_layout.setSizeConstraint(QLayout.SetMaximumSize)
-            form_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
-            form_layout.setLabelAlignment(Qt.AlignCenter)
-            form_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
-            form_layout.setContentsMargins(10, 10, 10, 10)
-            form_layout.setSpacing(10)
-
-            self.add(QLabel, lane, Column.Left, row=0, name='LVs',
-                     text='Latent Variables')
-            self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',)
-            self.add(QRadioButton, lane, Column.Left, row=1, name='X',
-                     group_name=str(lane) + 'ButtonGroup')
-            self.add(QSpinBox, lane, Column.Right, row=1, name='X')
-            self.add(QRadioButton, lane, Column.Left, row=2, name='Y',
-                     group_name=str(lane) + 'ButtonGroup')
-            self.add(QSpinBox, lane, Column.Right, row=2, name='Y')
-            self.add(QPushButton, lane, Column.Left, row=3, name='Back')
-            self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
-
         lane = Lane.Right
         parent = self.set_attr(lane, QWidget, parent=main_splitter,
                                size=(150, 580, 400, 4300))
@@ -254,18 +273,18 @@ class UserInterface(object):
         scroll_area.setWidgetResizable(True)
         layout.addWidget(scroll_area, 1, 0, 1, 1)
 
-        scroll_area_widget = self.set_attr(lane + 'ScrollArea', QWidget,
-                                           size=(138, 534, 388, 4259))
-        scroll_area.setWidget(scroll_area_widget)
-        scroll_area_widget.setGeometry(QRect(0, 0, 189, 565))
+        details_grid_widget = self.set_attr(str(lane) + 'DetailsGrid', QWidget,
+                                            size=(138, 534, 388, 4259))
+        scroll_area.setWidget(details_grid_widget)
+        details_grid_widget.setGeometry(QRect(0, 0, 189, 565))
 
         details_layout = self.set_attr(str(lane) + 'Details', QGridLayout,
-                                       parent=scroll_area_widget, policy=None)
+                                       parent=details_grid_widget, policy=None)
         details_layout.setContentsMargins(3, 3, 3, 3)
         details_layout.setSpacing(5)
 
         details_label = self.set_attr(
-                'Details', QLabel, parent=scroll_area_widget,
+                'Details', QLabel, parent=details_grid_widget,
                 size=(138, 534, 388, 4259))
         details_layout.addWidget(details_label, 0, 0, 1, 1)
         details_label.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
@@ -386,9 +405,24 @@ class UserInterface(object):
         if self._current_mode == 'start':
             self.SaveModelAction.setEnabled(False)
             self.ExportMatricesAction.setEnabled(False)
+
+            self.LeftComboBox.setEnabled(False)
+            self.CentralComboBox.setEnabled(False)
+
+            for lane in (Lane.Left, Lane.Central):
+                self.reset_widget_and_layout(Widget.Form, lane)
+                self.add(QLabel, lane, Column.Both, row=0, name='Hint',
+                         text='Several plots are available in the above '
+                              'dropdown menu.\n'
+                              '(if you create or load a model before)',
+                         label_alignment=Qt.AlignHCenter,
+                         policy=Policy.Expanding, size=(170, 520, 3610, 4240))
         else:
             self.SaveModelAction.setEnabled(True)
             self.ExportMatricesAction.setEnabled(True)
+
+            self.LeftComboBox.setEnabled(True)
+            self.CentralComboBox.setEnabled(True)
 
 
     @property
@@ -417,6 +451,92 @@ class UserInterface(object):
             IO.Log.debug('NO (not replacing current model)')
             return False
 
+    def reset_widget_and_layout(self, widget, lane, show=True):
+        """Reset the [Left|Central][Form|VBox] Widget and Layout.
+
+           Warning: any previous Widget and Layout will be deleted and lost!
+
+           lane should be of gui.Lane(enum.Enum) type
+           widget should be of gui.Widget(enum.Enum) type
+
+           Raises TypeError on bad widget type.
+
+           Returns a tuple with references to the created widget and layout.
+        """
+        if not isinstance(widget, Widget):
+            raise TypeError('widget parameter in reset_widget_and_layout() is '
+                            'not instance of Widget ({})'.format(type(widget)))
+
+        # clean up old widget and old layout (if they exists)
+        try:
+            clear(getattr(self, str(lane) + str(widget) + 'Layout'))
+        except AttributeError:
+            IO.Log.debug('No {}{}Layout to clean'.format(lane, widget))
+        try:
+            delete(getattr(self, str(lane) + str(widget) + 'Widget'))
+        except AttributeError:
+            IO.Log.debug('No {}{}Widget to delete'.format(lane, widget))
+
+        scroll_area = getattr(self, str(lane) + 'ScrollArea')
+
+        # create new widget
+        w = self.set_attr(str(lane) + str(widget), QWidget, parent=scroll_area,
+                          size=(174, 427, 3611, 4147))
+        w.setGeometry(QRect(0, 0, 290, 545))
+        w.setLayoutDirection(Qt.LayoutDirectionAuto)
+
+        # create new layout
+        if widget is Widget.Form:
+            l = self.set_attr(lane, QFormLayout, parent=w, policy=None)
+            # Simulate the form layout appearance of QMacStyle
+            # (https://doc.qt.io/qt-5/qformlayout.html#details)
+            l.setRowWrapPolicy(QFormLayout.DontWrapRows)
+            l.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
+            l.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+            l.setLabelAlignment(Qt.AlignRight)  # as in macOS Aqua guidelines
+        else:
+            assert widget is Widget.VBox, "Unexpected widget type in " \
+                                          "reset_widget_and_layout() " \
+                                          "({})".format(type(widget))
+            l = self.set_attr(str(lane), QVBoxLayout, parent=w, policy=None)
+
+            # create back button
+            back = self.set_attr(str(lane) + 'Back', QPushButton,
+                                 parent=w, policy=Policy.Expanding,
+                                 size=(138, 22, 3625, 22))
+            back.setText('Back')
+
+            # create canvas and its figure
+            fig = plt.figure(tight_layout=True)
+            setattr(self, str(lane) + 'Figure', fig)
+            canvas = Canvas(fig)
+            canvas.setSizePolicy(Policy.Expanding, Policy.Expanding)
+            canvas.setMinimumSize(QSize(138, 475))
+            canvas.setMaximumSize(QSize(3625, 4195))
+            setattr(self, str(lane) + 'Canvas', canvas)
+
+            # create toolbar
+            toolbar = Toolbar(canvas, parent=w)
+            toolbar.setSizePolicy(Policy.Expanding, Policy.Preferred)
+            toolbar.setMinimumSize(QSize(138, 30))
+            toolbar.setMaximumSize(QSize(3625, 30))
+            setattr(self, str(lane) + 'Toolbar', toolbar)
+
+            l.addWidget(toolbar, 0, Qt.AlignHCenter | Qt.AlignTop)
+            l.addWidget(canvas)
+            l.addWidget(back, 0, Qt.AlignBottom)
+
+        l.setSizeConstraint(QLayout.SetMaximumSize)
+        l.setContentsMargins(10, 10, 10, 10)
+        l.setSpacing(10)
+
+        if show:
+            # any widget that was in scroll_area is lost!
+            scroll_area.setWidget(w)
+            scroll_area.setWidgetResizable(True)
+            w.show()
+        return w, l
+
     def set_attr(self, name, widget, parent=None, policy=Policy.Expanding,
                  size=None):
         """Wrapper of setattr over self to add a widget."""
@@ -427,11 +547,11 @@ class UserInterface(object):
         setattr(self, attr_name, new_widget)
 
         if policy is not None:
-            tmp = Policy(policy, policy)
-            tmp.setHeightForWidth(new_widget.sizePolicy().hasHeightForWidth())
-            tmp.setHorizontalStretch(0)
-            tmp.setVerticalStretch(0)
-            new_widget.setSizePolicy(tmp)
+            pol = Policy(policy, policy)
+            pol.setHeightForWidth(new_widget.sizePolicy().hasHeightForWidth())
+            pol.setHorizontalStretch(0)
+            pol.setVerticalStretch(0)
+            new_widget.setSizePolicy(pol)
         if size is not None:
             size = tuple(map(int, map(max, size, [0, 0, 0, 0])))
             min_w, min_h, max_w, max_h = size
@@ -442,25 +562,44 @@ class UserInterface(object):
         return new_widget
 
     def add(self, widget, lane, column, row, name, text=None, word_wrap=True,
-            text_format=Qt.AutoText, alignment=Qt.AlignLeft,
-            group_name=None, minimum=1, maximum=99):
+            text_format=Qt.AutoText, label_alignment=Qt.AlignLeft,
+            group_name=None, minimum=1, maximum=99, policy=Policy.Preferred,
+            size=(70, 25, 170, 520)):
         """Add to the specified lane the widget in (row, column) position."""
-        parent_widget = getattr(self, str(lane) + 'ScrollAreaWidget')
-        new_widget = self.set_attr(name, widget, parent=parent_widget,
-                                   lane=lane, policy=Policy.Preferred,
-                                   size=(70, 22, 1310, 170))
+        parent_widget = getattr(self, str(lane) + 'FormWidget')
+        new_widget = self.set_attr(str(lane) + name, widget,
+                                   parent=parent_widget,
+                                   policy=policy, size=size)
 
         if widget == QLabel:
             new_widget.setTextFormat(text_format)
-            new_widget.setAlignment(alignment)
+            new_widget.setAlignment(label_alignment)
             new_widget.setWordWrap(word_wrap)
         elif widget == QRadioButton:
             group = getattr(self, group_name, None)
+            try:
+                if group is not None:
+                    group.objectName()
+            except RuntimeError as e:
+                if 'QButtonGroup has been deleted' in str(e):
+                    # group has already been garbage collected
+                    IO.Log.debug('Deleted {}'.format(group_name))
+                    group = None  # force creation of a new group
+                else:
+                    raise e
+
+            # create a new group
             if group is None:
                 group = QButtonGroup(parent_widget)
                 group.setObjectName(group_name)
                 setattr(self, group_name, group)
+                IO.Log.debug('Created {}ButtonGroup'.format(group_name))
+
             group.addButton(new_widget)
+
+            # ensure at least one RadioButton is checked
+            if group.checkedButton() is None:
+                new_widget.setChecked(True)
         elif widget == QSpinBox:
             new_widget.setMinimum(minimum)
             new_widget.setMaximum(maximum)
@@ -468,7 +607,7 @@ class UserInterface(object):
         if widget in (QLabel, QPushButton, QRadioButton):
             new_widget.setText(str(text if text is not None else str(name)))
 
-        layout = getattr(self, str(lane) + 'PlotFormLayout')
+        layout = getattr(self, str(lane) + 'FormLayout')
         layout.setWidget(row, column.value, new_widget)
         return new_widget
 
@@ -479,13 +618,42 @@ class UserInterface(object):
             return
         for entry in self.drop_down_menu:
             if index == entry['index'] or text == entry['text']:
-                # clear layouts from previous widget
-                clear(getattr(self, str(lane) + 'PlotFormLayout'))
                 # populate layouts with necessary widget
                 return getattr(self, entry['method'])(lane)
 
     def plot_scree(self, lane):
-        pass
+        # create an empty FormLayout in the lane
+        form_widget, form_layout = self.reset_widget_and_layout(Widget.Form,
+                                                                lane)
+        # add necessary widgets to the form
+        xrb = self.add(QRadioButton, lane, Column.Left, row=0, name='X',
+                       group_name=str(lane) + 'ScreePlot')
+        yrb = self.add(QRadioButton, lane, Column.Left, row=1, name='Y',
+                       group_name=str(lane) + 'ScreePlot')
+        ppb = self.add(QPushButton, lane, Column.Left, row=2, name='Plot')
+
+        # create an empty VBoxLayout in the lane without displaying it
+        vbox_widget, vbox_layout = self.reset_widget_and_layout(Widget.VBox,
+                                                                lane,
+                                                                show=False)
+
+        scroll_area = getattr(self, str(lane) + 'ScrollArea')
+        fig = getattr(self, str(lane) + 'Figure')
+        canvas = getattr(self, str(lane) + 'Canvas')
+        back = getattr(self, str(lane) + 'BackPushButton')
+
+        ppb.clicked.connect(lambda: (fig.clear(),
+                                     plot.scree(fig.add_subplot(111),
+                                                x=xrb.isChecked(),
+                                                y=yrb.isChecked()),
+                                     canvas.draw(),
+                                     scroll_area.setWidget(vbox_widget),
+                                     # form_widget will be garbage collected
+                                     scroll_area.setWidgetResizable(True),
+                                     vbox_widget.show(),
+                                     ))
+
+        back.clicked.connect(lambda: self.plot_scree(str(lane)))
 
     def plot_explained_variance(self, lane):
         pass
