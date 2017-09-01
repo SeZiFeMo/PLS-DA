@@ -7,13 +7,13 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Toolbar
 from PyQt5.QtCore import QCoreApplication, QMetaObject, QRect, QSize, Qt
-from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QComboBox,
-                             QDialog, QFileDialog, QFormLayout, QGridLayout,
-                             QFrame, QInputDialog, QLabel, QLayout,
-                             QMainWindow, QMenu, QMenuBar, QMessageBox,
-                             QPushButton, QRadioButton, QScrollArea,
-                             QSizePolicy as Policy, QSpinBox, QSplitter,
-                             QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QCheckBox,
+                             QComboBox, QDialog, QFileDialog, QFormLayout,
+                             QGridLayout, QFrame, QInputDialog, QLabel,
+                             QLayout, QMainWindow, QMenu, QMenuBar,
+                             QMessageBox, QPushButton, QRadioButton,
+                             QScrollArea, QSizePolicy as Policy, QSpinBox,
+                             QSplitter, QVBoxLayout, QWidget)
 import sys
 
 import IO
@@ -166,8 +166,7 @@ def popup_question(message, parent, title=None):
     dialog.setWindowTitle(title if title is not None else '')
     dialog.setText(message)
     dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-    choice = dialog.exec()
-    return choice == QMessageBox.Yes
+    return dialog.exec() == QMessageBox.Yes
 
 
 class Column(enum.Enum):
@@ -324,20 +323,20 @@ class UserInterface(object):
     @property
     def drop_down_menu(self):
         """Return a generator iterator over drop down menu item properties."""
-        tmp = (('Scree', 'plot_scree'),
-               ('Cumulative explained variance', 'plot_explained_variance'),
-               ('Inner relationships', 'plot_inner_relations'),
-               ('Scores', 'plot_scores'),
-               ('Loadings', 'plot_loadings'),
-               ('Biplot', 'plot_biplot'),
-               ('Scores & Loadings', 'plot_scores_and_loadings'),
-               ('Calculated Y', 'plot_calculated_y'),
-               ('Predicted Y', 'plot_predicted_y'),
-               ('T² – Q', 'plot_t_square_q'),
-               ('Residuals – Leverage', 'plot_residuals_leverage'),
-               ('Regression coefficients', 'plot_regression_coefficients'))
+        tmp = (('Scree', 'scree'),
+               ('Cumulative explained variance', 'explained_variance'),
+               ('Inner relationships', 'inner_relations'),
+               ('Scores', 'scores'),
+               ('Loadings', 'loadings'),
+               ('Biplot', 'biplot'),
+               ('Scores & Loadings', 'scores_and_loadings'),
+               ('Calculated Y', 'calculated_y'),
+               ('Predicted Y', 'predicted_y'),
+               ('T² – Q', 't_square_q'),
+               ('Residuals – Leverage', 'residuals_leverage'),
+               ('Regression coefficients', 'regression_coefficients'))
         for index, (text, method) in enumerate(tmp):
-            yield {'index': index, 'text': text, 'method': method}
+            yield {'index': index, 'text': text, 'method': method + '_plot'}
 
     @property
     def menu_bar(self):
@@ -367,6 +366,51 @@ class UserInterface(object):
             l = [word.capitalize() for word in text.replace('&', '').split()]
             yield {'name': ''.join(l).replace('sv', 'sV'),
                    'text': text, 'shortcut': shortcut}
+
+    def back_button(self, lane):
+        return getattr(self, str(lane) + 'BackPushButton')
+
+    def canvas(self, lane):
+        return getattr(self, str(lane) + 'Canvas')
+
+    def figure(self, lane):
+        return getattr(self, str(lane) + 'Figure')
+
+    def form_layout(self, lane):
+        return getattr(self, str(lane) + 'FormLayout')
+
+    def form_widget(self, lane):
+        return getattr(self, str(lane) + 'FormWidget')
+
+    def lva_spin_box(self, lane):
+        return getattr(self, str(lane) + 'LVaSpinBox')
+
+    def lvb_spin_box(self, lane):
+        return getattr(self, str(lane) + 'LVbSpinBox')
+
+    def lvs_spin_box(self, lane):
+        return getattr(self, str(lane) + 'LVsSpinBox')
+
+    def normalize_check_box(self, lane):
+        return getattr(self, str(lane) + 'NormalizeCheckBox')
+
+    def plot_button(self, lane):
+        return getattr(self, str(lane) + 'PlotPushButton')
+
+    def scroll_area(self, lane):
+        return getattr(self, str(lane) + 'ScrollArea')
+
+    def vbox_layout(self, lane):
+        return getattr(self, str(lane) + 'VBoxLayout')
+
+    def vbox_widget(self, lane):
+        return getattr(self, str(lane) + 'VBoxWidget')
+
+    def x_radio_button(self, lane):
+        return getattr(self, str(lane) + 'XRadioButton')
+
+    def y_radio_button(self, lane):
+        return getattr(self, str(lane) + 'YRadioButton')
 
     @property
     def current_mode(self):
@@ -477,10 +521,9 @@ class UserInterface(object):
         except AttributeError:
             IO.Log.debug('No {}{}Widget to delete'.format(lane, widget))
 
-        scroll_area = getattr(self, str(lane) + 'ScrollArea')
-
         # create new widget
-        w = self.set_attr(str(lane) + str(widget), QWidget, parent=scroll_area,
+        w = self.set_attr(str(lane) + str(widget), QWidget,
+                          parent=self.scroll_area(lane),
                           size=(174, 427, 3611, 4147))
         w.setGeometry(QRect(0, 0, 290, 545))
         w.setLayoutDirection(Qt.LayoutDirectionAuto)
@@ -532,8 +575,8 @@ class UserInterface(object):
 
         if show:
             # any widget that was in scroll_area is lost!
-            scroll_area.setWidget(w)
-            scroll_area.setWidgetResizable(True)
+            self.scroll_area(lane).setWidget(w)
+            self.scroll_area(lane).setWidgetResizable(True)
             w.show()
         return w, l
 
@@ -562,11 +605,11 @@ class UserInterface(object):
         return new_widget
 
     def add(self, widget, lane, column, row, name, text=None, word_wrap=True,
-            text_format=Qt.AutoText, label_alignment=Qt.AlignLeft,
+            text_format=Qt.AutoText, label_alignment=Qt.AlignRight,
             group_name=None, minimum=1, maximum=99, policy=Policy.Preferred,
             size=(70, 25, 170, 520)):
         """Add to the specified lane the widget in (row, column) position."""
-        parent_widget = getattr(self, str(lane) + 'FormWidget')
+        parent_widget = self.form_widget(lane)
         new_widget = self.set_attr(str(lane) + name, widget,
                                    parent=parent_widget,
                                    policy=policy, size=size)
@@ -576,6 +619,8 @@ class UserInterface(object):
             new_widget.setAlignment(label_alignment)
             new_widget.setWordWrap(word_wrap)
         elif widget == QRadioButton:
+            if not group_name.endswith('ButtonGroup'):
+                group_name += 'ButtonGroup'
             group = getattr(self, group_name, None)
             try:
                 if group is not None:
@@ -604,12 +649,19 @@ class UserInterface(object):
             new_widget.setMinimum(minimum)
             new_widget.setMaximum(maximum)
 
-        if widget in (QLabel, QPushButton, QRadioButton):
+        if widget in (QCheckBox, QLabel, QPushButton, QRadioButton):
             new_widget.setText(str(text if text is not None else str(name)))
 
-        layout = getattr(self, str(lane) + 'FormLayout')
+        layout = self.form_layout(lane)
         layout.setWidget(row, column.value, new_widget)
         return new_widget
+
+    def draw_plot(self, lane, entry):
+        try:
+            getattr(self, 'draw_' + entry['method'])(lane)
+        except ValueError as e:
+            popup_error(message=str(e), parent=self.MainWindow)
+            self.figure(lane).clear()
 
     def call_plot_method(self, lane, index=None, text=None):
         if index is None and text is None:
@@ -618,75 +670,162 @@ class UserInterface(object):
             return
         for entry in self.drop_down_menu:
             if index == entry['index'] or text == entry['text']:
-                # populate layouts with necessary widget
-                return getattr(self, entry['method'])(lane)
+                # create two new empty layouts
+                self.reset_widget_and_layout(Widget.Form, lane, show=True)
+                self.reset_widget_and_layout(Widget.VBox, lane, show=False)
 
-    def plot_scree(self, lane):
-        # create an empty FormLayout in the lane
-        form_widget, form_layout = self.reset_widget_and_layout(Widget.Form,
-                                                                lane)
-        # add necessary widgets to the form
-        xrb = self.add(QRadioButton, lane, Column.Left, row=0, name='X',
-                       group_name=str(lane) + 'ScreePlot')
-        yrb = self.add(QRadioButton, lane, Column.Left, row=1, name='Y',
-                       group_name=str(lane) + 'ScreePlot')
-        ppb = self.add(QPushButton, lane, Column.Left, row=2, name='Plot')
+                # populate layouts with widget
+                getattr(self, 'build_' + entry['method'] + '_form')(lane)
 
-        # create an empty VBoxLayout in the lane without displaying it
-        vbox_widget, vbox_layout = self.reset_widget_and_layout(Widget.VBox,
-                                                                lane,
-                                                                show=False)
+                # connect events
+                self.plot_button(lane).clicked.connect(
+                    lambda: (self.figure(lane).clear(),
+                             self.draw_plot(lane, entry),
+                             self.canvas(lane).draw(),
+                             self.scroll_area(lane).setWidget(
+                                 self.vbox_widget(lane)),
+                             self.scroll_area(lane).setWidgetResizable(True),
+                             self.vbox_widget(lane).show()))
+                self.back_button(lane).clicked.connect(
+                    lambda: self.call_plot_method(lane, index, text))
+                break
 
-        scroll_area = getattr(self, str(lane) + 'ScrollArea')
-        fig = getattr(self, str(lane) + 'Figure')
-        canvas = getattr(self, str(lane) + 'Canvas')
-        back = getattr(self, str(lane) + 'BackPushButton')
+    def xy_radio_form(self, lane, group):
+        self.add(QRadioButton, lane, Column.Left, row=0, name='X',
+                 group_name=str(lane) + group)
+        self.add(QRadioButton, lane, Column.Left, row=1, name='Y',
+                 group_name=str(lane) + group)
+        self.add(QPushButton, lane, Column.Left, row=2, name='Plot')
 
-        ppb.clicked.connect(lambda: (fig.clear(),
-                                     plot.scree(fig.add_subplot(111),
-                                                x=xrb.isChecked(),
-                                                y=yrb.isChecked()),
-                                     canvas.draw(),
-                                     scroll_area.setWidget(vbox_widget),
-                                     # form_widget will be garbage collected
-                                     scroll_area.setWidgetResizable(True),
-                                     vbox_widget.show(),
-                                     ))
+    def xy_radio_ab_spin_form(self, lane, group):
+        self.add(QRadioButton, lane, Column.Left, row=0, name='X',
+                 group_name=str(lane) + group)
+        self.add(QRadioButton, lane, Column.Right, row=0, name='Y',
+                 group_name=str(lane) + group)
 
-        back.clicked.connect(lambda: self.plot_scree(str(lane)))
+        self.add(QLabel, lane, Column.Left, row=1, name='LVa',
+                 text='1st latent variable')
+        self.add(QSpinBox, lane, Column.Right, row=1, name='LVa',
+                 minimum=0, maximum=self.plsda_model.max_lv - 1)
 
-    def plot_explained_variance(self, lane):
-        pass
+        self.add(QLabel, lane, Column.Left, row=2, name='LVb',
+                 text='2nd latent variable')
+        self.add(QSpinBox, lane, Column.Right, row=2, name='LVb',
+                 minimum=0, maximum=self.plsda_model.max_lv - 1)
 
-    def plot_inner_relations(self, lane):
-        pass
+    def only_plot_button_form(self, lane, size=(170, 25, 3610, 25)):
+        self.add(QPushButton, lane, Column.Left, row=0, name='Plot', size=size)
 
-    def plot_scores(self, lane):
-        pass
+    def build_scree_plot_form(self, lane):
+        self.xy_radio_form(lane, group='ScreePlot')
 
-    def plot_loadings(self, lane):
-        pass
+    def build_explained_variance_plot_form(self, lane):
+        self.xy_radio_form(lane, group='ExplainedVariance')
 
-    def plot_biplot(self, lane):
-        pass
+    def build_inner_relations_plot_form(self, lane):
+        self.add(QLabel, lane, Column.Left, row=0, name='LVs',
+                 text='Latent variable')
+        self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',
+                 minimum=0, maximum=self.plsda_model.max_lv - 1)
+        self.add(QPushButton, lane, Column.Right, row=1, name='Plot')
 
-    def plot_scores_and_loadings(self, lane):
-        pass
+    def build_scores_plot_form(self, lane):
+        self.xy_radio_ab_spin_form(lane, group='ScoresPlot')
+        self.add(QCheckBox, lane, Column.Left, row=3, name='Normalize',
+                 text='normalize')
+        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
 
-    def plot_calculated_y(self, lane):
-        pass
+    def build_loadings_plot_form(self, lane):
+        self.xy_radio_ab_spin_form(lane, group='LoadingsPlot')
+        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
 
-    def plot_predicted_y(self, lane):
-        pass
+    def build_biplot_plot_form(self, lane):
+        self.xy_radio_ab_spin_form(lane, group='BiplotPlot')
+        self.add(QCheckBox, lane, Column.Left, row=3, name='Normalize',
+                 text='normalize')
+        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
 
-    def plot_t_square_q(self, lane):
-        pass
+    def build_scores_and_loadings_plot_form(self, lane):
+        self.xy_radio_ab_spin_form(lane, group='ScoresAndLoadingsPlot')
+        self.add(QCheckBox, lane, Column.Left, row=3, name='Normalize',
+                 text='normalize')
+        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
 
-    def plot_residuals_leverage(self, lane):
-        pass
+    def build_calculated_y_plot_form(self, lane):
+        self.only_plot_button_form(lane)
 
-    def plot_regression_coefficients(self, lane):
-        pass
+    def build_predicted_y_plot_form(self, lane):
+        self.only_plot_button_form(lane)
+
+    def build_t_square_q_plot_form(self, lane):
+        self.only_plot_button_form(lane)
+
+    def build_residuals_leverage_plot_form(self, lane):
+        self.only_plot_button_form(lane)
+
+    def build_regression_coefficients_plot_form(self, lane):
+        self.only_plot_button_form(lane)
+
+    def draw_scree_plot(self, lane, rows=1, cols=1, pos=1):
+        plot.scree(self.figure(lane).add_subplot(rows, cols, pos),
+                   x=self.x_radio_button(lane).isChecked(),
+                   y=self.y_radio_button(lane).isChecked())
+
+    def draw_explained_variance_plot(self, lane, rows=1, cols=1, pos=1):
+        plot.cumulative_explained_variance(
+            self.figure(lane).add_subplot(rows, cols, pos),
+            x=self.x_radio_button(lane).isChecked(),
+            y=self.y_radio_button(lane).isChecked())
+
+    def draw_inner_relations_plot(self, lane, rows=1, cols=1, pos=1):
+        plot.inner_relations(ax=self.figure(lane).add_subplot(rows, cols, pos),
+                             num=self.lvs_spin_box(lane).value())
+
+    def draw_scores_plot(self, lane, rows=1, cols=1, pos=1):
+        normalize = self.normalize_check_box(lane).checkState() == Qt.Checked
+        plot.scores(self.figure(lane).add_subplot(rows, cols, pos),
+                    lv_a=self.lva_spin_box(lane).value(),
+                    lv_b=self.lvb_spin_box(lane).value(),
+                    x=self.x_radio_button(lane).isChecked(),
+                    y=self.y_radio_button(lane).isChecked(),
+                    normalize=normalize)
+
+    def draw_loadings_plot(self, lane, rows=1, cols=1, pos=1):
+        plot.loadings(self.figure(lane).add_subplot(rows, cols, pos),
+                      lv_a=self.lva_spin_box(lane).value(),
+                      lv_b=self.lvb_spin_box(lane).value(),
+                      x=self.x_radio_button(lane).isChecked(),
+                      y=self.y_radio_button(lane).isChecked())
+
+    def draw_biplot_plot(self, lane, rows=1, cols=1, pos=1):
+        normalize = self.normalize_check_box(lane).checkState() == Qt.Checked
+        plot.biplot(self.figure(lane).add_subplot(rows, cols, pos),
+                    lv_a=self.lva_spin_box(lane).value(),
+                    lv_b=self.lvb_spin_box(lane).value(),
+                    x=self.x_radio_button(lane).isChecked(),
+                    y=self.y_radio_button(lane).isChecked(),
+                    normalize=normalize)
+
+    def draw_scores_and_loadings_plot(self, lane):
+        self.draw_scores_plot(lane, rows=2, cols=1, pos=1)
+        self.draw_loadings_plot(lane, rows=2, cols=1, pos=2)
+
+    def draw_calculated_y_plot(self, lane, rows=1, cols=1, pos=1):
+        plot.calculated_y(self.figure(lane).add_subplot(rows, cols, pos))
+
+    def draw_predicted_y_plot(self, lane, rows=1, cols=1, pos=1):
+        plot.y_predicted(self.figure(lane).add_subplot(rows, cols, pos))
+
+    def draw_t_square_q_plot(self, lane, rows=1, cols=1, pos=1):
+        plot.t_square_q(self.figure(lane).add_subplot(rows, cols, pos))
+
+    def draw_residuals_leverage_plot(self, lane, rows=1, cols=1, pos=1):
+        plot.y_residuals_leverage(
+            self.figure(lane).add_subplot(rows, cols, pos))
+
+    def draw_regression_coefficients_plot(self, lane, rows=1, cols=1, pos=1):
+        plot.regression_coefficients(
+            self.figure(lane).add_subplot(rows, cols, pos))
 
     def new_model(self):
         """Initialize plsda_model attribute from csv."""
