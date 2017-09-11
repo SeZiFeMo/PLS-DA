@@ -317,8 +317,91 @@ class UserInterface(object):
         QMetaObject.connectSlotsByName(main_window)
         self.connect_handlers()
 
-        self.plsda_model = None
         self.current_mode = 'start'
+
+    @property
+    def plsda_model(self):
+        """Return reference to object of model.Model type or None."""
+        return getattr(self, '_plsda_model', None)
+
+    @plsda_model.setter
+    def plsda_model(self, value):
+        """Wrap update of plot.MODEL reference.
+
+           Raises TypeError on bad value type.
+        """
+        # create attribute if not yet existent
+        self._plsda_model = getattr(self, '_plsda_model', None)
+
+        if not isinstance(value, model.Model) and value is not None:
+            raise TypeError("value assigned to self.plsda_model is not an "
+                            "instance of model.Model ({})".type(value))
+
+        self._plsda_model = value
+        plot.update_global_model(value)
+
+    @property
+    def train_set(self):
+        """Return reference to object of model.TrainingSet type or None."""
+        return getattr(self, '_train_set', None)
+
+    @train_set.setter
+    def train_set(self, value):
+        """Wrap update of plot.TRAIN_SET reference.
+
+           Raises TypeError on bad value type.
+        """
+        # create attribute if not yet existent
+        self._train_set = getattr(self, '_train_set', None)
+
+        if not isinstance(value, model.TrainingSet) and value is not None:
+            raise TypeError("value assigned to self.train_set is not an "
+                            "instance of model.TrainingSet ({})".type(value))
+
+        self._train_set = value
+        plot.update_global_train_set(value)
+
+    @property
+    def test_set(self):
+        """Return reference to object of model.TestSet type or None."""
+        return getattr(self, '_test_set', None)
+
+    @test_set.setter
+    def test_set(self, value):
+        """Wrap update of plot.TEST_SET reference.
+
+           Raises TypeError on bad value type.
+        """
+        # create attribute if not yet existent
+        self._test_set = getattr(self, '_test_set', None)
+
+        if not isinstance(value, model.TestSet) and value is not None:
+            raise TypeError("value assigned to self.test_set is not an "
+                            "instance of model.TestSet ({})".type(value))
+
+        self._test_set = value
+        plot.update_global_test_set(value)
+
+    @property
+    def stats(self):
+        """Return reference to object of model.Statistics type or None."""
+        return getattr(self, '_stats', None)
+
+    @stats.setter
+    def stats(self, value):
+        """Wrap update of plot.STATS reference.
+
+           Raises TypeError on bad value type.
+        """
+        # create attribute if not yet existent
+        self._stats = getattr(self, '_stats', None)
+
+        if not isinstance(value, model.Statistics) and value is not None:
+            raise TypeError("value assigned to self.stats is not an "
+                            "instance of model.Statistics ({})".type(value))
+
+        self._stats = value
+        plot.update_global_statistics(value)
 
     @property
     def drop_down_menu(self):
@@ -869,9 +952,6 @@ class UserInterface(object):
             return
 
         self.train_set, self.plsda_model = train_set, plsda_model
-
-        plot.update_global_train_set(self.train_set)
-        plot.update_global_model(self.plsda_model)
 
         IO.Log.debug('Model created correctly')
         self.current_mode = 'model'
