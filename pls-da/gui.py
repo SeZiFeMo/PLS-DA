@@ -999,23 +999,62 @@ class UserInterface(object):
         self.LoadModelAction.triggered.connect(self.load_model)
 
         self.ExportMatricesAction.triggered.connect(
-                lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
+            lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
 
         self.QuitAction.triggered.connect(self.quit)
 
         self.ModelAction.triggered.connect(
-                lambda: setattr(self, 'current_mode', Mode.Model))
+            lambda: setattr(self, 'current_mode', Mode.Model))
         self.CrossValidationAction.triggered.connect(
-                lambda: setattr(self, 'current_mode', Mode.CV))
+            lambda: setattr(self, 'current_mode', Mode.CV))
         self.PredictionAction.triggered.connect(
-                lambda: setattr(self, 'current_mode', Mode.Prediction))
+            lambda: setattr(self, 'current_mode', Mode.Prediction))
 
+        self.AboutThisProjectAction.triggered.connect(
+            lambda: self.about_this_project())
         self.AboutQtAction.triggered.connect(QApplication.aboutQt)
 
         self.LeftComboBox.currentIndexChanged.connect(
-                lambda idx: self.call_plot_method(Lane.Left, index=idx))
+            lambda idx: self.call_plot_method(Lane.Left, index=idx))
         self.CentralComboBox.currentTextChanged.connect(
-                lambda txt: self.call_plot_method(Lane.Central, text=txt))
+            lambda txt: self.call_plot_method(Lane.Central, text=txt))
+
+    def about_this_project(self):
+        dialog = QMessageBox(self.MainWindow)
+        dialog.setObjectName('AboutThisProjectMessageBox')
+        dialog.setWindowTitle('About this project')
+        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.setIcon(QMessageBox.NoIcon)
+        dialog.setTextFormat(Qt.RichText)  # to use HTML
+        dialog.setText(
+            '<p align="left">'
+            '<big><b>About this project</b></big>'
+            '<br><br>'
+            'This project has been developed for the "Processing of '
+            'Scientific Data" exam at the university of Modena and Reggio '
+            'Emilia (Italy).'
+            '<br><br>'
+            'Its main purpose is to conduct a "Partial least squares '
+            'Discriminant Analysis" (PLS-DA) on a given dataset.'
+            '<br><br>'
+            '<br><br>'
+            'Copyright (C) 2017  Serena Ziviani, Federico Motta'
+            '<br><br>'
+            'This program is free software: you can redistribute it and/or '
+            'modify it under the terms of the GNU General Public License as '
+            'published by the Free Software Foundation, either version 3 of '
+            'the License, or any later version.'
+            '<br><br>'
+            'This program is distributed in the hope that it will be useful, '
+            'but WITHOUT ANY WARRANTY; without even the implied warranty of '
+            'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. '
+            'See the GNU General Public License for more details.'
+            '<br><br>'
+            'You should have received a copy of the GNU General Public '
+            'License along with this program. '
+            'If not, see <a href="http://www.gnu.org/licenses/">'
+            'http://www.gnu.org/licenses/</a>.</p>')
+        dialog.exec()
 
     def quit(self):
         """Ask for confirmation with a popup and quit returning 0."""
