@@ -94,7 +94,7 @@ def _popup_choose(parent, filter_csv=False,
     if _file:
         dialog.setFileMode(QFileDialog.ExistingFile)
         if filter_csv:
-            dialog.setNameFilter("Comma-separated values files (*.csv *.txt)")
+            dialog.setNameFilter('Comma-separated values files (*.csv *.txt)')
     else:  # _directory
         dialog.setFileMode(QFileDialog.Directory)
         dialog.setOption(QFileDialog.ShowDirsOnly)
@@ -191,6 +191,25 @@ class Lane(enum.Enum):
         return self.value
 
 
+class Mode(enum.Enum):
+    """Enumerate to identify the 4 finite-states of the application."""
+
+    Start = 'start'
+    Model = 'model'
+    Crossvalidation = 'cross-validation'
+    CV = 'cross-validation'  # useful alias of Mode.Crossvalidation
+    Prediction = 'prediction'
+
+    def __eq__(self, other):
+        """Comparisons done with == and != operators will be case insensitive.
+        """
+        return self.value.lower() == other.value.lower()
+
+    def __str__(self):
+        """The returned string is ready to be the CurrentModeLabel text."""
+        return self.value.capitalize() + ' mode'
+
+
 class Widget(enum.Enum):
     """Enumerate to identify the kind of QWigdet to put in a QScrollArea."""
 
@@ -258,8 +277,7 @@ class UserInterface(object):
         layout.setSpacing(5)
 
         current_mode_label = self.set_attr(
-                'CurrentMode', QLabel, parent=parent,
-                size=(144, 22, 394, 22))
+            'CurrentMode', QLabel, parent=parent, size=(144, 22, 394, 22))
         current_mode_label.setLineWidth(1)
         current_mode_label.setTextFormat(Qt.AutoText)
         current_mode_label.setAlignment(Qt.AlignCenter)
@@ -317,7 +335,7 @@ class UserInterface(object):
         QMetaObject.connectSlotsByName(main_window)
         self.connect_handlers()
 
-        self.current_mode = 'start'
+        self.current_mode = Mode.Start
 
     @property
     def plsda_model(self):
@@ -334,8 +352,8 @@ class UserInterface(object):
         self._plsda_model = getattr(self, '_plsda_model', None)
 
         if not isinstance(value, model.Model) and value is not None:
-            raise TypeError("value assigned to self.plsda_model is not an "
-                            "instance of model.Model ({})".type(value))
+            raise TypeError('value assigned to self.plsda_model is not an '
+                            'instance of model.Model ({})'.format(type(value)))
 
         self._plsda_model = value
         plot.update_global_model(value)
@@ -355,8 +373,9 @@ class UserInterface(object):
         self._train_set = getattr(self, '_train_set', None)
 
         if not isinstance(value, model.TrainingSet) and value is not None:
-            raise TypeError("value assigned to self.train_set is not an "
-                            "instance of model.TrainingSet ({})".type(value))
+            raise TypeError('value assigned to self.train_set is not an '
+                            'instance of model.TrainingSet '
+                            '({})'.format(type(value)))
 
         self._train_set = value
         plot.update_global_train_set(value)
@@ -376,8 +395,9 @@ class UserInterface(object):
         self._test_set = getattr(self, '_test_set', None)
 
         if not isinstance(value, model.TestSet) and value is not None:
-            raise TypeError("value assigned to self.test_set is not an "
-                            "instance of model.TestSet ({})".type(value))
+            raise TypeError('value assigned to self.test_set is not an '
+                            'instance of model.TestSet '
+                            '({})'.format(type(value)))
 
         self._test_set = value
         plot.update_global_test_set(value)
@@ -397,8 +417,9 @@ class UserInterface(object):
         self._stats = getattr(self, '_stats', None)
 
         if not isinstance(value, model.Statistics) and value is not None:
-            raise TypeError("value assigned to self.stats is not an "
-                            "instance of model.Statistics ({})".type(value))
+            raise TypeError('value assigned to self.stats is not an '
+                            'instance of model.Statistics '
+                            '({})'.format(type(value)))
 
         self._stats = value
         plot.update_global_statistics(value)
@@ -497,59 +518,42 @@ class UserInterface(object):
 
     @property
     def current_mode(self):
-        """Get value of CurrentModeLabel."""
-        return self.CurrentModeLabel.text()
+        """Return reference to gui.Mode object."""
+        return self._current_mode
 
     @current_mode.setter
     def current_mode(self, value):
-        """Set value of CurrentModeLabel and change."""
-        if not isinstance(value, str) or \
-            value.lower() not in ('start', 'cv', 'crossvalidation', 'model',
-                                  'prediction'):
-            IO.Log.error('Could not change current mode to '
-                         '{} !'.format(repr(value)))
-            return
-        self._current_mode = value.lower()
-        if value.lower() == 'cv':
-            self._current_mode = 'crossvalidation'
+        """Change internal state of current_mode and text of CurrentModeLabel.
 
-        IO.Log.debug('Current mode changed to: ' + self._current_mode.upper())
-        self.CurrentModeLabel.setText(
-                self._current_mode.capitalize().replace('sv', 'sV') + ' mode')
+           Raises TypeError on bad value type.
+        """
+        if not isinstance(value, Mode):
+            raise TypeError('value assigned to self.current_mode is not '
+                            'an instance of gui.Mode ({})'.format(type(value)))
 
-        model_flag, cv_flag, pred_flag = False, False, False
-        if self._current_mode == 'crossvalidation':
-            model_flag, pred_flag = True, True
-        elif self._current_mode == 'model':
-            cv_flag, pred_flag = True, True
-        elif self._current_mode == 'prediction':
-            model_flag, cv_flag = True, True
+        # apply change in internal state and in text of the label
+        self._current_mode = value
+        self.CurrentModeLabel.setText(str(self.current_mode))
+        IO.Log.debug('Current mode changed to: ' + str(self.current_mode))
 
-        self.ModelAction.setEnabled(model_flag)
-        self.CrossValidationAction.setEnabled(cv_flag)
-        self.PredictionAction.setEnabled(pred_flag)
+        self.ModelAction.setEnabled(self.current_mode != Mode.Model)
+        self.CrossValidationAction.setEnabled(self.current_mode != Mode.CV)
+        self.PredictionAction.setEnabled(self.current_mode != Mode.Prediction)
 
-        if self._current_mode == 'start':
-            self.SaveModelAction.setEnabled(False)
-            self.ExportMatricesAction.setEnabled(False)
-
-            self.LeftComboBox.setEnabled(False)
-            self.CentralComboBox.setEnabled(False)
-
+        if self.current_mode == Mode.Start:
             for lane in (Lane.Left, Lane.Central):
                 self.reset_widget_and_layout(Widget.Form, lane)
                 self.add(QLabel, lane, Column.Both, row=0, name='Hint',
-                         text='Several plots are available in the above '
-                              'dropdown menu.\n'
+                         text='↑ Several plots are available in the above '
+                              'dropdown menu. ↑\n'
                               '(if you create or load a model before)',
                          label_alignment=Qt.AlignHCenter,
                          policy=Policy.Expanding, size=(170, 520, 3610, 4240))
-        else:
-            self.SaveModelAction.setEnabled(True)
-            self.ExportMatricesAction.setEnabled(True)
 
-            self.LeftComboBox.setEnabled(True)
-            self.CentralComboBox.setEnabled(True)
+        self.SaveModelAction.setEnabled(self.current_mode != Mode.Start)
+        self.ExportMatricesAction.setEnabled(self.current_mode != Mode.Start)
+        self.LeftComboBox.setEnabled(self.current_mode != Mode.Start)
+        self.CentralComboBox.setEnabled(self.current_mode != Mode.Start)
 
 
     @property
@@ -621,9 +625,9 @@ class UserInterface(object):
             l.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
             l.setLabelAlignment(Qt.AlignRight)  # as in macOS Aqua guidelines
         else:
-            assert widget is Widget.VBox, "Unexpected widget type in " \
-                                          "reset_widget_and_layout() " \
-                                          "({})".format(type(widget))
+            assert widget is Widget.VBox, 'Unexpected widget type in ' \
+                                          'reset_widget_and_layout() ' \
+                                          '({})'.format(type(widget))
             l = self.set_attr(str(lane), QVBoxLayout, parent=w, policy=None)
 
             # create back button
@@ -954,7 +958,7 @@ class UserInterface(object):
         self.train_set, self.plsda_model = train_set, plsda_model
 
         IO.Log.debug('Model created correctly')
-        self.current_mode = 'model'
+        self.current_mode = Mode.Model
 
     def save_model(self):
         export_dir = popup_choose_output_directory(parent=self.MainWindow)
@@ -987,7 +991,7 @@ class UserInterface(object):
             return
 
         IO.Log.debug('Model loaded correctly')
-        self.current_mode = 'model'
+        self.current_mode = Mode.Model
 
     def connect_handlers(self):
         self.NewModelAction.triggered.connect(self.new_model)
@@ -1000,11 +1004,11 @@ class UserInterface(object):
         self.QuitAction.triggered.connect(self.quit)
 
         self.ModelAction.triggered.connect(
-                lambda: setattr(self, 'current_mode', 'model'))
+                lambda: setattr(self, 'current_mode', Mode.Model))
         self.CrossValidationAction.triggered.connect(
-                lambda: setattr(self, 'current_mode', 'cv'))
+                lambda: setattr(self, 'current_mode', Mode.CV))
         self.PredictionAction.triggered.connect(
-                lambda: setattr(self, 'current_mode', 'prediction'))
+                lambda: setattr(self, 'current_mode', Mode.Prediction))
 
         self.AboutQtAction.triggered.connect(QApplication.aboutQt)
 
