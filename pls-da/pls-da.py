@@ -53,10 +53,9 @@ fig = plt.figure(tight_layout=True)
 # plot.scree(ax, y=True)
 plot.loadings(fig.add_subplot(2, 2, 1), 0, 1, x=True)
 plot.biplot(fig.add_subplot(2, 2, 2), 0, 1, x=True)
-plot.MODEL.nr_lv = 7
-plot.data(fig.add_subplot(2, 2, 4))
 plot.MODEL.nr_lv = 4
-plot.cumulative_explained_variance(fig.add_subplot(2, 2, 3), x=True)
+plot.t_square_q(fig.add_subplot(2, 2, 4))
+plot.q_over_leverage(fig.add_subplot(2, 2, 3))
 plt.show()
 
 print(test_set.categories)
