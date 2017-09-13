@@ -306,24 +306,24 @@ class UserInterface(object):
 
         self.populate_right_vbox_widgets_and_layouts()
         self.populate_right_model_widget(
-            #  model_info=str('X-Block: ??? x ???\n'
-            #                 'Y-Block: ??? x ???\n'
-            #                 'RMSEC: ???\n'
-            #                 'Bias: ???\n'
-            #                 'R^2: ???')
+            model_info=str('X-Block: ??? x ???\n'
+                           'Y-Block: ??? x ???\n'
+                           'RMSEC: ???\n'
+                           'Bias: ???\n'
+                           'R^2: ???')
             )
         self.populate_right_cv_widget(
-            #  cv_info=str('Samples: ???\n'
-            #              'RMSECV: ???\n'
-            #              'CV-Bias: ???\n'
-            #              'R^2 CV: ???')
+            cv_info=str('Samples: ???\n'
+                        'RMSECV: ???\n'
+                        'CV-Bias: ???\n'
+                        'R^2 CV: ???')
             )
         self.populate_right_prediction_widget(
-            #  prediction_info=str('X-Block: ??? x ???\n'
-            #                      'Y-Block: ??? x ???\n'
-            #                      'RMSEP: ???\n'
-            #                      'Pred-Bias: ???\n'
-            #                      'R^2 Pred: ???')
+            prediction_info=str('X-Block: ??? x ???\n'
+                                'Y-Block: ??? x ???\n'
+                                'RMSEP: ???\n'
+                                'Pred-Bias: ???\n'
+                                'R^2 Pred: ???')
             )
 
         top_menu_bar = self.set_attr('Top', QMenuBar, parent=main_window,
@@ -665,6 +665,15 @@ class UserInterface(object):
                  text=model_info, label_alignment=Qt.AlignLeft,
                  parent_widget=parent)
 
+        self.add(QLabel, lane, Column.Both, row=3, name='Preprocessing',
+                 text='Preprocessing:', label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+        t = self.add(QComboBox, lane, Column.Both, row=4,
+                     name='Preprocessing', parent_widget=parent)
+        t.addItem('Autoscaling')
+        t.addItem('Centering')
+        t.addItem('Normalizing')
+        t.addItem('None')
 
     def populate_right_cv_widget(self, cv_info=''):
         lane, parent = Lane.Right, self.right_widget(Mode.CV)
