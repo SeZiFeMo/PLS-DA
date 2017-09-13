@@ -285,30 +285,46 @@ class UserInterface(object):
         current_mode_label.setFrameShape(QFrame.StyledPanel)
         layout.addWidget(current_mode_label, 0, 0, 1, 1)
 
-        scroll_area = self.set_attr(lane, QScrollArea, parent=parent,
-                                    policy=None, size=(144, 547, 394, 4272))
-        scroll_area.setWidgetResizable(True)
-        layout.addWidget(scroll_area, 1, 0, 1, 1)
+        right_scroll_area = self.set_attr(
+            lane, QScrollArea, parent=parent,
+            policy=None, size=(144, 547, 394, 4272))
+        layout.addWidget(right_scroll_area, 1, 0, 1, 1)
 
-        details_grid_widget = self.set_attr(str(lane) + 'DetailsGrid', QWidget,
-                                            size=(138, 534, 388, 4259))
-        scroll_area.setWidget(details_grid_widget)
-        details_grid_widget.setGeometry(QRect(0, 0, 189, 565))
+        right_vbox_widget = self.set_attr(
+            str(lane) + str(Widget.VBox), QWidget, parent=right_scroll_area,
+            size=(138, 534, 388, 4259))
+        right_vbox_widget.setGeometry(QRect(0, 0, 138, 534))
+        right_vbox_widget.setLayoutDirection(Qt.LayoutDirectionAuto)
+        right_scroll_area.setWidget(right_vbox_widget)
+        right_scroll_area.setWidgetResizable(True)
 
-        details_layout = self.set_attr(str(lane) + 'Details', QGridLayout,
-                                       parent=details_grid_widget, policy=None)
-        details_layout.setContentsMargins(3, 3, 3, 3)
-        details_layout.setSpacing(5)
+        right_vbox_layout = self.set_attr(
+            str(lane), QVBoxLayout, parent=right_vbox_widget, policy=None)
+        right_vbox_layout.setSizeConstraint(QLayout.SetMaximumSize)
+        right_vbox_layout.setContentsMargins(4, 4, 4, 4)
+        right_vbox_layout.setSpacing(4)
 
-        details_label = self.set_attr(
-                'Details', QLabel, parent=details_grid_widget,
-                size=(138, 534, 388, 4259))
-        details_layout.addWidget(details_label, 0, 0, 1, 1)
-        details_label.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
-        details_label.setTextInteractionFlags(Qt.TextSelectableByKeyboard
-                                              | Qt.TextSelectableByMouse)
-        details_label.setWordWrap(True)
-        self.details_label = 'Details'
+        self.populate_right_vbox_widgets_and_layouts()
+        self.populate_right_model_widget(
+            #  model_info=str('X-Block: ??? x ???\n'
+            #                 'Y-Block: ??? x ???\n'
+            #                 'RMSEC: ???\n'
+            #                 'Bias: ???\n'
+            #                 'R^2: ???')
+            )
+        self.populate_right_cv_widget(
+            #  cv_info=str('Samples: ???\n'
+            #              'RMSECV: ???\n'
+            #              'CV-Bias: ???\n'
+            #              'R^2 CV: ???')
+            )
+        self.populate_right_prediction_widget(
+            #  prediction_info=str('X-Block: ??? x ???\n'
+            #                      'Y-Block: ??? x ???\n'
+            #                      'RMSEP: ???\n'
+            #                      'Pred-Bias: ???\n'
+            #                      'R^2 Pred: ???')
+            )
 
         top_menu_bar = self.set_attr('Top', QMenuBar, parent=main_window,
                                      policy=None, size=(800, 20, 7680, 20))
@@ -480,11 +496,25 @@ class UserInterface(object):
     def figure(self, lane):
         return getattr(self, str(lane) + 'Figure')
 
-    def form_layout(self, lane):
-        return getattr(self, str(lane) + 'FormLayout')
+    def form_layout(self, lane, kind=None):
+        if lane == Lane.Right and not isinstance(kind, Mode):
+            raise TypeError(str('Please set "kind" argument in form_layout() '
+                                'when lane is Lane.Right'))
+        elif lane == Lane.Right:
+            name = kind.value.capitalize() if kind != Mode.CV else 'CV'
+            return getattr(self, str(lane) + name + 'FormLayout')
+        else:
+            return getattr(self, str(lane) + 'FormLayout')
 
-    def form_widget(self, lane):
-        return getattr(self, str(lane) + 'FormWidget')
+    def form_widget(self, lane, kind=None):
+        if lane == Lane.Right and not isinstance(kind, Mode):
+            raise TypeError(str('Please set "kind" argument in form_widget() '
+                                'when lane is Lane.Right'))
+        elif lane == Lane.Right:
+            name = kind.value.capitalize() if kind != Mode.CV else 'CV'
+            return getattr(self, str(lane) + name + 'FormWidget')
+        else:
+            return getattr(self, str(lane) + 'FormWidget')
 
     def lva_spin_box(self, lane):
         return getattr(self, str(lane) + 'LVaSpinBox')
@@ -500,6 +530,20 @@ class UserInterface(object):
 
     def plot_button(self, lane):
         return getattr(self, str(lane) + 'PlotPushButton')
+
+    def right_layout(self, kind):
+        if not isinstance(kind, Mode):
+            raise TypeError('kind parameter in right_layout() is not '
+                            'instance of Mode ({})'.format(type(kind)))
+        name = kind.value.Capitalize() if kind != Mode.CV else 'CV'
+        return getattr(self, str(Lane.Right) + name + 'FormLayout')
+
+    def right_widget(self, kind):
+        if not isinstance(kind, Mode):
+            raise TypeError('kind parameter in right_widget() is not '
+                            'instance of Mode ({})'.format(type(kind)))
+        name = kind.value.capitalize() if kind != Mode.CV else 'CV'
+        return getattr(self, str(Lane.Right) + name + 'FormWidget')
 
     def scroll_area(self, lane):
         return getattr(self, str(lane) + 'ScrollArea')
@@ -556,16 +600,6 @@ class UserInterface(object):
         self.CentralComboBox.setEnabled(self.current_mode != Mode.Start)
 
 
-    @property
-    def details_label(self):
-        """Get text of DetailsLabel."""
-        return self.DetailsLabel.text()
-
-    @details_label.setter
-    def details_label(self, value):
-        """Set text of DetailsLabel."""
-        return self.DetailsLabel.setText(str(value))
-
     def _replace_current_model(self):
         """Show a popup to ask if plsda_model should be replaced."""
         if self.plsda_model is None:
@@ -581,6 +615,84 @@ class UserInterface(object):
         else:
             IO.Log.debug('NO (not replacing current model)')
             return False
+
+    def populate_right_vbox_widgets_and_layouts(self):
+        lane = Lane.Right
+
+        # DetailsLabel
+        dl = self.set_attr('Details', QLabel, parent=self.vbox_widget(lane),
+                           size=(108, 20, 358, 20))
+        dl.setTextInteractionFlags(Qt.TextSelectableByKeyboard
+                                   | Qt.TextSelectableByMouse)
+        dl.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        dl.setText('Details')
+        dl.setWordWrap(True)
+        self.vbox_layout(lane).addWidget(dl)
+
+        # Right [ Model | CV | Prediction ] Form [ Widget | Layout ]
+        for kind in (Mode.Model, Mode.CV, Mode.Prediction):
+            name = kind.value.capitalize() if kind != Mode.CV else 'CV'
+
+            w = self.set_attr(str(lane) + name + str(Widget.Form), QWidget,
+                              parent=self.vbox_widget(lane),
+                              size=(108, 164, 358, 1406))
+            l = self.set_attr(str(lane) + name, QFormLayout,
+                              parent=self.right_widget(kind), policy=None)
+
+            w.setGeometry(QRect(0, 0, 108, 164))
+            w.setLayoutDirection(Qt.LeftToRight)
+            l.setRowWrapPolicy(QFormLayout.DontWrapRows)
+            l.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
+            l.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
+            l.setLabelAlignment(Qt.AlignLeft)
+            l.setSizeConstraint(QLayout.SetMaximumSize)
+            l.setSpacing(1)
+            self.vbox_layout(lane).addWidget(w)
+
+    def populate_right_model_widget(self, model_info=''):
+        lane, parent = Lane.Right, self.right_widget(Mode.Model)
+
+        self.add(QLabel, lane, Column.Both, row=0, name='Model', text='Model:',
+                 label_alignment=Qt.AlignLeft, parent_widget=parent)
+
+        self.add(QLabel, lane, Column.Left, row=1, name='LVs', text='LVs:',
+                 word_wrap=False, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+        self.add(QSpinBox, lane, Column.Right, row=1, name='LVs',
+                 parent_widget=parent, size=(25, 25, 170, 520))
+
+        self.add(QLabel, lane, Column.Both, row=2, name='ModelInfo',
+                 text=model_info, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+
+
+    def populate_right_cv_widget(self, cv_info=''):
+        lane, parent = Lane.Right, self.right_widget(Mode.CV)
+
+        self.add(QLabel, lane, Column.Both, row=0, name='CV',
+                 text='Cross-validation:', label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+
+        self.add(QLabel, lane, Column.Left, row=1, name='Splits',
+                 text='Splits:', word_wrap=False, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+        self.add(QSpinBox, lane, Column.Right, row=1, name='Splits',
+                 parent_widget=parent, size=(25, 25, 170, 520))
+
+        self.add(QLabel, lane, Column.Both, row=2, name='CVInfo',
+                 text=cv_info, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+
+    def populate_right_prediction_widget(self, prediction_info=''):
+        lane, parent = Lane.Right, self.right_widget(Mode.Prediction)
+
+        self.add(QLabel, lane, Column.Both, row=0, name='Prediction',
+                 text='Prediction:', label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+
+        self.add(QLabel, lane, Column.Both, row=1, name='PredictionInfo',
+                 text=prediction_info, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
 
     def reset_widget_and_layout(self, widget, lane, show=True):
         """Reset the [Left|Central][Form|VBox] Widget and Layout.
@@ -693,10 +805,27 @@ class UserInterface(object):
 
     def add(self, widget, lane, column, row, name, text=None, word_wrap=True,
             text_format=Qt.AutoText, label_alignment=Qt.AlignRight,
-            group_name=None, minimum=1, maximum=99, policy=Policy.Preferred,
+            group_name=None, minimum=1, maximum=99, parent_widget=None,
+            parent_type=None, policy=Policy.Preferred,
             size=(70, 25, 170, 520)):
         """Add to the specified lane the widget in (row, column) position."""
-        parent_widget = self.form_widget(lane)
+        if parent_widget is None:
+            if lane == Lane.Right and \
+               (parent_type is None or not isinstance(parent_type, Mode)):
+                raise TypeError('Please specify at least "parent_widget" or '
+                                '"parent_type" (if lane is right) in '
+                                'gui.UserInterface.add() method !')
+            else:
+                parent_widget = self.form_widget(lane, parent_type)
+        if lane == Lane.Right:
+            parent_name = parent_widget.objectName().lstrip('Right')
+            parent_name = parent_name.rstrip('FormWidget')
+            if parent_name != 'CV':
+                parent_type = getattr(Mode, parent_name)
+            else:
+                parent_type = Mode.CV
+            name += parent_name
+
         new_widget = self.set_attr(str(lane) + name, widget,
                                    parent=parent_widget,
                                    policy=policy, size=size)
@@ -705,6 +834,8 @@ class UserInterface(object):
             new_widget.setTextFormat(text_format)
             new_widget.setAlignment(label_alignment)
             new_widget.setWordWrap(word_wrap)
+            new_widget.setTextInteractionFlags(Qt.TextSelectableByKeyboard
+                                               | Qt.TextSelectableByMouse)
         elif widget == QRadioButton:
             if not group_name.endswith('ButtonGroup'):
                 group_name += 'ButtonGroup'
@@ -739,7 +870,7 @@ class UserInterface(object):
         if widget in (QCheckBox, QLabel, QPushButton, QRadioButton):
             new_widget.setText(str(text if text is not None else str(name)))
 
-        layout = self.form_layout(lane)
+        layout = self.form_layout(lane, parent_type)
         layout.setWidget(row, column.value, new_widget)
         return new_widget
 
