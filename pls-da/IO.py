@@ -5,12 +5,25 @@ import logging
 import numpy as np
 import utility
 import yaml
+import os
 
 
 def dump(plsda_model, workspace):
-    """Creates in workspace directory a csv file for each plsda_model matrix.
+    """Save on CSV the informations necessary to rebuild the model.
+
+    Create a workspace directory containing all the CSV files necessary to
+    rebuild the pls-da model.
     """
     Log.error('Not yet implemented IO.dump(plsda_model, workspace)')
+
+
+def save_matrix(matrix, header, filename):
+    """Save on CSV the specified matrix."""
+    filename = os.path.abspath(filename)
+    folder = os.path.split(filename)[0]
+    if not os.path.isdir(folder):
+        raise FileNotFoundError('Directory {} does not exist'.format(folder))
+    np.savetxt(filename, matrix, '%s', ';', header=header)
 
 
 def load(workspace):

@@ -58,5 +58,7 @@ plot.t_square_q(fig.add_subplot(2, 2, 4))
 plot.q_over_leverage(fig.add_subplot(2, 2, 3))
 plt.show()
 
+IO.save_matrix(nipals_model.X, ';'.join(['X', str(plot.MODEL.nr_lv),
+                                        str(plot.MODEL.X.shape)]), 'temp_file.csv')
 print(test_set.categories)
 
