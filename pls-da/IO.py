@@ -7,17 +7,31 @@ import utility
 import yaml
 import os
 
+import plot
+import model
+
 
 def dump(plsda_model, workspace):
-    """Save on CSV the informations necessary to rebuild the model.
+    """Save the informations necessary to rebuild the model."""
+    folder = os.path.abspath(workspace)
+    if not os.path.isdir(folder):
+        raise FileNotFoundError('Directory {} does not exist'.format(folder))
 
-    Create a workspace directory containing all the CSV files necessary to
-    rebuild the pls-da model.
-    """
-    Log.error('Not yet implemented IO.dump(plsda_model, workspace)')
+    model = plot.MODEL
+    train_set = plot.TRAIN_SET
+
+    matrix = train_set.body.copy()
+    matrix.insert(0, train_set.header)
+    save_matrix(matrix, filename=os.path.join(folder, 'dataset.csv'))
+
+    data = {'nr_lv': model.nr_lv, 'centered': train_set.centered,
+            'normalized': train_set.normalized,
+            'split': '???', 'sample': '???'}
+    with open(os.path.join(folder, 'data.yaml'), 'w') as f:
+        yaml.safe_dump(data, f)
 
 
-def save_matrix(matrix, header, filename):
+def save_matrix(matrix, filename, header=''):
     """Save on CSV the specified matrix."""
     filename = os.path.abspath(filename)
     folder = os.path.split(filename)[0]
@@ -27,10 +41,28 @@ def save_matrix(matrix, header, filename):
 
 
 def load(workspace):
-    """Return a plsda_model from csv file in workspace.
-    """
-    Log.error('Not yet implemented IO.load(workspace)')
-    return None
+    """Return a plsda_model from csv file in workspace."""
+    folder = os.path.abspath(workspace)
+    if not os.path.isdir(folder):
+        raise FileNotFoundError('Directory {} does not exist'.format(folder))
+
+    with open(os.path.join(folder, 'data.yaml'), 'r') as f:
+        data = yaml.safe_load(f)
+
+    dataset = model.TrainingSet(os.path.join(folder, 'dataset.csv'))
+    if data['centered']:
+        dataset.center()
+    if data['normalized']:
+        dataset.normalize()
+
+    nipals_model = model.nipals(dataset.x, dataset.y)
+    nipals_model.nr_lv = data['nr_lv']
+
+
+    plot.TRAIN_SET = dataset
+    plot.MODEL = nipals_model
+
+    return nipals_model
 
 
 def mat2str(data, h_bar='-', v_bar='|', join='+'):

@@ -20,29 +20,29 @@ class Dataset(object):
 
            self.axis        axis to compute std and mean
         """
-        if input_file is None:
-            input_file = utility.CLI.args().input_file
-        self.header, body = IO.CSV.parse(input_file)
-        IO.Log.debug('Successfully parsed {} input file.'.format(input_file))
+        if input_file is not None:
+            self.header, body = IO.CSV.parse(input_file)
+            IO.Log.debug('Successfully parsed file {}.'.format(input_file))
 
-        self.categorical_y = [row[0] for row in body]
-        self.categories = utility.get_unique_list(self.categorical_y)
+            self.body = body
+            self.categorical_y = [row[0] for row in body]
+            self.categories = utility.get_unique_list(self.categorical_y)
 
-        self.x = np.array([np.array(row[1:]) for row in body])
-        IO.Log.debug('Loaded dataset', self.x)
+            self.x = np.array([np.array(row[1:]) for row in body])
+            IO.Log.debug('Loaded dataset', self.x)
 
-        self.y = np.array([[1.0 if c == cat else 0.0
-                            for c in self.categorical_y]
-                           for cat in self.categories]).T
-        IO.Log.debug('Dummy y', self.y)
+            self.y = np.array([[1.0 if c == cat else 0.0
+                                for c in self.categorical_y]
+                               for cat in self.categories]).T
+            IO.Log.debug('Dummy y', self.y)
 
-        self.mean_x = np.zeros(self.m)
-        self.mean_y = np.zeros(self.p)
-        self.sigma_x = np.ones(self.m)
-        self.sigma_y = np.ones(self.p)
-        self.axis = 0
-        self._centered = False
-        self._normalized = False
+            self.mean_x = np.zeros(self.m)
+            self.mean_y = np.zeros(self.p)
+            self.sigma_x = np.ones(self.m)
+            self.sigma_y = np.ones(self.p)
+            self.axis = 0
+            self._centered = False
+            self._normalized = False
 
     @property
     def n(self):
