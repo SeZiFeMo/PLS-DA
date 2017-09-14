@@ -6,7 +6,6 @@ import functools
 import math
 import numpy as np
 import scipy as sp
-import sklearn.cross_decomposition as sklCD
 
 import IO
 import model
@@ -429,33 +428,6 @@ def data(ax):
     ax.set_title('Data by category')
     ax.set_xlabel('sample')
     ax.set_ylabel('Value')
-
-
-def sklearn_inner_relations(ax, num):
-    """Plot the inner relations for the chosen latent variable.
-
-       WARNING: implementation uses sklearn PLS regression!
-
-       Raise ValueError if num is greater than available latent variables.
-    """
-    if num > MODEL.nr_lv:
-        raise ValueError('In sklearn_inner_relations() num of latent variables'
-                         ' is out of bounds')
-
-    X, Y = TRAIN_SET.x.copy(), TRAIN_SET.y.copy()
-    sklearn_pls = sklCD.PLSRegression(n_components=min(MODEL.n, MODEL.m),
-                                      scale=True, max_iter=1e4, tol=1e-6,
-                                      copy=True)
-    sklearn_pls.fit(X, Y)
-
-    for i in range(MODEL.T.shape[0]):
-        scatter_wrapper(ax, sklearn_pls.x_scores_[i, num],
-                        sklearn_pls.y_scores_[i, num],
-                        TRAIN_SET.categorical_y[i])
-
-    ax.set_title('Inner relation for LV {} (sklearn)'.format(num))
-    ax.set_xlabel('t{}'.format(num))
-    ax.set_ylabel('u{}'.format(num))
 
 
 if __name__ == '__main__':
