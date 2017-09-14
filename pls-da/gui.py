@@ -540,6 +540,10 @@ class UserInterface(object):
         """Number of LVs in the SpinBox in the right Model area."""
         return getattr(self, 'RightLVsModelSpinBox').value()
 
+    def right_cv_samples(self):
+        """Number of Samples in the SpinBox in the right CV area."""
+        return getattr(self, 'RightSamplesCVSpinBox').value()
+
     def right_cv_splits(self):
         """Number of Splits in the SpinBox in the right CV area."""
         return getattr(self, 'RightSplitsCVSpinBox').value()
@@ -599,10 +603,13 @@ class UserInterface(object):
         self.CentralComboBox.setEnabled(self.current_mode != Mode.Start)
 
         self.update_right_model_lvs_spinbox(
-            minimum=1, maximum=getattr(self.plsda_model, 'max_lv', 99),
+            minimum=1, maximum=getattr(self.plsda_model, 'max_lv', 7),
             enabled=self.current_mode == Mode.Model)
         self.update_right_cv_splits_spinbox(
-            minimum=1, maximum=99, !
+            minimum=1, maximum=getattr(self.plsda_model, 'n', 219),
+            enabled=self.current_mode == Mode.CV)
+        self.update_right_cv_samples_spinbox(
+            minimum=1, maximum=getattr(self.plsda_model, 'n', 219),
             enabled=self.current_mode == Mode.CV)
 
 
@@ -665,7 +672,7 @@ class UserInterface(object):
                  word_wrap=False, label_alignment=Qt.AlignLeft,
                  parent_widget=parent)
         sb = self.add(QSpinBox, lane, Column.Right, row=1, name='LVs',
-                      parent_widget=parent, size=(25, 25, 170, 520))
+                      parent_widget=parent, size=(45, 25, 170, 520))
         sb.setEnabled(False)
 
         self.add(QLabel, lane, Column.Both, row=2, name='ModelInfo',
@@ -681,13 +688,20 @@ class UserInterface(object):
                  parent_widget=parent)
 
         self.add(QLabel, lane, Column.Left, row=1, name='Splits',
-                 text='Splits:', word_wrap=False, label_alignment=Qt.AlignLeft,
-                 parent_widget=parent)
+                 text='Splits:', word_wrap=False,
+                 label_alignment=Qt.AlignLeft, parent_widget=parent)
         sb = self.add(QSpinBox, lane, Column.Right, row=1, name='Splits',
-                      parent_widget=parent, size=(25, 25, 170, 520))
+                      parent_widget=parent, size=(45, 25, 170, 520))
         sb.setEnabled(False)
 
-        self.add(QLabel, lane, Column.Both, row=2, name='CVInfo',
+        self.add(QLabel, lane, Column.Left, row=2, name='Samples',
+                 text='Samples:', word_wrap=False,
+                 label_alignment=Qt.AlignLeft, parent_widget=parent)
+        sb = self.add(QSpinBox, lane, Column.Right, row=2, name='Samples',
+                      parent_widget=parent, size=(45, 25, 170, 520))
+        sb.setEnabled(False)
+
+        self.add(QLabel, lane, Column.Both, row=3, name='CVInfo',
                  text=cv_info, label_alignment=Qt.AlignLeft,
                  parent_widget=parent)
 
@@ -734,14 +748,25 @@ class UserInterface(object):
         """Method to refresh the label with cv infos."""
         l = getattr(self, 'RightCVInfoLabel', None)
         if l is not None:
-            # splits = self.right_cv_splits()
-
-            samples = ' ??? '
-
-            text = 'Samples: {}\n'.format(samples)
-            text += 'RMSECV: {}\n'.format(' ??? ')
+            text = 'RMSECV: {}\n'.format(' ??? ')
             text += 'R^2 CV: {}\n'.format(' ??? ')
             l.setText(text)
+
+    def update_right_cv_samples_spinbox(self, minimum=None, maximum=None,
+                                        enabled=False):
+        """Change min, max values and enabled status."""
+        sb = getattr(self, 'RightSamplesCVSpinBox', None)
+        if sb is not None:
+            minimum = minimum if minimum is not None else sb.minimum
+            maximum = maximum if maximum is not None else sb.maximum
+
+            if minimum > maximum:
+                minimum, maximum = maximum, minimum
+
+            sb.setMinimum(minimum)
+            sb.setMaximum(maximum)
+
+            sb.setEnabled(enabled)
 
     def update_right_cv_splits_spinbox(self, minimum=None, maximum=None,
                                        enabled=False):
