@@ -304,27 +304,12 @@ class UserInterface(object):
         right_vbox_layout.setContentsMargins(4, 4, 4, 4)
         right_vbox_layout.setSpacing(4)
 
+        # Build three stacked areas in the right lane
         self.populate_right_vbox_widgets_and_layouts()
-        self.populate_right_model_widget(
-            #  model_info=str('X-Block: ??? x ???\n'
-            #                 'Y-Block: ??? x ???\n'
-            #                 'RMSEC: ???\n'
-            #                 'Bias: ???\n'
-            #                 'R^2: ???')
-            )
-        self.populate_right_cv_widget(
-            #  cv_info=str('Samples: ???\n'
-            #              'RMSECV: ???\n'
-            #              'CV-Bias: ???\n'
-            #              'R^2 CV: ???')
-            )
-        self.populate_right_prediction_widget(
-            #  prediction_info=str('X-Block: ??? x ???\n'
-            #                      'Y-Block: ??? x ???\n'
-            #                      'RMSEP: ???\n'
-            #                      'Pred-Bias: ???\n'
-            #                      'R^2 Pred: ???')
-            )
+        # Fill them with their widgets
+        self.populate_right_model_widget()
+        self.populate_right_cv_widget()
+        self.populate_right_prediction_widget()
 
         top_menu_bar = self.set_attr('Top', QMenuBar, parent=main_window,
                                      policy=None, size=(800, 20, 7680, 20))
@@ -360,7 +345,7 @@ class UserInterface(object):
 
     @plsda_model.setter
     def plsda_model(self, value):
-        """Wrap update of plot.MODEL reference.
+        """Wrap update of plot.MODEL reference and refresh info in right area.
 
            Raises TypeError on bad value type.
         """
@@ -373,6 +358,8 @@ class UserInterface(object):
 
         self._plsda_model = value
         plot.update_global_model(value)
+
+        self.update_right_model_info()
 
     @property
     def train_set(self):
@@ -545,6 +532,14 @@ class UserInterface(object):
         name = kind.value.capitalize() if kind != Mode.CV else 'CV'
         return getattr(self, str(Lane.Right) + name + 'FormWidget')
 
+    def right_model_lvs(self):
+        """Number of LVs in the SpinBox in the right Model area."""
+        return getattr(self, 'RightLVsModelSpinBox').value()
+
+    def right_cv_splits(self):
+        """Number of Splits in the SpinBox in the right CV area."""
+        return getattr(self, 'RightSplitsCVSpinBox').value()
+
     def scroll_area(self, lane):
         return getattr(self, str(lane) + 'ScrollArea')
 
@@ -598,6 +593,13 @@ class UserInterface(object):
         self.ExportMatricesAction.setEnabled(self.current_mode != Mode.Start)
         self.LeftComboBox.setEnabled(self.current_mode != Mode.Start)
         self.CentralComboBox.setEnabled(self.current_mode != Mode.Start)
+
+        self.update_right_model_lvs_spinbox(
+            minimum=1, maximum=getattr(self.plsda_model, 'max_lv', 99),
+            enabled=self.current_mode == Mode.Model)
+        self.update_right_cv_splits_spinbox(
+            minimum=1, maximum=99, !
+            enabled=self.current_mode == Mode.CV)
 
 
     def _replace_current_model(self):
@@ -658,8 +660,9 @@ class UserInterface(object):
         self.add(QLabel, lane, Column.Left, row=1, name='LVs', text='LVs:',
                  word_wrap=False, label_alignment=Qt.AlignLeft,
                  parent_widget=parent)
-        self.add(QSpinBox, lane, Column.Right, row=1, name='LVs',
-                 parent_widget=parent, size=(25, 25, 170, 520))
+        sb = self.add(QSpinBox, lane, Column.Right, row=1, name='LVs',
+                      parent_widget=parent, size=(25, 25, 170, 520))
+        sb.setEnabled(False)
 
         self.add(QLabel, lane, Column.Both, row=2, name='ModelInfo',
                  text=model_info, label_alignment=Qt.AlignLeft,
@@ -676,8 +679,9 @@ class UserInterface(object):
         self.add(QLabel, lane, Column.Left, row=1, name='Splits',
                  text='Splits:', word_wrap=False, label_alignment=Qt.AlignLeft,
                  parent_widget=parent)
-        self.add(QSpinBox, lane, Column.Right, row=1, name='Splits',
-                 parent_widget=parent, size=(25, 25, 170, 520))
+        sb = self.add(QSpinBox, lane, Column.Right, row=1, name='Splits',
+                      parent_widget=parent, size=(25, 25, 170, 520))
+        sb.setEnabled(False)
 
         self.add(QLabel, lane, Column.Both, row=2, name='CVInfo',
                  text=cv_info, label_alignment=Qt.AlignLeft,
@@ -693,6 +697,75 @@ class UserInterface(object):
         self.add(QLabel, lane, Column.Both, row=1, name='PredictionInfo',
                  text=prediction_info, label_alignment=Qt.AlignLeft,
                  parent_widget=parent)
+
+    def update_right_model_info(self):
+        """Method to refresh the label with model infos."""
+        l = getattr(self, 'RightModelInfoLabel', None)
+        if l is not None:
+            text = 'X-Block: {} x {}\n'.format(self.plsda_model.n,
+                                               self.plsda_model.m)
+            text += 'Y-Block: {} x {}\n'.format(self.plsda_model.n,
+                                                self.plsda_model.p)
+            text += 'RMSEC: {}\n'.format(' ??? ')
+            text += 'R^2: {}\n'.format(' ??? ')
+            l.setText(text)
+
+    def update_right_model_lvs_spinbox(self, minimum=None, maximum=None,
+                                       enabled=False):
+        """Change min, max values and enabled status."""
+        sb = getattr(self, 'RightLVsModelSpinBox', None)
+        if sb is not None:
+            minimum = minimum if minimum is not None else sb.minimum
+            maximum = maximum if maximum is not None else sb.maximum
+
+            if minimum > maximum:
+                minimum, maximum = maximum, minimum
+
+            sb.setMinimum(minimum)
+            sb.setMaximum(maximum)
+
+            sb.setEnabled(enabled)
+
+    def update_right_cv_info(self):
+        """Method to refresh the label with cv infos."""
+        l = getattr(self, 'RightCVInfoLabel', None)
+        if l is not None:
+            # splits = self.right_cv_splits()
+
+            samples = ' ??? '
+
+            text = 'Samples: {}\n'.format(samples)
+            text += 'RMSECV: {}\n'.format(' ??? ')
+            text += 'R^2 CV: {}\n'.format(' ??? ')
+            l.setText(text)
+
+    def update_right_cv_splits_spinbox(self, minimum=None, maximum=None,
+                                       enabled=False):
+        """Change min, max values and enabled status."""
+        sb = getattr(self, 'RightSplitsCVSpinBox', None)
+        if sb is not None:
+            minimum = minimum if minimum is not None else sb.minimum
+            maximum = maximum if maximum is not None else sb.maximum
+
+            if minimum > maximum:
+                minimum, maximum = maximum, minimum
+
+            sb.setMinimum(minimum)
+            sb.setMaximum(maximum)
+
+            sb.setEnabled(enabled)
+
+    def update_right_prediction_info(self):
+        """Method to refresh the label with prediction infos."""
+        l = getattr(self, 'RightPredictionInfoLabel', None)
+        if l is not None:
+            text = 'X-Block: {} x {}\n'.format(' ??? ',
+                                               ' ??? ')
+            text += 'Y-Block: {} x {}\n'.format(' ??? ',
+                                                ' ??? ')
+            text += 'RMSEP: {}\n'.format(self.stats.rmsec)
+            text += 'R^2 Pred: {}\n'.format(self.stats.r_squared)
+            l.setText(text)
 
     def reset_widget_and_layout(self, widget, lane, show=True):
         """Reset the [Left|Central][Form|VBox] Widget and Layout.
@@ -824,7 +897,8 @@ class UserInterface(object):
                 parent_type = getattr(Mode, parent_name)
             else:
                 parent_type = Mode.CV
-            name += parent_name
+            if not name.startswith(parent_name):
+                name += parent_name
 
         new_widget = self.set_attr(str(lane) + name, widget,
                                    parent=parent_widget,
