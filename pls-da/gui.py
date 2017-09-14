@@ -94,7 +94,7 @@ def _popup_choose(parent, filter_csv=False,
     if _file:
         dialog.setFileMode(QFileDialog.ExistingFile)
         if filter_csv:
-            dialog.setNameFilter("Comma-separated values files (*.csv *.txt)")
+            dialog.setNameFilter('Comma-separated values files (*.csv *.txt)')
     else:  # _directory
         dialog.setFileMode(QFileDialog.Directory)
         dialog.setOption(QFileDialog.ShowDirsOnly)
@@ -191,6 +191,25 @@ class Lane(enum.Enum):
         return self.value
 
 
+class Mode(enum.Enum):
+    """Enumerate to identify the 4 finite-states of the application."""
+
+    Start = 'start'
+    Model = 'model'
+    Crossvalidation = 'cross-validation'
+    CV = 'cross-validation'  # useful alias of Mode.Crossvalidation
+    Prediction = 'prediction'
+
+    def __eq__(self, other):
+        """Comparisons done with == and != operators will be case insensitive.
+        """
+        return self.value.lower() == other.value.lower()
+
+    def __str__(self):
+        """The returned string is ready to be the CurrentModeLabel text."""
+        return self.value.capitalize() + ' mode'
+
+
 class Widget(enum.Enum):
     """Enumerate to identify the kind of QWigdet to put in a QScrollArea."""
 
@@ -258,8 +277,7 @@ class UserInterface(object):
         layout.setSpacing(5)
 
         current_mode_label = self.set_attr(
-                'CurrentMode', QLabel, parent=parent,
-                size=(144, 22, 394, 22))
+            'CurrentMode', QLabel, parent=parent, size=(144, 22, 394, 22))
         current_mode_label.setLineWidth(1)
         current_mode_label.setTextFormat(Qt.AutoText)
         current_mode_label.setAlignment(Qt.AlignCenter)
@@ -267,30 +285,31 @@ class UserInterface(object):
         current_mode_label.setFrameShape(QFrame.StyledPanel)
         layout.addWidget(current_mode_label, 0, 0, 1, 1)
 
-        scroll_area = self.set_attr(lane, QScrollArea, parent=parent,
-                                    policy=None, size=(144, 547, 394, 4272))
-        scroll_area.setWidgetResizable(True)
-        layout.addWidget(scroll_area, 1, 0, 1, 1)
+        right_scroll_area = self.set_attr(
+            lane, QScrollArea, parent=parent,
+            policy=None, size=(144, 547, 394, 4272))
+        layout.addWidget(right_scroll_area, 1, 0, 1, 1)
 
-        details_grid_widget = self.set_attr(str(lane) + 'DetailsGrid', QWidget,
-                                            size=(138, 534, 388, 4259))
-        scroll_area.setWidget(details_grid_widget)
-        details_grid_widget.setGeometry(QRect(0, 0, 189, 565))
+        right_vbox_widget = self.set_attr(
+            str(lane) + str(Widget.VBox), QWidget, parent=right_scroll_area,
+            size=(138, 534, 388, 4259))
+        right_vbox_widget.setGeometry(QRect(0, 0, 138, 534))
+        right_vbox_widget.setLayoutDirection(Qt.LayoutDirectionAuto)
+        right_scroll_area.setWidget(right_vbox_widget)
+        right_scroll_area.setWidgetResizable(True)
 
-        details_layout = self.set_attr(str(lane) + 'Details', QGridLayout,
-                                       parent=details_grid_widget, policy=None)
-        details_layout.setContentsMargins(3, 3, 3, 3)
-        details_layout.setSpacing(5)
+        right_vbox_layout = self.set_attr(
+            str(lane), QVBoxLayout, parent=right_vbox_widget, policy=None)
+        right_vbox_layout.setSizeConstraint(QLayout.SetMaximumSize)
+        right_vbox_layout.setContentsMargins(4, 4, 4, 4)
+        right_vbox_layout.setSpacing(4)
 
-        details_label = self.set_attr(
-                'Details', QLabel, parent=details_grid_widget,
-                size=(138, 534, 388, 4259))
-        details_layout.addWidget(details_label, 0, 0, 1, 1)
-        details_label.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
-        details_label.setTextInteractionFlags(Qt.TextSelectableByKeyboard
-                                              | Qt.TextSelectableByMouse)
-        details_label.setWordWrap(True)
-        self.details_label = 'Details'
+        # Build three stacked areas in the right lane
+        self.populate_right_vbox_widgets_and_layouts()
+        # Fill them with their widgets
+        self.populate_right_model_widget()
+        self.populate_right_cv_widget()
+        self.populate_right_prediction_widget()
 
         top_menu_bar = self.set_attr('Top', QMenuBar, parent=main_window,
                                      policy=None, size=(800, 20, 7680, 20))
@@ -317,7 +336,7 @@ class UserInterface(object):
         QMetaObject.connectSlotsByName(main_window)
         self.connect_handlers()
 
-        self.current_mode = 'start'
+        self.current_mode = Mode.Start
 
     @property
     def plsda_model(self):
@@ -326,7 +345,7 @@ class UserInterface(object):
 
     @plsda_model.setter
     def plsda_model(self, value):
-        """Wrap update of plot.MODEL reference.
+        """Wrap update of plot.MODEL reference and refresh info in right area.
 
            Raises TypeError on bad value type.
         """
@@ -334,11 +353,13 @@ class UserInterface(object):
         self._plsda_model = getattr(self, '_plsda_model', None)
 
         if not isinstance(value, model.Model) and value is not None:
-            raise TypeError("value assigned to self.plsda_model is not an "
-                            "instance of model.Model ({})".type(value))
+            raise TypeError('value assigned to self.plsda_model is not an '
+                            'instance of model.Model ({})'.format(type(value)))
 
         self._plsda_model = value
         plot.update_global_model(value)
+
+        self.update_right_model_info()
 
     @property
     def train_set(self):
@@ -355,8 +376,9 @@ class UserInterface(object):
         self._train_set = getattr(self, '_train_set', None)
 
         if not isinstance(value, model.TrainingSet) and value is not None:
-            raise TypeError("value assigned to self.train_set is not an "
-                            "instance of model.TrainingSet ({})".type(value))
+            raise TypeError('value assigned to self.train_set is not an '
+                            'instance of model.TrainingSet '
+                            '({})'.format(type(value)))
 
         self._train_set = value
         plot.update_global_train_set(value)
@@ -376,8 +398,9 @@ class UserInterface(object):
         self._test_set = getattr(self, '_test_set', None)
 
         if not isinstance(value, model.TestSet) and value is not None:
-            raise TypeError("value assigned to self.test_set is not an "
-                            "instance of model.TestSet ({})".type(value))
+            raise TypeError('value assigned to self.test_set is not an '
+                            'instance of model.TestSet '
+                            '({})'.format(type(value)))
 
         self._test_set = value
         plot.update_global_test_set(value)
@@ -397,8 +420,9 @@ class UserInterface(object):
         self._stats = getattr(self, '_stats', None)
 
         if not isinstance(value, model.Statistics) and value is not None:
-            raise TypeError("value assigned to self.stats is not an "
-                            "instance of model.Statistics ({})".type(value))
+            raise TypeError('value assigned to self.stats is not an '
+                            'instance of model.Statistics '
+                            '({})'.format(type(value)))
 
         self._stats = value
         plot.update_global_statistics(value)
@@ -459,11 +483,25 @@ class UserInterface(object):
     def figure(self, lane):
         return getattr(self, str(lane) + 'Figure')
 
-    def form_layout(self, lane):
-        return getattr(self, str(lane) + 'FormLayout')
+    def form_layout(self, lane, kind=None):
+        if lane == Lane.Right and not isinstance(kind, Mode):
+            raise TypeError(str('Please set "kind" argument in form_layout() '
+                                'when lane is Lane.Right'))
+        elif lane == Lane.Right:
+            name = kind.value.capitalize() if kind != Mode.CV else 'CV'
+            return getattr(self, str(lane) + name + 'FormLayout')
+        else:
+            return getattr(self, str(lane) + 'FormLayout')
 
-    def form_widget(self, lane):
-        return getattr(self, str(lane) + 'FormWidget')
+    def form_widget(self, lane, kind=None):
+        if lane == Lane.Right and not isinstance(kind, Mode):
+            raise TypeError(str('Please set "kind" argument in form_widget() '
+                                'when lane is Lane.Right'))
+        elif lane == Lane.Right:
+            name = kind.value.capitalize() if kind != Mode.CV else 'CV'
+            return getattr(self, str(lane) + name + 'FormWidget')
+        else:
+            return getattr(self, str(lane) + 'FormWidget')
 
     def lva_spin_box(self, lane):
         return getattr(self, str(lane) + 'LVaSpinBox')
@@ -479,6 +517,28 @@ class UserInterface(object):
 
     def plot_button(self, lane):
         return getattr(self, str(lane) + 'PlotPushButton')
+
+    def right_layout(self, kind):
+        if not isinstance(kind, Mode):
+            raise TypeError('kind parameter in right_layout() is not '
+                            'instance of Mode ({})'.format(type(kind)))
+        name = kind.value.Capitalize() if kind != Mode.CV else 'CV'
+        return getattr(self, str(Lane.Right) + name + 'FormLayout')
+
+    def right_widget(self, kind):
+        if not isinstance(kind, Mode):
+            raise TypeError('kind parameter in right_widget() is not '
+                            'instance of Mode ({})'.format(type(kind)))
+        name = kind.value.capitalize() if kind != Mode.CV else 'CV'
+        return getattr(self, str(Lane.Right) + name + 'FormWidget')
+
+    def right_model_lvs(self):
+        """Number of LVs in the SpinBox in the right Model area."""
+        return getattr(self, 'RightLVsModelSpinBox').value()
+
+    def right_cv_splits(self):
+        """Number of Splits in the SpinBox in the right CV area."""
+        return getattr(self, 'RightSplitsCVSpinBox').value()
 
     def scroll_area(self, lane):
         return getattr(self, str(lane) + 'ScrollArea')
@@ -497,70 +557,50 @@ class UserInterface(object):
 
     @property
     def current_mode(self):
-        """Get value of CurrentModeLabel."""
-        return self.CurrentModeLabel.text()
+        """Return reference to gui.Mode object."""
+        return self._current_mode
 
     @current_mode.setter
     def current_mode(self, value):
-        """Set value of CurrentModeLabel and change."""
-        if not isinstance(value, str) or \
-            value.lower() not in ('start', 'cv', 'crossvalidation', 'model',
-                                  'prediction'):
-            IO.Log.error('Could not change current mode to '
-                         '{} !'.format(repr(value)))
-            return
-        self._current_mode = value.lower()
-        if value.lower() == 'cv':
-            self._current_mode = 'crossvalidation'
+        """Change internal state of current_mode and text of CurrentModeLabel.
 
-        IO.Log.debug('Current mode changed to: ' + self._current_mode.upper())
-        self.CurrentModeLabel.setText(
-                self._current_mode.capitalize().replace('sv', 'sV') + ' mode')
+           Raises TypeError on bad value type.
+        """
+        if not isinstance(value, Mode):
+            raise TypeError('value assigned to self.current_mode is not '
+                            'an instance of gui.Mode ({})'.format(type(value)))
 
-        model_flag, cv_flag, pred_flag = False, False, False
-        if self._current_mode == 'crossvalidation':
-            model_flag, pred_flag = True, True
-        elif self._current_mode == 'model':
-            cv_flag, pred_flag = True, True
-        elif self._current_mode == 'prediction':
-            model_flag, cv_flag = True, True
+        # apply change in internal state and in text of the label
+        self._current_mode = value
+        self.CurrentModeLabel.setText(str(self.current_mode))
+        IO.Log.debug('Current mode changed to: ' + str(self.current_mode))
 
-        self.ModelAction.setEnabled(model_flag)
-        self.CrossValidationAction.setEnabled(cv_flag)
-        self.PredictionAction.setEnabled(pred_flag)
+        self.ModelAction.setEnabled(self.current_mode != Mode.Model)
+        self.CrossValidationAction.setEnabled(self.current_mode != Mode.CV)
+        self.PredictionAction.setEnabled(self.current_mode != Mode.Prediction)
 
-        if self._current_mode == 'start':
-            self.SaveModelAction.setEnabled(False)
-            self.ExportMatricesAction.setEnabled(False)
-
-            self.LeftComboBox.setEnabled(False)
-            self.CentralComboBox.setEnabled(False)
-
+        if self.current_mode == Mode.Start:
             for lane in (Lane.Left, Lane.Central):
                 self.reset_widget_and_layout(Widget.Form, lane)
                 self.add(QLabel, lane, Column.Both, row=0, name='Hint',
-                         text='Several plots are available in the above '
-                              'dropdown menu.\n'
+                         text='↑ Several plots are available in the above '
+                              'dropdown menu. ↑\n'
                               '(if you create or load a model before)',
                          label_alignment=Qt.AlignHCenter,
                          policy=Policy.Expanding, size=(170, 520, 3610, 4240))
-        else:
-            self.SaveModelAction.setEnabled(True)
-            self.ExportMatricesAction.setEnabled(True)
 
-            self.LeftComboBox.setEnabled(True)
-            self.CentralComboBox.setEnabled(True)
+        self.SaveModelAction.setEnabled(self.current_mode != Mode.Start)
+        self.ExportMatricesAction.setEnabled(self.current_mode != Mode.Start)
+        self.LeftComboBox.setEnabled(self.current_mode != Mode.Start)
+        self.CentralComboBox.setEnabled(self.current_mode != Mode.Start)
 
+        self.update_right_model_lvs_spinbox(
+            minimum=1, maximum=getattr(self.plsda_model, 'max_lv', 99),
+            enabled=self.current_mode == Mode.Model)
+        self.update_right_cv_splits_spinbox(
+            minimum=1, maximum=99, !
+            enabled=self.current_mode == Mode.CV)
 
-    @property
-    def details_label(self):
-        """Get text of DetailsLabel."""
-        return self.DetailsLabel.text()
-
-    @details_label.setter
-    def details_label(self, value):
-        """Set text of DetailsLabel."""
-        return self.DetailsLabel.setText(str(value))
 
     def _replace_current_model(self):
         """Show a popup to ask if plsda_model should be replaced."""
@@ -577,6 +617,155 @@ class UserInterface(object):
         else:
             IO.Log.debug('NO (not replacing current model)')
             return False
+
+    def populate_right_vbox_widgets_and_layouts(self):
+        lane = Lane.Right
+
+        # DetailsLabel
+        dl = self.set_attr('Details', QLabel, parent=self.vbox_widget(lane),
+                           size=(108, 20, 358, 20))
+        dl.setTextInteractionFlags(Qt.TextSelectableByKeyboard
+                                   | Qt.TextSelectableByMouse)
+        dl.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        dl.setText('Details')
+        dl.setWordWrap(True)
+        self.vbox_layout(lane).addWidget(dl)
+
+        # Right [ Model | CV | Prediction ] Form [ Widget | Layout ]
+        for kind in (Mode.Model, Mode.CV, Mode.Prediction):
+            name = kind.value.capitalize() if kind != Mode.CV else 'CV'
+
+            w = self.set_attr(str(lane) + name + str(Widget.Form), QWidget,
+                              parent=self.vbox_widget(lane),
+                              size=(108, 164, 358, 1406))
+            l = self.set_attr(str(lane) + name, QFormLayout,
+                              parent=self.right_widget(kind), policy=None)
+
+            w.setGeometry(QRect(0, 0, 108, 164))
+            w.setLayoutDirection(Qt.LeftToRight)
+            l.setRowWrapPolicy(QFormLayout.DontWrapRows)
+            l.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
+            l.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
+            l.setLabelAlignment(Qt.AlignLeft)
+            l.setSizeConstraint(QLayout.SetMaximumSize)
+            l.setSpacing(1)
+            self.vbox_layout(lane).addWidget(w)
+
+    def populate_right_model_widget(self, model_info=''):
+        lane, parent = Lane.Right, self.right_widget(Mode.Model)
+
+        self.add(QLabel, lane, Column.Both, row=0, name='Model', text='Model:',
+                 label_alignment=Qt.AlignLeft, parent_widget=parent)
+
+        self.add(QLabel, lane, Column.Left, row=1, name='LVs', text='LVs:',
+                 word_wrap=False, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+        sb = self.add(QSpinBox, lane, Column.Right, row=1, name='LVs',
+                      parent_widget=parent, size=(25, 25, 170, 520))
+        sb.setEnabled(False)
+
+        self.add(QLabel, lane, Column.Both, row=2, name='ModelInfo',
+                 text=model_info, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+
+
+    def populate_right_cv_widget(self, cv_info=''):
+        lane, parent = Lane.Right, self.right_widget(Mode.CV)
+
+        self.add(QLabel, lane, Column.Both, row=0, name='CV',
+                 text='Cross-validation:', label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+
+        self.add(QLabel, lane, Column.Left, row=1, name='Splits',
+                 text='Splits:', word_wrap=False, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+        sb = self.add(QSpinBox, lane, Column.Right, row=1, name='Splits',
+                      parent_widget=parent, size=(25, 25, 170, 520))
+        sb.setEnabled(False)
+
+        self.add(QLabel, lane, Column.Both, row=2, name='CVInfo',
+                 text=cv_info, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+
+    def populate_right_prediction_widget(self, prediction_info=''):
+        lane, parent = Lane.Right, self.right_widget(Mode.Prediction)
+
+        self.add(QLabel, lane, Column.Both, row=0, name='Prediction',
+                 text='Prediction:', label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+
+        self.add(QLabel, lane, Column.Both, row=1, name='PredictionInfo',
+                 text=prediction_info, label_alignment=Qt.AlignLeft,
+                 parent_widget=parent)
+
+    def update_right_model_info(self):
+        """Method to refresh the label with model infos."""
+        l = getattr(self, 'RightModelInfoLabel', None)
+        if l is not None:
+            text = 'X-Block: {} x {}\n'.format(self.plsda_model.n,
+                                               self.plsda_model.m)
+            text += 'Y-Block: {} x {}\n'.format(self.plsda_model.n,
+                                                self.plsda_model.p)
+            text += 'RMSEC: {}\n'.format(' ??? ')
+            text += 'R^2: {}\n'.format(' ??? ')
+            l.setText(text)
+
+    def update_right_model_lvs_spinbox(self, minimum=None, maximum=None,
+                                       enabled=False):
+        """Change min, max values and enabled status."""
+        sb = getattr(self, 'RightLVsModelSpinBox', None)
+        if sb is not None:
+            minimum = minimum if minimum is not None else sb.minimum
+            maximum = maximum if maximum is not None else sb.maximum
+
+            if minimum > maximum:
+                minimum, maximum = maximum, minimum
+
+            sb.setMinimum(minimum)
+            sb.setMaximum(maximum)
+
+            sb.setEnabled(enabled)
+
+    def update_right_cv_info(self):
+        """Method to refresh the label with cv infos."""
+        l = getattr(self, 'RightCVInfoLabel', None)
+        if l is not None:
+            # splits = self.right_cv_splits()
+
+            samples = ' ??? '
+
+            text = 'Samples: {}\n'.format(samples)
+            text += 'RMSECV: {}\n'.format(' ??? ')
+            text += 'R^2 CV: {}\n'.format(' ??? ')
+            l.setText(text)
+
+    def update_right_cv_splits_spinbox(self, minimum=None, maximum=None,
+                                       enabled=False):
+        """Change min, max values and enabled status."""
+        sb = getattr(self, 'RightSplitsCVSpinBox', None)
+        if sb is not None:
+            minimum = minimum if minimum is not None else sb.minimum
+            maximum = maximum if maximum is not None else sb.maximum
+
+            if minimum > maximum:
+                minimum, maximum = maximum, minimum
+
+            sb.setMinimum(minimum)
+            sb.setMaximum(maximum)
+
+            sb.setEnabled(enabled)
+
+    def update_right_prediction_info(self):
+        """Method to refresh the label with prediction infos."""
+        l = getattr(self, 'RightPredictionInfoLabel', None)
+        if l is not None:
+            text = 'X-Block: {} x {}\n'.format(' ??? ',
+                                               ' ??? ')
+            text += 'Y-Block: {} x {}\n'.format(' ??? ',
+                                                ' ??? ')
+            text += 'RMSEP: {}\n'.format(self.stats.rmsec)
+            text += 'R^2 Pred: {}\n'.format(self.stats.r_squared)
+            l.setText(text)
 
     def reset_widget_and_layout(self, widget, lane, show=True):
         """Reset the [Left|Central][Form|VBox] Widget and Layout.
@@ -621,9 +810,9 @@ class UserInterface(object):
             l.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
             l.setLabelAlignment(Qt.AlignRight)  # as in macOS Aqua guidelines
         else:
-            assert widget is Widget.VBox, "Unexpected widget type in " \
-                                          "reset_widget_and_layout() " \
-                                          "({})".format(type(widget))
+            assert widget is Widget.VBox, 'Unexpected widget type in ' \
+                                          'reset_widget_and_layout() ' \
+                                          '({})'.format(type(widget))
             l = self.set_attr(str(lane), QVBoxLayout, parent=w, policy=None)
 
             # create back button
@@ -689,10 +878,28 @@ class UserInterface(object):
 
     def add(self, widget, lane, column, row, name, text=None, word_wrap=True,
             text_format=Qt.AutoText, label_alignment=Qt.AlignRight,
-            group_name=None, minimum=1, maximum=99, policy=Policy.Preferred,
+            group_name=None, minimum=1, maximum=99, parent_widget=None,
+            parent_type=None, policy=Policy.Preferred,
             size=(70, 25, 170, 520)):
         """Add to the specified lane the widget in (row, column) position."""
-        parent_widget = self.form_widget(lane)
+        if parent_widget is None:
+            if lane == Lane.Right and \
+               (parent_type is None or not isinstance(parent_type, Mode)):
+                raise TypeError('Please specify at least "parent_widget" or '
+                                '"parent_type" (if lane is right) in '
+                                'gui.UserInterface.add() method !')
+            else:
+                parent_widget = self.form_widget(lane, parent_type)
+        if lane == Lane.Right:
+            parent_name = parent_widget.objectName().lstrip('Right')
+            parent_name = parent_name.rstrip('FormWidget')
+            if parent_name != 'CV':
+                parent_type = getattr(Mode, parent_name)
+            else:
+                parent_type = Mode.CV
+            if not name.startswith(parent_name):
+                name += parent_name
+
         new_widget = self.set_attr(str(lane) + name, widget,
                                    parent=parent_widget,
                                    policy=policy, size=size)
@@ -701,6 +908,8 @@ class UserInterface(object):
             new_widget.setTextFormat(text_format)
             new_widget.setAlignment(label_alignment)
             new_widget.setWordWrap(word_wrap)
+            new_widget.setTextInteractionFlags(Qt.TextSelectableByKeyboard
+                                               | Qt.TextSelectableByMouse)
         elif widget == QRadioButton:
             if not group_name.endswith('ButtonGroup'):
                 group_name += 'ButtonGroup'
@@ -735,7 +944,7 @@ class UserInterface(object):
         if widget in (QCheckBox, QLabel, QPushButton, QRadioButton):
             new_widget.setText(str(text if text is not None else str(name)))
 
-        layout = self.form_layout(lane)
+        layout = self.form_layout(lane, parent_type)
         layout.setWidget(row, column.value, new_widget)
         return new_widget
 
@@ -954,7 +1163,7 @@ class UserInterface(object):
         self.train_set, self.plsda_model = train_set, plsda_model
 
         IO.Log.debug('Model created correctly')
-        self.current_mode = 'model'
+        self.current_mode = Mode.Model
 
     def save_model(self):
         export_dir = popup_choose_output_directory(parent=self.MainWindow)
@@ -987,7 +1196,7 @@ class UserInterface(object):
             return
 
         IO.Log.debug('Model loaded correctly')
-        self.current_mode = 'model'
+        self.current_mode = Mode.Model
 
     def connect_handlers(self):
         self.NewModelAction.triggered.connect(self.new_model)
@@ -995,23 +1204,66 @@ class UserInterface(object):
         self.LoadModelAction.triggered.connect(self.load_model)
 
         self.ExportMatricesAction.triggered.connect(
-                lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
+            lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
 
         self.QuitAction.triggered.connect(self.quit)
 
         self.ModelAction.triggered.connect(
-                lambda: setattr(self, 'current_mode', 'model'))
+            lambda: setattr(self, 'current_mode', Mode.Model))
         self.CrossValidationAction.triggered.connect(
-                lambda: setattr(self, 'current_mode', 'cv'))
+            lambda: setattr(self, 'current_mode', Mode.CV))
         self.PredictionAction.triggered.connect(
-                lambda: setattr(self, 'current_mode', 'prediction'))
+            lambda: setattr(self, 'current_mode', Mode.Prediction))
 
+        self.AboutThisProjectAction.triggered.connect(
+            lambda: self.about_this_project())
         self.AboutQtAction.triggered.connect(QApplication.aboutQt)
 
         self.LeftComboBox.currentIndexChanged.connect(
-                lambda idx: self.call_plot_method(Lane.Left, index=idx))
+            lambda idx: self.call_plot_method(Lane.Left, index=idx))
         self.CentralComboBox.currentTextChanged.connect(
-                lambda txt: self.call_plot_method(Lane.Central, text=txt))
+            lambda txt: self.call_plot_method(Lane.Central, text=txt))
+
+    def about_this_project(self):
+        dialog = QMessageBox(self.MainWindow)
+        dialog.setObjectName('AboutThisProjectMessageBox')
+        dialog.setWindowTitle('About this project')
+        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.setIcon(QMessageBox.NoIcon)
+        dialog.setTextFormat(Qt.RichText)  # to use HTML
+        dialog.setText(
+            '<p align="left">'
+            '<big><b>About this project</b></big>'
+            '<br><br>'
+            'This project has been developed for the <i>Processing of '
+            'Scientific Data</i> exam (<a href="https://personale.unimore.it/'
+            'rubrica/contenutiAD/cocchi/2016/49729/N0/N0/4569">EDS</a>), at '
+            '<i>Physics, Informatics and Mathematics</i> departement (<a '
+            'href="http://www.fim.unimore.it/site/en/home.html">FIM</a>) '
+            'of <i>University of Modena and Reggio Emilia</i> (<a '
+            'href="http://www.unimore.it/en/">UNIMORE</a>) in Italy.'
+            '<br><br>'
+            'Its main purpose is to conduct a "Partial least squares '
+            'Discriminant Analysis" (PLS-DA) on a given dataset.'
+            '<br><br>'
+            '<br><br>'
+            'Copyright (C) 2017  Serena Ziviani, Federico Motta'
+            '<br><br>'
+            'This program is free software: you can redistribute it and/or '
+            'modify it under the terms of the GNU General Public License as '
+            'published by the Free Software Foundation, either version 3 of '
+            'the License, or any later version.'
+            '<br><br>'
+            'This program is distributed in the hope that it will be useful, '
+            'but WITHOUT ANY WARRANTY; without even the implied warranty of '
+            'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. '
+            'See the GNU General Public License for more details.'
+            '<br><br>'
+            'You should have received a copy of the GNU General Public '
+            'License along with this program. '
+            'If not, see <a href="http://www.gnu.org/licenses/">'
+            'http://www.gnu.org/licenses/</a>.</p>')
+        dialog.exec()
 
     def quit(self):
         """Ask for confirmation with a popup and quit returning 0."""
