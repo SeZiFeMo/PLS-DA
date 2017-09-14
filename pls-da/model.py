@@ -414,7 +414,7 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
     return model
 
 
-def cross_validation(train_set, split, max_lv):
+def cross_validation(train_set, split, sample, max_lv):
     """Perform a cross-validation procedure on a TrainingSet dataset.
 
     Return a list of dictionaries of Statistics object. Every dictionary
@@ -423,7 +423,7 @@ def cross_validation(train_set, split, max_lv):
     element is the lv used for that prediction.
     """
     results = []
-    for train, test in venetian_blind_split(train_set, split):
+    for train, test in venetian_blind_split(train_set, split, sample):
         model = nipals(*train)
         res = dict()
         for lv in range(1, max_lv):
@@ -434,10 +434,33 @@ def cross_validation(train_set, split, max_lv):
     return results
 
 
-def venetian_blind_split(train_set, split):
+def venetian_blind_split(train_set, split, sample):
     """Split the dataset in train and test using the venetian blind algo."""
-    for offset in range(split, 0, -1):  # order result logically
-        mask = np.arange(offset, train_set.n + offset) % split == 0
+
+    # find the minimum divisor of split * sample greater than n
+    # this is needed to be able to use the function np.roll properly
+    n = train_set.n
+    base = split * sample
+    div = n - (n % base) + (base if n % base else 0)
+
+    # build the set of mask used to create the first split
+    masks = []
+    masks.append(np.arange(0, div) % (split*sample) == 0)
+    for offset in range(1, sample):
+        masks.append(np.roll(masks[0], offset))
+
+    # build the mask for the first split
+    m = []
+    for i in zip(*masks):
+        x = False
+        for e in i:
+            x = x or e
+        m.append(x)
+
+    for offset in range(split):
+        # Create the mask for the current split and truncate it to
+        # its real length
+        mask = np.roll(m, offset * sample)[:n]
         test_x = train_set.x[mask]
         train_x = train_set.x[~mask]
         test_y = train_set.y[mask]

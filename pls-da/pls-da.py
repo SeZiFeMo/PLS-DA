@@ -39,7 +39,7 @@ y_pred = nipals_model.predict(test_set.x)
 pred = model.Statistics(test_set.y, y_pred)
 plot.update_global_statistics(pred)
 
-results = model.cross_validation(train_set, 4, 6)
+results = model.cross_validation(train_set, 4, 3, 6)
 # for res in results:
 #    for stat_id in res:
 #        print(res[stat_id].rss)
