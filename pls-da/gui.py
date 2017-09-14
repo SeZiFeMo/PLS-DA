@@ -480,8 +480,12 @@ class UserInterface(object):
     def canvas(self, lane):
         return getattr(self, str(lane) + 'Canvas')
 
-    def figure(self, lane):
-        return getattr(self, str(lane) + 'Figure')
+    def figure(self, lane, tight_layout=True):
+        ret = getattr(self, str(lane) + 'Figure', None)
+        if ret is None:
+            ret = plt.figure(tight_layout=tight_layout)
+            setattr(self, str(lane) + 'Figure', ret)
+        return ret
 
     def form_layout(self, lane, kind=None):
         if lane == Lane.Right and not isinstance(kind, Mode):
@@ -821,9 +825,9 @@ class UserInterface(object):
                                  size=(138, 22, 3625, 22))
             back.setText('Back')
 
-            # create canvas and its figure
-            fig = plt.figure(tight_layout=True)
-            setattr(self, str(lane) + 'Figure', fig)
+            # create new canvas and but keep previous figure (and clear it)
+            fig = self.figure(lane)
+            fig.clf()
             canvas = Canvas(fig)
             canvas.setSizePolicy(Policy.Expanding, Policy.Expanding)
             canvas.setMinimumSize(QSize(138, 475))
@@ -998,12 +1002,12 @@ class UserInterface(object):
         self.add(QLabel, lane, Column.Left, row=1, name='LVa',
                  text='1st latent variable')
         self.add(QSpinBox, lane, Column.Right, row=1, name='LVa',
-                 minimum=0, maximum=self.plsda_model.max_lv - 1)
+                 minimum=1, maximum=self.plsda_model.max_lv)
 
         self.add(QLabel, lane, Column.Left, row=2, name='LVb',
                  text='2nd latent variable')
         self.add(QSpinBox, lane, Column.Right, row=2, name='LVb',
-                 minimum=0, maximum=self.plsda_model.max_lv - 1)
+                 minimum=1, maximum=self.plsda_model.max_lv)
 
     def only_plot_button_form(self, lane, size=(170, 25, 3610, 25)):
         self.add(QPushButton, lane, Column.Left, row=0, name='Plot', size=size)
@@ -1018,7 +1022,7 @@ class UserInterface(object):
         self.add(QLabel, lane, Column.Left, row=0, name='LVs',
                  text='Latent variable')
         self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',
-                 minimum=0, maximum=self.plsda_model.max_lv - 1)
+                 minimum=1, maximum=self.plsda_model.max_lv)
         self.add(QPushButton, lane, Column.Right, row=1, name='Plot')
 
     def build_scores_plot_form(self, lane):
