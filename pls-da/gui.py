@@ -1402,13 +1402,22 @@ class UserInterface(object):
             popup_error(message=str(e), parent=self.MainWindow)
         else:
             for lane in (Lane.Left, Lane.Central):
+                # Update LatentVariable maximum in SpinBox
+                for name in ('LVa', 'LVb', 'LVs'):
+                    try:
+                        getattr(self, str(lane) + name + 'SpinBox').setMaximum(
+                            self.plsda_model.nr_lv)
+                    except Exception:
+                        # probably the SpinBox does not exists yet
+                        continue
+
+                # Update visible plots
                 try:
                     # ensure canvas exists
                     canvas = self.canvas(lane)
                 except AttributeError as e:
                     continue
                 else:
-                    # and redraw plots if it is visible
                     if canvas.isVisible():
                         cb = getattr(self, str(lane) + 'ComboBox')
                         for entry in self.drop_down_menu:
