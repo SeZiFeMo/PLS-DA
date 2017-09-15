@@ -282,9 +282,9 @@ class Model(object):
                 leverage[i] = self.U[i].dot(temp).dot(self.U[i].T)
         return leverage
 
-    def predict(self, train_set):
+    def predict(self, test_set_x):
         """Return Y predicted for the given test set over this model."""
-        return np.dot(train_set, self.B)
+        return np.dot(test_set_x, self.B)
 
 
 class Statistics(object):
@@ -293,8 +293,8 @@ class Statistics(object):
     def __init__(self, y_real, y_pred):
         """Save the real and the predicted Y."""
 
-        assert y_real.shape == y_pred.shape, "Y real and Y predicted" \
-                                             "must have the same dimension"
+        assert y_real.shape == y_pred.shape, 'Y real and Y predicted ' \
+                                             'must have the same dimension'
         self.y_real = y_real
         self.y_pred = y_pred
 
@@ -317,7 +317,13 @@ class Statistics(object):
 
     @property
     def r_squared(self):
+        IO.Log.debug('ess: ', self.ess)
+        IO.Log.debug('rss: ', self.rss)
+        IO.Log.debug('tss: ', self.tss)
+
         r_squared = 1 - self.rss / self.tss
+        IO.Log.debug('r_squared: ', r_squared)
+
         assert r_squared > 0, "Negative r_squared found"
         return r_squared
 

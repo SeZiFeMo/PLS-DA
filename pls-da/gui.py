@@ -390,7 +390,7 @@ class UserInterface(object):
 
     @test_set.setter
     def test_set(self, value):
-        """Wrap update of plot.TEST_SET reference.
+        """Wrap update of plot.TEST_SET reference (and right prediction info).
 
            Raises TypeError on bad value type.
         """
@@ -404,6 +404,8 @@ class UserInterface(object):
 
         self._test_set = value
         plot.update_global_test_set(value)
+
+        self.update_right_prediction_info()
 
     @property
     def stats(self):
@@ -459,19 +461,21 @@ class UserInterface(object):
                    ('&Save model', 'Ctrl+S'),
                    ('&Load model', 'Ctrl+L'),
                    ('1_ Separator', None),
-                   ('&Export matrices', 'Ctrl+E'),
+                   ('Load csv to &predict', 'Ctrl+R'),
                    ('2_ Separator', None),
+                   ('&Export matrices', 'Ctrl+E'),
+                   ('3_ Separator', None),
                    ('&Quit', 'Ctrl+Q'))
         elif menu == 'ChangeMode':
             tmp = (('&Model', 'Ctrl+M'),
-                   ('Cross&Validation', 'Ctrl+V'),
+                   ('Cross-&validation', 'Ctrl+V'),
                    ('&Prediction', 'Ctrl+P'))
         elif menu == 'About':
             tmp = (('A&bout this project', 'F1'),
                    ('Abo&ut Qt', 'F2'))
         for text, shortcut in tmp:
             l = [word.capitalize() for word in text.replace('&', '').split()]
-            yield {'name': ''.join(l).replace('sv', 'sV'),
+            yield {'name': ''.join(l).replace('s-v', 'sV'),
                    'text': text, 'shortcut': shortcut}
 
     def back_button(self, lane):
@@ -540,6 +544,9 @@ class UserInterface(object):
         """Number of LVs in the SpinBox in the right Model area."""
         return getattr(self, 'RightLVsModelSpinBox').value()
 
+    def right_cv_start_button(self):
+        return getattr(self, 'RightStartCVPushButton')
+
     def right_cv_samples(self):
         """Number of Samples in the SpinBox in the right CV area."""
         return getattr(self, 'RightSamplesCVSpinBox').value()
@@ -583,21 +590,26 @@ class UserInterface(object):
         self.CurrentModeLabel.setText(str(self.current_mode))
         IO.Log.debug('Current mode changed to: ' + str(self.current_mode))
 
-        self.ModelAction.setEnabled(self.current_mode != Mode.Model)
-        self.CrossValidationAction.setEnabled(self.current_mode != Mode.CV)
-        self.PredictionAction.setEnabled(self.current_mode != Mode.Prediction)
+        self.ModelAction.setEnabled(
+            self.current_mode not in (Mode.Start, Mode.Model))
+        self.CrossValidationAction.setEnabled(
+            self.current_mode not in (Mode.Start, Mode.CV))
+        self.PredictionAction.setEnabled(
+            self.current_mode not in (Mode.Start, Mode.Prediction))
 
         if self.current_mode == Mode.Start:
             for lane in (Lane.Left, Lane.Central):
                 self.reset_widget_and_layout(Widget.Form, lane)
                 self.add(QLabel, lane, Column.Both, row=0, name='Hint',
-                         text='↑ Several plots are available in the above '
-                              'dropdown menu. ↑\n'
+                         text='↑{}↑\n'.format(' ' * 48)
+                              'Several plots are available in the above '
+                              'dropdown menu.\n'
                               '(if you create or load a model before)',
                          label_alignment=Qt.AlignHCenter,
                          policy=Policy.Expanding, size=(170, 520, 3610, 4240))
 
         self.SaveModelAction.setEnabled(self.current_mode != Mode.Start)
+        self.LoadCsvToPredictAction.setEnabled(self.current_mode != Mode.Start)
         self.ExportMatricesAction.setEnabled(self.current_mode != Mode.Start)
         self.LeftComboBox.setEnabled(self.current_mode != Mode.Start)
         self.CentralComboBox.setEnabled(self.current_mode != Mode.Start)
@@ -611,6 +623,7 @@ class UserInterface(object):
         self.update_right_cv_samples_spinbox(
             minimum=1, maximum=getattr(self.plsda_model, 'n', 219),
             enabled=self.current_mode == Mode.CV)
+        self.right_cv_start_button().setEnabled(self.current_mode == Mode.CV)
 
 
     def _replace_current_model(self):
@@ -643,16 +656,22 @@ class UserInterface(object):
         self.vbox_layout(lane).addWidget(dl)
 
         # Right [ Model | CV | Prediction ] Form [ Widget | Layout ]
-        for kind in (Mode.Model, Mode.CV, Mode.Prediction):
+        for index, kind in enumerate((Mode.Model, Mode.CV, Mode.Prediction)):
+            separator = self.set_attr(str(lane) + 'Line' + str(index), QFrame,
+                                      parent=self.vbox_widget(lane), size=None)
+            separator.setFrameShape(QFrame.HLine)
+            separator.setFrameShadow(QFrame.Sunken)
+            self.vbox_layout(lane).addWidget(separator)
+
             name = kind.value.capitalize() if kind != Mode.CV else 'CV'
 
             w = self.set_attr(str(lane) + name + str(Widget.Form), QWidget,
                               parent=self.vbox_widget(lane),
-                              size=(108, 164, 358, 1406))
+                              size=(108, 140, 358, 1406))
             l = self.set_attr(str(lane) + name, QFormLayout,
                               parent=self.right_widget(kind), policy=None)
 
-            w.setGeometry(QRect(0, 0, 108, 164))
+            w.setGeometry(QRect(0, 0, 108, 140))
             w.setLayoutDirection(Qt.LeftToRight)
             l.setRowWrapPolicy(QFormLayout.DontWrapRows)
             l.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
@@ -695,13 +714,18 @@ class UserInterface(object):
         sb.setEnabled(False)
 
         self.add(QLabel, lane, Column.Left, row=2, name='Samples',
-                 text='Samples:', word_wrap=False,
-                 label_alignment=Qt.AlignLeft, parent_widget=parent)
+                 text='Samples per blind:', word_wrap=True,
+                 label_alignment=Qt.AlignLeft, parent_widget=parent,
+                 size=(50, 40, 170, 520))
         sb = self.add(QSpinBox, lane, Column.Right, row=2, name='Samples',
                       parent_widget=parent, size=(45, 25, 170, 520))
         sb.setEnabled(False)
 
-        self.add(QLabel, lane, Column.Both, row=3, name='CVInfo',
+        self.add(QPushButton, lane, Column.Both, row=3, name='Start',
+                 text='Start CV', parent_widget=parent,
+                 size=(70, 25, 127, 520))
+
+        self.add(QLabel, lane, Column.Both, row=4, name='CVInfo',
                  text=cv_info, label_alignment=Qt.AlignLeft,
                  parent_widget=parent)
 
@@ -793,7 +817,12 @@ class UserInterface(object):
             text += 'Y-Block: {} x {}\n'.format(' ??? ',
                                                 ' ??? ')
             text += 'RMSEP: {}\n'.format(self.stats.rmsec)
-            text += 'R^2 Pred: {}\n'.format(self.stats.r_squared)
+            try:
+                text += 'R^2 Pred: {}\n'.format(self.stats.r_squared)
+            except Exception as e:
+                text += 'R^2 Pred: {}\n'.format(' ??? ')
+                IO.Log.debug(str(e))
+                popup_error(message=str(e), parent=self.MainWindow)
             l.setText(text)
 
     def reset_widget_and_layout(self, widget, lane, show=True):
@@ -977,12 +1006,95 @@ class UserInterface(object):
         layout.setWidget(row, column.value, new_widget)
         return new_widget
 
-    def draw_plot(self, lane, entry):
+    def cache_current_plot_preferences(self, lane):
+        self.clear_cached_plot_preferences(lane)
+        cache = getattr(self, str(lane) + 'PlotPreferences')
+
+        for name in ('LVaSpinBox', 'LVbSpinBox', 'LVsSpinBox',
+                     'XRadioButton', 'YRadioButton', 'NormalizeCheckBox'):
+            if 'SpinBox' in name:
+                try:
+                    cache[name] = getattr(self, str(lane) + name).value()
+                except (AttributeError, RuntimeError) as e:
+                    cache.pop(name, None)
+            else:
+                try:
+                    cache[name] = getattr(self, str(lane) + name).isChecked()
+                except (AttributeError, RuntimeError) as e:
+                    cache.pop(name, None)
+            if name in cache:
+                IO.Log.debug('Added {}: {} '.format(name, cache[name])
+                             'to cached plot preferences')
+
+    def clear_cached_plot_preferences(self, lane):
+        setattr(self, str(lane) + 'PlotPreferences', dict())
+
+    def set_cached_plot_preferences(self, lane):
+        cache = getattr(self, str(lane) + 'PlotPreferences')
+
+        for name in cache:
+            if 'SpinBox' in name:  # 'LVaSpinBox', 'LVbSpinBox', 'LVsSpinBox'
+                try:
+                    getattr(self, str(lane) + name).setValue(cache[name])
+                except (AttributeError, RuntimeError) as e:
+                    pass  # widget not yet created or already garbage collected
+                else:
+                    IO.Log.debug('Set {} with cached preference {}'.format(
+                        str(lane) + name, str(cache[name])))
+            else:  # 'XRadioButton', 'YRadioButton', 'NormalizeCheckBox'
+                try:
+                    getattr(self, str(lane) + name).setChecked(cache[name])
+                except (AttributeError, RuntimeError) as e:
+                    pass
+                else:
+                    IO.Log.debug('Set {} with cached preference {}'.format(
+                        str(lane) + name, str(cache[name])))
+
+    def get_cached_plot_preferences(self, lane):
+        """Return tuple of cached value or None if absent.
+
+           Order of the tuple fields:
+           'LVaSpinBox', 'LVbSpinBox', 'LVsSpinBox', ...
+           ... 'NormalizeCheckBox', 'XRadioButton', 'YRadioButton'
+        """
+        white_list = ('LVaSpinBox', 'LVbSpinBox', 'LVsSpinBox',
+                      'NormalizeCheckBox', 'XRadioButton', 'YRadioButton')
+        cache = getattr(self, str(lane) + 'PlotPreferences')
+        ret = tuple((cache.get(key, None) for key in white_list))
+        for k in cache:
+            assert k in white_list, 'Unknown cached plot preference: ' + str(k)
+        assert len(ret) == 6, 'Cached plot preferences should be 6'
+        IO.Log.debug('Cached plot preferences: {}'.format(repr(ret)))
+        return ret
+
+    def draw_plot(self, lane, entry, refresh=False):
+        if not refresh:
+            # Plot button has just been pushed,
+            # let's cache immediately preferences
+            self.cache_current_plot_preferences(lane)
+
+        self.figure(lane).clear()
         try:
-            getattr(self, 'draw_' + entry['method'])(lane)
-        except ValueError as e:
-            popup_error(message=str(e), parent=self.MainWindow)
+            getattr(self, 'draw_' + entry['method'])(lane, refresh=refresh)
+        except Exception as e:
             self.figure(lane).clear()
+            # resize the vbox_widget to ensure figure.clear() will be applied
+            size = self.vbox_widget(lane).size()
+            width, height = size.width(), size.height()
+            self.vbox_widget(lane).resize(width - 1, height - 1)
+            self.vbox_widget(lane).resize(width, height)
+
+            IO.Log.debug(str(e))
+            popup_error(message='An error occured while drawing '
+                                '{} plot:\n'.format(str(lane).lower())
+                                '{}'.format(str(e)),
+                        parent=self.MainWindow)
+        else:
+            self.canvas(lane).draw()
+            if not refresh:
+                self.scroll_area(lane).setWidget(self.vbox_widget(lane))
+                self.scroll_area(lane).setWidgetResizable(True)
+                self.vbox_widget(lane).show()
 
     def call_plot_method(self, lane, index=None, text=None):
         if index is None and text is None:
@@ -996,19 +1108,28 @@ class UserInterface(object):
                 self.reset_widget_and_layout(Widget.VBox, lane, show=False)
 
                 # populate layouts with widget
-                getattr(self, 'build_' + entry['method'] + '_form')(lane)
-
-                # connect events
-                self.plot_button(lane).clicked.connect(
-                    lambda: (self.figure(lane).clear(),
-                             self.draw_plot(lane, entry),
-                             self.canvas(lane).draw(),
-                             self.scroll_area(lane).setWidget(
-                                 self.vbox_widget(lane)),
-                             self.scroll_area(lane).setWidgetResizable(True),
-                             self.vbox_widget(lane).show()))
-                self.back_button(lane).clicked.connect(
-                    lambda: self.call_plot_method(lane, index, text))
+                try:
+                    getattr(self, 'build_' + entry['method'] + '_form')(lane)
+                except AttributeError as e:
+                    try:
+                        # if there isn't a 'build_' method
+                        # maybe there aren't inputs to choose,
+                        # let's draw directly
+                        self.draw_plot(lane, entry)
+                    except AttributeError as f:
+                        # unfortunately also the 'draw_' method is missing
+                        IO.Log.debug(str(f))
+                        popup_error(message=str(f), parent=self.MainWindow)
+                    else:
+                        # plot drawn with success
+                        # no inputs means no need of a back button
+                        self.back_button(lane).setVisible(False)
+                else:
+                    self.set_cached_plot_preferences(lane)
+                    self.plot_button(lane).clicked.connect(
+                        lambda: self.draw_plot(lane, entry))
+                    self.back_button(lane).clicked.connect(
+                        lambda: self.call_plot_method(lane, index, text))
                 break
 
     def xy_radio_form(self, lane, group):
@@ -1027,15 +1148,12 @@ class UserInterface(object):
         self.add(QLabel, lane, Column.Left, row=1, name='LVa',
                  text='1st latent variable')
         self.add(QSpinBox, lane, Column.Right, row=1, name='LVa',
-                 minimum=1, maximum=self.plsda_model.max_lv)
+                 minimum=1, maximum=self.plsda_model.nr_lv)
 
         self.add(QLabel, lane, Column.Left, row=2, name='LVb',
                  text='2nd latent variable')
         self.add(QSpinBox, lane, Column.Right, row=2, name='LVb',
-                 minimum=1, maximum=self.plsda_model.max_lv)
-
-    def only_plot_button_form(self, lane, size=(170, 25, 3610, 25)):
-        self.add(QPushButton, lane, Column.Left, row=0, name='Plot', size=size)
+                 minimum=1, maximum=self.plsda_model.nr_lv)
 
     def build_scree_plot_form(self, lane):
         self.xy_radio_form(lane, group='ScreePlot')
@@ -1047,7 +1165,7 @@ class UserInterface(object):
         self.add(QLabel, lane, Column.Left, row=0, name='LVs',
                  text='Latent variable')
         self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',
-                 minimum=1, maximum=self.plsda_model.max_lv)
+                 minimum=1, maximum=self.plsda_model.nr_lv)
         self.add(QPushButton, lane, Column.Right, row=1, name='Plot')
 
     def build_scores_plot_form(self, lane):
@@ -1072,81 +1190,83 @@ class UserInterface(object):
                  text='normalize')
         self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
 
-    def build_calculated_y_plot_form(self, lane):
-        self.only_plot_button_form(lane)
+    def draw_scree_plot(self, lane, refresh=False):
+        if refresh:
+            _, _, _, _, x, y = self.get_cached_plot_preferences(lane)
+        else:
+            x = self.x_radio_button(lane).isChecked()
+            y = self.y_radio_button(lane).isChecked()
+        plot.scree(self.figure(lane).add_subplot(111), x=x, y=y)
 
-    def build_predicted_y_plot_form(self, lane):
-        self.only_plot_button_form(lane)
-
-    def build_t_square_q_plot_form(self, lane):
-        self.only_plot_button_form(lane)
-
-    def build_residuals_leverage_plot_form(self, lane):
-        self.only_plot_button_form(lane)
-
-    def build_regression_coefficients_plot_form(self, lane):
-        self.only_plot_button_form(lane)
-
-    def draw_scree_plot(self, lane, rows=1, cols=1, pos=1):
-        plot.scree(self.figure(lane).add_subplot(rows, cols, pos),
-                   x=self.x_radio_button(lane).isChecked(),
-                   y=self.y_radio_button(lane).isChecked())
-
-    def draw_explained_variance_plot(self, lane, rows=1, cols=1, pos=1):
+    def draw_explained_variance_plot(self, lane, refresh=False):
+        if refresh:
+            _, _, _, _, x, y = self.get_cached_plot_preferences(lane)
+        else:
+            x = self.x_radio_button(lane).isChecked()
+            y = self.y_radio_button(lane).isChecked()
         plot.cumulative_explained_variance(
-            self.figure(lane).add_subplot(rows, cols, pos),
-            x=self.x_radio_button(lane).isChecked(),
-            y=self.y_radio_button(lane).isChecked())
+            self.figure(lane).add_subplot(111), x=x, y=y)
 
-    def draw_inner_relations_plot(self, lane, rows=1, cols=1, pos=1):
-        plot.inner_relations(ax=self.figure(lane).add_subplot(rows, cols, pos),
-                             num=self.lvs_spin_box(lane).value())
+    def draw_inner_relations_plot(self, lane, refresh=False):
+        if refresh:
+            _, _, lvs, _, _, _ = self.get_cached_plot_preferences(lane)
+        else:
+            lvs = self.lvs_spin_box(lane).value()
+        plot.inner_relations(ax=self.figure(lane).add_subplot(111), num=lvs)
 
-    def draw_scores_plot(self, lane, rows=1, cols=1, pos=1):
-        normalize = self.normalize_check_box(lane).checkState() == Qt.Checked
+    def draw_scores_plot(self, lane, rows=1, cols=1, pos=1, refresh=False):
+        if refresh:
+            lva, lvb, _, norm, x, y = self.get_cached_plot_preferences(lane)
+        else:
+            lva = self.lva_spin_box(lane).value()
+            lvb = self.lvb_spin_box(lane).value()
+            norm = self.normalize_check_box(lane).checkState() == Qt.Checked
+            x = self.x_radio_button(lane).isChecked()
+            y = self.y_radio_button(lane).isChecked()
         plot.scores(self.figure(lane).add_subplot(rows, cols, pos),
-                    lv_a=self.lva_spin_box(lane).value(),
-                    lv_b=self.lvb_spin_box(lane).value(),
-                    x=self.x_radio_button(lane).isChecked(),
-                    y=self.y_radio_button(lane).isChecked(),
-                    normalize=normalize)
+                    lv_a=lva, lv_b=lvb, normalize=norm, x=x, y=y)
 
-    def draw_loadings_plot(self, lane, rows=1, cols=1, pos=1):
+    def draw_loadings_plot(self, lane, rows=1, cols=1, pos=1, refresh=False):
+        if refresh:
+            lva, lvb, _, _, x, y = self.get_cached_plot_preferences(lane)
+        else:
+            lva = self.lva_spin_box(lane).value()
+            lvb = self.lvb_spin_box(lane).value()
+            x = self.x_radio_button(lane).isChecked()
+            y = self.y_radio_button(lane).isChecked()
         plot.loadings(self.figure(lane).add_subplot(rows, cols, pos),
-                      lv_a=self.lva_spin_box(lane).value(),
-                      lv_b=self.lvb_spin_box(lane).value(),
-                      x=self.x_radio_button(lane).isChecked(),
-                      y=self.y_radio_button(lane).isChecked())
+                      lv_a=lva, lv_b=lvb, x=x, y=y)
 
-    def draw_biplot_plot(self, lane, rows=1, cols=1, pos=1):
-        normalize = self.normalize_check_box(lane).checkState() == Qt.Checked
-        plot.biplot(self.figure(lane).add_subplot(rows, cols, pos),
-                    lv_a=self.lva_spin_box(lane).value(),
-                    lv_b=self.lvb_spin_box(lane).value(),
-                    x=self.x_radio_button(lane).isChecked(),
-                    y=self.y_radio_button(lane).isChecked(),
-                    normalize=normalize)
+    def draw_biplot_plot(self, lane, refresh=False):
+        if refresh:
+            lva, lvb, _, norm, x, y = self.get_cached_plot_preferences(lane)
+        else:
+            lva = self.lva_spin_box(lane).value()
+            lvb = self.lvb_spin_box(lane).value()
+            norm = self.normalize_check_box(lane).checkState() == Qt.Checked
+            x = self.x_radio_button(lane).isChecked()
+            y = self.y_radio_button(lane).isChecked()
+        plot.biplot(self.figure(lane).add_subplot(111),
+                    lv_a=lva, lv_b=lvb, normalize=norm, x=x, y=y)
 
-    def draw_scores_and_loadings_plot(self, lane):
-        self.draw_scores_plot(lane, rows=2, cols=1, pos=1)
-        self.draw_loadings_plot(lane, rows=2, cols=1, pos=2)
+    def draw_scores_and_loadings_plot(self, lane, refresh=False):
+        self.draw_scores_plot(lane, rows=2, cols=1, pos=1, refresh=refresh)
+        self.draw_loadings_plot(lane, rows=2, cols=1, pos=2, refresh=refresh)
 
-    def draw_calculated_y_plot(self, lane, rows=1, cols=1, pos=1):
-        plot.calculated_y(self.figure(lane).add_subplot(rows, cols, pos))
+    def draw_calculated_y_plot(self, lane, refresh=False):
+        plot.calculated_y(self.figure(lane).add_subplot(111))
 
-    def draw_predicted_y_plot(self, lane, rows=1, cols=1, pos=1):
-        plot.y_predicted(self.figure(lane).add_subplot(rows, cols, pos))
+    def draw_predicted_y_plot(self, lane, refresh=False):
+        plot.y_predicted(self.figure(lane).add_subplot(111))
 
-    def draw_t_square_q_plot(self, lane, rows=1, cols=1, pos=1):
-        plot.t_square_q(self.figure(lane).add_subplot(rows, cols, pos))
+    def draw_t_square_q_plot(self, lane, refresh=False):
+        plot.t_square_q(self.figure(lane).add_subplot(111))
 
-    def draw_residuals_leverage_plot(self, lane, rows=1, cols=1, pos=1):
-        plot.y_residuals_leverage(
-            self.figure(lane).add_subplot(rows, cols, pos))
+    def draw_residuals_leverage_plot(self, lane, refresh=False):
+        plot.y_residuals_leverage(self.figure(lane).add_subplot(111))
 
-    def draw_regression_coefficients_plot(self, lane, rows=1, cols=1, pos=1):
-        plot.regression_coefficients(
-            self.figure(lane).add_subplot(rows, cols, pos))
+    def draw_regression_coefficients_plot(self, lane, refresh=False):
+        plot.regression_coefficients(self.figure(lane).add_subplot(111))
 
     def new_model(self):
         """Initialize plsda_model attribute from csv."""
@@ -1189,10 +1309,12 @@ class UserInterface(object):
             popup_error(message=str(e), parent=self.MainWindow)
             return
 
-        self.train_set, self.plsda_model = train_set, plsda_model
+        self.train_set = train_set
+        self.plsda_model = plsda_model
 
         IO.Log.debug('Model created correctly')
         self.current_mode = Mode.Model
+        self.RightLVsModelSpinBox.setValue(self.plsda_model.nr_lv)
 
     def save_model(self):
         export_dir = popup_choose_output_directory(parent=self.MainWindow)
@@ -1226,12 +1348,77 @@ class UserInterface(object):
 
         IO.Log.debug('Model loaded correctly')
         self.current_mode = Mode.Model
+        self.RightLVsModelSpinBox.setValue(self.plsda_model.nr_lv)
+
+    def load_csv_to_predict(self):
+        input_file = popup_choose_input_file(parent=self.MainWindow,
+                                             filter_csv=True)
+        if input_file is None:
+            return
+
+        try:
+            test_set = model.TestSet(input_file, self.train_set)
+        except Exception as e:
+            IO.Log.debug(str(e))
+            popup_error(message=str(e), parent=self.MainWindow)
+            return
+
+        try:
+            stats = model.Statistics(
+                y_real=test_set.y,
+                y_pred=self.plsda_model.predict(test_set.x))
+        except Exception as e:
+            IO.Log.debug(str(e))
+            popup_error(message=str(e), parent=self.MainWindow)
+            return
+        else:
+            self.stats = stats
+            self.test_set = test_set
+
+        IO.Log.debug('TestSet created correctly')
+        self.current_mode = Mode.Prediction
+
+    def update_latent_variables_number(self, num):
+        try:
+            self.plsda_model.nr_lv = num
+        except AssertionError as e:
+            IO.Log.debug(str(e))
+            popup_error(message=str(e), parent=self.MainWindow)
+        else:
+            for lane in (Lane.Left, Lane.Central):
+                try:
+                    # ensure canvas exists
+                    canvas = self.canvas(lane)
+                except AttributeError as e:
+                    continue
+                else:
+                    # and redraw plots if it is visible
+                    if canvas.isVisible():
+                        cb = getattr(self, str(lane) + 'ComboBox')
+                        for entry in self.drop_down_menu:
+                            if cb.currentIndex() == entry['index']:
+                                self.draw_plot(lane, entry, refresh=True)
+                                break
+
+    def cross_validation_wrapper(self):
+        split = self.right_cv_splits()
+        sample = self.right_cv_samples()
+        max_lv = self.plsda_model.max_lv
+
+        try:
+            ret = model.cross_validation(self.train_set, split, sample, max_lv)
+        except Exception as e:
+            IO.Log.debug(str(e))
+            popup_error(message=str(e), parent=self.MainWindow)
+
+
+        self.update_right_cv_info()
 
     def connect_handlers(self):
         self.NewModelAction.triggered.connect(self.new_model)
         self.SaveModelAction.triggered.connect(self.save_model)
         self.LoadModelAction.triggered.connect(self.load_model)
-
+        self.LoadCsvToPredictAction.triggered.connect(self.load_csv_to_predict)
         self.ExportMatricesAction.triggered.connect(
             lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
 
@@ -1249,9 +1436,16 @@ class UserInterface(object):
         self.AboutQtAction.triggered.connect(QApplication.aboutQt)
 
         self.LeftComboBox.currentIndexChanged.connect(
-            lambda idx: self.call_plot_method(Lane.Left, index=idx))
+            lambda idx: (self.clear_cached_plot_preferences(Lane.Left),
+                         self.call_plot_method(Lane.Left, index=idx)))
         self.CentralComboBox.currentTextChanged.connect(
-            lambda txt: self.call_plot_method(Lane.Central, text=txt))
+            lambda txt: (self.clear_cached_plot_preferences(Lane.Central),
+                         self.call_plot_method(Lane.Central, text=txt)))
+
+        self.RightLVsModelSpinBox.valueChanged.connect(
+            lambda nr_lv: self.update_latent_variables_number(nr_lv))
+        self.RightStartCVPushButton.clicked.connect(
+            self.cross_validation_wrapper)
 
     def about_this_project(self):
         dialog = QMessageBox(self.MainWindow)
