@@ -5,7 +5,7 @@ import collections
 import functools
 import math
 import numpy as np
-import scipy as sp
+import scipy.stats as scipy_stats
 
 import IO
 import model
@@ -334,10 +334,10 @@ def t_square_q(ax):
     for i in range(MODEL.n):
         scatter_wrapper(ax, t_square[i], q_res[i], TRAIN_SET.categorical_y[i])
 
-    t_square_confidence_level = sp.stats.norm.interval(0.95, np.mean(t_square),
-                                                       np.std(t_square))[1]
-    q_confidence_level = sp.stats.norm.interval(0.95, np.mean(q_res),
-                                                np.std(q_res))[1]
+    t_square_confidence_level = scipy_stats.norm.interval(
+        0.95, np.mean(t_square), np.std(t_square))[1]
+    q_confidence_level = scipy_stats.norm.interval(
+        0.95, np.mean(q_res), np.std(q_res))[1]
 
     ax.axvline(t_square_confidence_level, linestyle='dashed', color='black')
     ax.axhline(q_confidence_level, linestyle='dashed', color='black')
@@ -359,6 +359,7 @@ def y_residuals_leverage(ax):
 
 
 def leverage(ax):
+
     """Plot leverage over the sample."""
     for i in range(MODEL.n):
         scatter_wrapper(ax, i, MODEL.leverage[i],
@@ -375,8 +376,8 @@ def q_over_leverage(ax):
         scatter_wrapper(ax, q_res[i], MODEL.leverage[i],
                         TRAIN_SET.categorical_y[i])
 
-    q_confidence_level = sp.stats.norm.interval(0.95, np.mean(q_res),
-                                                np.std(q_res))[1]
+    q_confidence_level = scipy_stats.norm.interval(
+        0.95, np.mean(q_res), np.std(q_res))[1]
 
     ax.axvline(q_confidence_level, linestyle='dashed', color='black')
 
@@ -458,8 +459,8 @@ def rmsecv_lv(ax, stats):
         r.append(rmsecv)
 
     r = np.asarray(r)
-    print(r)
-    print(r.T)
+    IO.Log.debug('r variable in plot.rmsecv_lv()', r)
+    IO.Log.debug('r.T variable in plot.rmsecv_lv()', r.T)
 
     for i in range(len(r.T)):
         line_wrapper(ax, range(1, len(r) + 1), r.T[i])

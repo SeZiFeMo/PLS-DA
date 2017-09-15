@@ -186,8 +186,8 @@ class Model(object):
 
     @nr_lv.setter
     def nr_lv(self, value):
-        assert 0 < value <= self.max_lv, "Chosen latent variable" \
-                                    " number {} out of bounds [0, {}]".format(
+        assert 0 < value <= self.max_lv, 'Chosen latent variable number ' \
+                                         '{} out of bounds [0, {}]'.format(
                                             value, self.max_lv)
 
         utility.clear_property_cache(self, 'Y_modeled')
@@ -337,18 +337,26 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
 
     assert X.shape[0] == Y.shape[0], "Incompatible X and Y matrices"
 
+    IO.Log.debug('Nipals X matrix: ' + str(X))
+    IO.Log.debug('Nipals Y matrix: ' + str(Y))
+
     n = X.shape[0]
     m = X.shape[1]
     p = Y.shape[1]
 
+    IO.Log.debug('Nipals n: {}, m: {}, p: {}'.format(n, m, p))
+
     if nr_lv is None:
+        IO.Log.debug('nipals was called with nr_lv: None')
         nr_lv = min(n, m)
     if nr_lv > min(n, m):
         IO.Log.warning('Too many latent variables specified. '
                        'Will use {}'.format(min(n, m)))
         nr_lv = min(n, m)
 
+    IO.Log.debug('Called model.Model with nr_lv: {}'.format(nr_lv))
     model = Model(X, Y, nr_lv)
+    IO.Log.debug('This line shouldn\'t be printed if you pushed StartCVButton')
 
     s_list_x = []
     s_list_y = []

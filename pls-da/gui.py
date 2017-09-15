@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QCheckBox,
                              QScrollArea, QSizePolicy as Policy, QSpinBox,
                              QSplitter, QVBoxLayout, QWidget)
 import sys
+import traceback
 
 import IO
 import model
@@ -408,12 +409,12 @@ class UserInterface(object):
         self.update_right_prediction_info()
 
     @property
-    def stats(self):
+    def prediction_stats(self):
         """Return reference to object of model.Statistics type or None."""
         return getattr(self, '_stats', None)
 
-    @stats.setter
-    def stats(self, value):
+    @prediction_stats.setter
+    def prediction_stats(self, value):
         """Wrap update of plot.STATS reference.
 
            Raises TypeError on bad value type.
@@ -430,6 +431,29 @@ class UserInterface(object):
         plot.update_global_statistics(value)
 
     @property
+    def cv_stats(self):
+        """Return reference to a list of model.Statistics objects.
+
+           Or None if the internal attribute is not set.
+        """
+        return getattr(self, '_cv_stats', None)
+
+    @cv_stats.setter
+    def cv_stats(self, value):
+        """Ensure that value is a list of list."""
+        if not isinstance(value, list) or not isinstance(value[0], list):
+            raise TypeError('value assigned to self.cv_stats is not a list '
+                            'of lists ({})'.format(repr(value)))
+        for sublist in value:
+            if not isinstance(sublist, list) or len(sublist) != len(value[0]):
+                raise TypeError('value assigned to self.cv_stats is not '
+                                'composed by lists of the same length '
+                                '({})'.format(repr(value)))
+        self._cv_stats = value
+
+        self.update_right_cv_info()
+
+    @property
     def drop_down_menu(self):
         """Return a generator iterator over drop down menu item properties."""
         tmp = (('Scree', 'scree'),
@@ -440,10 +464,17 @@ class UserInterface(object):
                ('Biplot', 'biplot'),
                ('Scores & Loadings', 'scores_and_loadings'),
                ('Calculated Y', 'calculated_y'),
+               ('Predicted Y – Real Y', 'predicted_y_real_y'),
                ('Predicted Y', 'predicted_y'),
                ('T² – Q', 't_square_q'),
                ('Residuals – Leverage', 'residuals_leverage'),
-               ('Regression coefficients', 'regression_coefficients'))
+               ('Samples – Leverage', 'samples_leverage'),
+               ('Q  Leverage', 'q_over_leverage'),
+               ('Regression coefficients', 'regression_coefficients'),
+               ('Weights', 'weights'),
+               ('Weights line', 'weights_line'),
+               ('Data', 'data'),
+               ('RMSECV', 'rmesecv'))
         for index, (text, method) in enumerate(tmp):
             yield {'index': index, 'text': text, 'method': method + '_plot'}
 
@@ -812,17 +843,12 @@ class UserInterface(object):
         """Method to refresh the label with prediction infos."""
         l = getattr(self, 'RightPredictionInfoLabel', None)
         if l is not None:
-            text = 'X-Block: {} x {}\n'.format(' ??? ',
-                                               ' ??? ')
-            text += 'Y-Block: {} x {}\n'.format(' ??? ',
-                                                ' ??? ')
-            text += 'RMSEP: {}\n'.format(self.stats.rmsec)
-            try:
-                text += 'R^2 Pred: {}\n'.format(self.stats.r_squared)
-            except Exception as e:
-                text += 'R^2 Pred: {}\n'.format(' ??? ')
-                IO.Log.debug(str(e))
-                popup_error(message=str(e), parent=self.MainWindow)
+            text = 'X-Block: {} x {}\n'.format(self.test_set.n,
+                                               self.test_set.m)
+            text += 'Y-Block: {} x {}\n'.format(self.test_set.n,
+                                                self.test_set.p)
+            text += 'RMSEP: {}\n'.format(self.prediction_stats.rmsec)
+            text += 'R^2 Pred: {}\n'.format(self.prediction_stats.r_squared)
             l.setText(text)
 
     def reset_widget_and_layout(self, widget, lane, show=True):
@@ -1085,6 +1111,7 @@ class UserInterface(object):
             self.vbox_widget(lane).resize(width, height)
 
             IO.Log.debug(str(e))
+            traceback.print_exc()
             popup_error(message='An error occured while drawing '
                                 '{} plot:\n'.format(str(lane).lower())
                                 '{}'.format(str(e)),
@@ -1204,6 +1231,21 @@ class UserInterface(object):
         self.xy_radio_ab_spin_form(
             lane, group='ScoresAndLoadingsPlot', add_normalize=True)
 
+    def build_weights_plot_form(self, lane):
+        self.xy_radio_ab_spin_form(lane, group='WeightsPlot')
+
+        # remove unnecessary x, y radio buttons
+        x, y = self.x_radio_button(lane), self.y_radio_button(lane)
+        x.setVisible(False), y.setVisible(False)
+        delete(x), delete(y)
+
+    def build_weights_line_plot_form(self, lane):
+        self.add(QLabel, lane, Column.Left, row=0, name='LVs',
+                 text='Latent variables')
+        self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',
+                 minimum=1, maximum=self.plsda_model.nr_lv)
+        self.add(QPushButton, lane, Column.Right, row=1, name='Plot')
+
     def draw_scree_plot(self, lane, refresh=False):
         if refresh:
             _, _, _, _, x, y = self.get_cached_plot_preferences(lane)
@@ -1270,6 +1312,9 @@ class UserInterface(object):
     def draw_calculated_y_plot(self, lane, refresh=False):
         plot.calculated_y(self.figure(lane).add_subplot(111))
 
+    def draw_predicted_y_real_y_plot(self, lane, refresh=False):
+        plot.y_predicted_y_real(self.figure(lane).add_subplot(111))
+
     def draw_predicted_y_plot(self, lane, refresh=False):
         plot.y_predicted(self.figure(lane).add_subplot(111))
 
@@ -1279,8 +1324,40 @@ class UserInterface(object):
     def draw_residuals_leverage_plot(self, lane, refresh=False):
         plot.y_residuals_leverage(self.figure(lane).add_subplot(111))
 
+    def draw_samples_leverage_plot(self, lane, refresh=False):
+        plot.leverage(self.figure(lane).add_subplot(111))
+
+    def draw_q_over_leverage_plot(self, lane, refresh=False):
+        plot.q_over_leverage(self.figure(lane).add_subplot(111))
+
     def draw_regression_coefficients_plot(self, lane, refresh=False):
         plot.regression_coefficients(self.figure(lane).add_subplot(111))
+
+    def draw_weights_plot(self, lane, refresh=False):
+        if refresh:
+            lva, lvb, _, _, _, _ = self.get_cached_plot_preferences(lane)
+        else:
+            lva = self.lva_spin_box(lane).value()
+            lvb = self.lvb_spin_box(lane).value()
+        plot.weights(self.figure(lane).add_subplot(111), lv_a=lva, lv_b=lvb)
+
+    def draw_weights_line_plot(self, lane, refresh=False):
+        if refresh:
+            _, _, lvs, _, _, _ = self.get_cached_plot_preferences(lane)
+        else:
+            lvs = self.lvs_spin_box(lane).value()
+        plot.weights_line(ax=self.figure(lane).add_subplot(111), lv=lvs)
+
+    def draw_data_plot(self, lane, refresh=False):
+        plot.data(self.figure(lane).add_subplot(111))
+
+    def draw_rmesecv_plot(self, lane, refresh=False):
+        if self.cv_stats is None:
+            popup_error(message='Please run cross-validation at least once!',
+                        parent=self.MainWindow)
+        else:
+            plot.rmsecv_lv(self.figure(lane).add_subplot(111),
+                           stats=self.cv_stats)
 
     def new_model(self):
         """Initialize plsda_model attribute from csv."""
@@ -1367,6 +1444,7 @@ class UserInterface(object):
         self.RightLVsModelSpinBox.setValue(self.plsda_model.nr_lv)
 
     def load_csv_to_predict(self):
+        """Initialize test_set and prediction_stats attribute."""
         input_file = popup_choose_input_file(parent=self.MainWindow,
                                              filter_csv=True)
         if input_file is None:
@@ -1388,7 +1466,7 @@ class UserInterface(object):
             popup_error(message=str(e), parent=self.MainWindow)
             return
         else:
-            self.stats = stats
+            self.prediction_stats = stats
             self.test_set = test_set
 
         IO.Log.debug('TestSet created correctly')
@@ -1429,15 +1507,14 @@ class UserInterface(object):
         split = self.right_cv_splits()
         sample = self.right_cv_samples()
         max_lv = self.plsda_model.max_lv
-
         try:
             ret = model.cross_validation(self.train_set, split, sample, max_lv)
         except Exception as e:
+            traceback.print_exc()
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
-
-
-        self.update_right_cv_info()
+        else:
+            self.cv_stats = ret
 
     def connect_handlers(self):
         self.NewModelAction.triggered.connect(self.new_model)
