@@ -59,10 +59,7 @@ def load(workspace):
     nipals_model.nr_lv = data['nr_lv']
 
 
-    plot.TRAIN_SET = dataset
-    plot.MODEL = nipals_model
-
-    return nipals_model
+    return nipals_model, dataset
 
 
 def mat2str(data, h_bar='-', v_bar='|', join='+'):

@@ -1338,10 +1338,12 @@ class UserInterface(object):
             return
 
         plsda_model_copy = copy.deepcopy(self.plsda_model)
+        train_set_copy = copy.deepcopy(self.train_set)
         try:
-            self.plsda_model = IO.load(workspace_dir)
+            self.plsda_model, self.train_set = IO.load(workspace_dir)
         except Exception as e:
             self.plsda_model = plsda_model_copy
+            self.train_set = train_set_copy
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
             return
