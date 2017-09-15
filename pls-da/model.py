@@ -20,29 +20,29 @@ class Dataset(object):
 
            self.axis        axis to compute std and mean
         """
-        if input_file is None:
-            input_file = utility.CLI.args().input_file
-        self.header, body = IO.CSV.parse(input_file)
-        IO.Log.debug('Successfully parsed {} input file.'.format(input_file))
+        if input_file is not None:
+            self.header, body = IO.CSV.parse(input_file)
+            IO.Log.debug('Successfully parsed file {}.'.format(input_file))
 
-        self.categorical_y = [row[0] for row in body]
-        self.categories = utility.get_unique_list(self.categorical_y)
+            self.body = body
+            self.categorical_y = [row[0] for row in body]
+            self.categories = utility.get_unique_list(self.categorical_y)
 
-        self.x = np.array([np.array(row[1:]) for row in body])
-        IO.Log.debug('Loaded dataset', self.x)
+            self.x = np.array([np.array(row[1:]) for row in body])
+            IO.Log.debug('Loaded dataset', self.x)
 
-        self.y = np.array([[1.0 if c == cat else 0.0
-                            for c in self.categorical_y]
-                           for cat in self.categories]).T
-        IO.Log.debug('Dummy y', self.y)
+            self.y = np.array([[1.0 if c == cat else 0.0
+                                for c in self.categorical_y]
+                               for cat in self.categories]).T
+            IO.Log.debug('Dummy y', self.y)
 
-        self.mean_x = np.zeros(self.m)
-        self.mean_y = np.zeros(self.p)
-        self.sigma_x = np.ones(self.m)
-        self.sigma_y = np.ones(self.p)
-        self.axis = 0
-        self._centered = False
-        self._normalized = False
+            self.mean_x = np.zeros(self.m)
+            self.mean_y = np.zeros(self.p)
+            self.sigma_x = np.ones(self.m)
+            self.sigma_y = np.ones(self.p)
+            self.axis = 0
+            self._centered = False
+            self._normalized = False
 
     @property
     def n(self):
@@ -420,7 +420,7 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
     return model
 
 
-def cross_validation(train_set, split, max_lv):
+def cross_validation(train_set, split, sample, max_lv):
     """Perform a cross-validation procedure on a TrainingSet dataset.
 
     Return a list of dictionaries of Statistics object. Every dictionary
@@ -429,7 +429,7 @@ def cross_validation(train_set, split, max_lv):
     element is the lv used for that prediction.
     """
     results = []
-    for train, test in venetian_blind_split(train_set, split):
+    for train, test in venetian_blind_split(train_set, split, sample):
         model = nipals(*train)
         res = dict()
         for lv in range(1, max_lv):
@@ -440,10 +440,33 @@ def cross_validation(train_set, split, max_lv):
     return results
 
 
-def venetian_blind_split(train_set, split):
+def venetian_blind_split(train_set, split, sample):
     """Split the dataset in train and test using the venetian blind algo."""
-    for offset in range(split, 0, -1):  # order result logically
-        mask = np.arange(offset, train_set.n + offset) % split == 0
+
+    # find the minimum divisor of split * sample greater than n
+    # this is needed to be able to use the function np.roll properly
+    n = train_set.n
+    base = split * sample
+    div = n - (n % base) + (base if n % base else 0)
+
+    # build the set of mask used to create the first split
+    masks = []
+    masks.append(np.arange(0, div) % (split*sample) == 0)
+    for offset in range(1, sample):
+        masks.append(np.roll(masks[0], offset))
+
+    # build the mask for the first split
+    m = []
+    for i in zip(*masks):
+        x = False
+        for e in i:
+            x = x or e
+        m.append(x)
+
+    for offset in range(split):
+        # Create the mask for the current split and truncate it to
+        # its real length
+        mask = np.roll(m, offset * sample)[:n]
         test_x = train_set.x[mask]
         train_x = train_set.x[~mask]
         test_y = train_set.y[mask]

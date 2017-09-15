@@ -25,7 +25,7 @@ if __name__ != '__main__':
 
 utility.check_python_version()
 
-train_set = model.TrainingSet()
+train_set = model.TrainingSet('datasets/olive_training.csv')
 train_set.autoscale()
 plot.update_global_train_set(train_set)
 
@@ -39,7 +39,7 @@ y_pred = nipals_model.predict(test_set.x)
 pred = model.Statistics(test_set.y, y_pred)
 plot.update_global_statistics(pred)
 
-results = model.cross_validation(train_set, 4, 6)
+results = model.cross_validation(train_set, 4, 3, 6)
 # for res in results:
 #    for stat_id in res:
 #        print(res[stat_id].rss)
@@ -51,12 +51,16 @@ fig = plt.figure(tight_layout=True)
 # plot.biplot(ax, 0, 1, x=True)
 # plot.cumulative_explained_variance(ax, x=True)
 # plot.scree(ax, y=True)
-plot.loadings(fig.add_subplot(2, 2, 1), 0, 1, x=True)
-plot.biplot(fig.add_subplot(2, 2, 2), 0, 1, x=True)
-plot.MODEL.nr_lv = 4
-plot.t_square_q(fig.add_subplot(2, 2, 4))
-plot.q_over_leverage(fig.add_subplot(2, 2, 3))
-plt.show()
+# plot.loadings(fig.add_subplot(2, 2, 1), 0, 1, x=True)
+# plot.biplot(fig.add_subplot(2, 2, 2), 0, 1, x=True)
+# plot.MODEL.nr_lv = 4
+# plot.t_square_q(fig.add_subplot(2, 2, 4))
+# plot.q_over_leverage(fig.add_subplot(2, 2, 3))
+# plt.show()
 
+IO.save_matrix(nipals_model.X, ';'.join(['X', str(plot.MODEL.nr_lv),
+                                        str(plot.MODEL.X.shape)]), 'temp_file.csv')
+IO.dump(nipals_model, 'workspace')
+IO.load('workspace')
 print(test_set.categories)
 
