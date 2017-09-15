@@ -6,7 +6,6 @@ import functools
 import math
 import numpy as np
 import scipy as sp
-import sklearn.cross_decomposition as sklCD
 
 import IO
 import model
@@ -447,31 +446,27 @@ def data(ax):
     ax.set_ylabel('Values')
 
 
-def sklearn_inner_relations(ax, num):
-    """Plot the inner relations for the chosen latent variable.
+def rmsecv_lv(ax, stats):
+    """Plot the RMSECV value for the current cv."""
 
-       WARNING: implementation uses sklearn PLS regression!
+    r = []
+    for j in range(len(stats[0])):               # lv
+        rmsecv = np.zeros((stats[0][j].p))
+        for i in range(len(stats)):              # split
+            for k, y in enumerate(stats[i][j].rmsec):     # y
+                rmsecv[k] += y/len(stats[0])
+        r.append(rmsecv)
 
-       Raise ValueError if num is greater than available latent variables.
-    """
-    if num > MODEL.nr_lv:
-        raise ValueError('In sklearn_inner_relations() num of latent variables'
-                         ' is out of bounds')
+    r = np.asarray(r)
+    print(r)
+    print(r.T)
 
-    X, Y = TRAIN_SET.x.copy(), TRAIN_SET.y.copy()
-    sklearn_pls = sklCD.PLSRegression(n_components=min(MODEL.n, MODEL.m),
-                                      scale=True, max_iter=1e4, tol=1e-6,
-                                      copy=True)
-    sklearn_pls.fit(X, Y)
+    for i in range(len(r.T)):
+        line_wrapper(ax, range(1, len(r) + 1), r.T[i])
 
-    for i in range(MODEL.T.shape[0]):
-        scatter_wrapper(ax, sklearn_pls.x_scores_[i, num],
-                        sklearn_pls.y_scores_[i, num],
-                        TRAIN_SET.categorical_y[i])
-
-    ax.set_title('Inner relation for LV {} (sklearn)'.format(num))
-    ax.set_xlabel('t{}'.format(num))
-    ax.set_ylabel('u{}'.format(num))
+    ax.set_title('RMSECV')
+    ax.set_xlabel('LV')
+    ax.set_ylabel('RMSECV')
 
 
 if __name__ == '__main__':

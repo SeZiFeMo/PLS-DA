@@ -299,6 +299,11 @@ class Statistics(object):
         self.y_pred = y_pred
 
     @property
+    def p(self):
+        """Return the number of columns of y."""
+        return self.y_real.shape[1]
+
+    @property
     def ess(self):
         return np.linalg.norm(self.y_pred - self.y_real.mean(axis=0),
                               axis=0)**2
@@ -318,9 +323,8 @@ class Statistics(object):
     @property
     def r_squared(self):
         r_squared = 1 - self.rss / self.tss
-        IO.Log.debug('r_squared: ', r_squared)
 
-        assert r_squared > 0, "Negative r_squared found"
+        assert np.all(r_squared > 0), "Negative r_squared found"
         return r_squared
 
 
@@ -419,19 +423,22 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
 def cross_validation(train_set, split, sample, max_lv):
     """Perform a cross-validation procedure on a TrainingSet dataset.
 
-    Return a list of dictionaries of Statistics object. Every dictionary
-    corresponds to a split, while every element in a dictionary corresponds
-    to the model predicted with a specific lv. The key of the dictionary
-    element is the lv used for that prediction.
+    Return a list of lists of Statistics object. Every element of the inner
+    list belongs to a different lv, while every element of the outer list
+    belongs ro a split.
+
+    Example:
+    [['split 0 lv 0', 'split 0 lv 1', 'split 0 lv 2'], ['split 1 lv 0',
+    'split 1 lv 1', 'split 1 lv 2']]
     """
     results = []
     for train, test in venetian_blind_split(train_set, split, sample):
         model = nipals(*train)
-        res = dict()
-        for lv in range(1, max_lv):
+        res = []
+        for lv in range(1, max_lv + 1):
             model.nr_lv = lv
             y_pred = model.predict(test[0])
-            res[lv] = Statistics(test[1], y_pred)
+            res.append(Statistics(test[1], y_pred))
         results.append(res)
     return results
 
