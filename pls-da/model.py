@@ -327,9 +327,8 @@ class Statistics(object):
         IO.Log.debug('tss: ', self.tss)
 
         r_squared = 1 - self.rss / self.tss
-        IO.Log.debug('r_squared: ', r_squared)
 
-        assert r_squared > 0, "Negative r_squared found"
+        assert np.all(r_squared > 0), "Negative r_squared found"
         return r_squared
 
 
