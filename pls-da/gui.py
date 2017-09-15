@@ -1139,7 +1139,7 @@ class UserInterface(object):
                  group_name=str(lane) + group)
         self.add(QPushButton, lane, Column.Left, row=2, name='Plot')
 
-    def xy_radio_ab_spin_form(self, lane, group):
+    def xy_radio_ab_spin_form(self, lane, group, add_normalize=False):
         self.add(QRadioButton, lane, Column.Left, row=0, name='X',
                  group_name=str(lane) + group)
         self.add(QRadioButton, lane, Column.Right, row=0, name='Y',
@@ -1147,13 +1147,34 @@ class UserInterface(object):
 
         self.add(QLabel, lane, Column.Left, row=1, name='LVa',
                  text='1st latent variable')
-        self.add(QSpinBox, lane, Column.Right, row=1, name='LVa',
-                 minimum=1, maximum=self.plsda_model.nr_lv)
+        sb1 = self.add(QSpinBox, lane, Column.Right, row=1, name='LVa',
+                       minimum=1, maximum=self.plsda_model.nr_lv)
 
         self.add(QLabel, lane, Column.Left, row=2, name='LVb',
                  text='2nd latent variable')
-        self.add(QSpinBox, lane, Column.Right, row=2, name='LVb',
-                 minimum=1, maximum=self.plsda_model.nr_lv)
+        sb2 = self.add(QSpinBox, lane, Column.Right, row=2, name='LVb',
+                       minimum=1, maximum=self.plsda_model.nr_lv)
+        sb2.setValue(sb1.value() + 1)
+
+        if add_normalize:
+            self.add(QCheckBox, lane, Column.Left, row=3, name='Normalize',
+                     text='normalize')
+        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
+
+        w1 = self.add(QLabel, lane, Column.Left, row=4, name='Warning',
+                      text_format=Qt.RichText, label_alignment=Qt.AlignRight,
+                      text='<font color="red">Latent <br><br>should</font>')
+        w2 = self.add(QLabel, lane, Column.Right, row=4, name='Warning',
+                      text_format=Qt.RichText, label_alignment=Qt.AlignLeft,
+                      text='<font color="red"> variables<br><br> differ!'
+                           '</font>')
+        w1.setVisible(False), w2.setVisible(False)
+        sb1.valueChanged.connect(
+            lambda sb1_value: (w1.setVisible(sb1_value == sb2.value()),
+                               w2.setVisible(sb1_value == sb2.value())))
+        sb2.valueChanged.connect(
+            lambda sb2_value: (w1.setVisible(sb1.value() == sb2_value),
+                               w2.setVisible(sb1.value() == sb2_value)))
 
     def build_scree_plot_form(self, lane):
         self.xy_radio_form(lane, group='ScreePlot')
@@ -1169,26 +1190,19 @@ class UserInterface(object):
         self.add(QPushButton, lane, Column.Right, row=1, name='Plot')
 
     def build_scores_plot_form(self, lane):
-        self.xy_radio_ab_spin_form(lane, group='ScoresPlot')
-        self.add(QCheckBox, lane, Column.Left, row=3, name='Normalize',
-                 text='normalize')
-        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
+        self.xy_radio_ab_spin_form(
+            lane, group='ScoresPlot', add_normalize=True)
 
     def build_loadings_plot_form(self, lane):
         self.xy_radio_ab_spin_form(lane, group='LoadingsPlot')
-        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
 
     def build_biplot_plot_form(self, lane):
-        self.xy_radio_ab_spin_form(lane, group='BiplotPlot')
-        self.add(QCheckBox, lane, Column.Left, row=3, name='Normalize',
-                 text='normalize')
-        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
+        self.xy_radio_ab_spin_form(
+            lane, group='BiplotPlot', add_normalize=True)
 
     def build_scores_and_loadings_plot_form(self, lane):
-        self.xy_radio_ab_spin_form(lane, group='ScoresAndLoadingsPlot')
-        self.add(QCheckBox, lane, Column.Left, row=3, name='Normalize',
-                 text='normalize')
-        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
+        self.xy_radio_ab_spin_form(
+            lane, group='ScoresAndLoadingsPlot', add_normalize=True)
 
     def draw_scree_plot(self, lane, refresh=False):
         if refresh:
