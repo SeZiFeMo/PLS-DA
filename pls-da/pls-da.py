@@ -39,10 +39,11 @@ y_pred = nipals_model.predict(test_set.x)
 pred = model.Statistics(test_set.y, y_pred)
 plot.update_global_statistics(pred)
 
-results = model.cross_validation(train_set, 4, 3, 6)
-# for res in results:
-#    for stat_id in res:
-#        print(res[stat_id].rss)
+results = model.cross_validation(train_set, 5, 5, 7)
+for split in results:
+    for lv in split:
+        print(lv.rmsec)
+print(results)
 
 fig = plt.figure(tight_layout=True)
 
@@ -51,12 +52,12 @@ fig = plt.figure(tight_layout=True)
 # plot.biplot(ax, 0, 1, x=True)
 # plot.cumulative_explained_variance(ax, x=True)
 # plot.scree(ax, y=True)
-# plot.loadings(fig.add_subplot(2, 2, 1), 0, 1, x=True)
-# plot.biplot(fig.add_subplot(2, 2, 2), 0, 1, x=True)
-# plot.MODEL.nr_lv = 4
-# plot.t_square_q(fig.add_subplot(2, 2, 4))
-# plot.q_over_leverage(fig.add_subplot(2, 2, 3))
-# plt.show()
+plot.rmsecv_lv(fig.add_subplot(2, 2, 1), results)
+plot.biplot(fig.add_subplot(2, 2, 2), 0, 1, x=True)
+plot.MODEL.nr_lv = 4
+plot.t_square_q(fig.add_subplot(2, 2, 4))
+plot.q_over_leverage(fig.add_subplot(2, 2, 3))
+plt.show()
 
 IO.save_matrix(nipals_model.X, ';'.join(['X', str(plot.MODEL.nr_lv),
                                         str(plot.MODEL.X.shape)]), 'temp_file.csv')

@@ -430,5 +430,28 @@ def data(ax):
     ax.set_ylabel('Value')
 
 
+def rmsecv_lv(ax, stats):
+    """Plot the RMSECV value for the current cv."""
+
+    r = []
+    for j in range(len(stats[0])):               # lv
+        rmsecv = np.zeros((stats[0][j].p))
+        for i in range(len(stats)):              # split
+            for k, y in enumerate(stats[i][j].rmsec):     # y
+                rmsecv[k] += y/len(stats[0])
+        r.append(rmsecv)
+
+    r = np.asarray(r)
+    print(r)
+    print(r.T)
+
+    for i in range(len(r.T)):
+        line_wrapper(ax, range(1, len(r) + 1), r.T[i])
+
+    ax.set_title('RMSECV')
+    ax.set_xlabel('LV')
+    ax.set_ylabel('RMSECV')
+
+
 if __name__ == '__main__':
     raise SystemExit('Please do not run that script, load it!')
