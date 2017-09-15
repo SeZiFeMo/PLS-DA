@@ -317,10 +317,6 @@ class Statistics(object):
 
     @property
     def r_squared(self):
-        IO.Log.debug('ess: ', self.ess)
-        IO.Log.debug('rss: ', self.rss)
-        IO.Log.debug('tss: ', self.tss)
-
         r_squared = 1 - self.rss / self.tss
         IO.Log.debug('r_squared: ', r_squared)
 
