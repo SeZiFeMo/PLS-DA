@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Toolbar
 from PyQt5.QtCore import QCoreApplication, QMetaObject, QRect, QSize, Qt
+from PyQt5.QtGui import QStandardItem
 from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QCheckBox,
                              QComboBox, QDialog, QFileDialog, QFormLayout,
                              QGridLayout, QFrame, QInputDialog, QLabel,
@@ -64,6 +65,18 @@ def delete(widget):
         widget.deleteLater()
         if widget_name.strip():
             IO.Log.debug('Deleted {}'.format(widget_name))
+
+
+def change_enable_flag(item, enabled):
+    """Change enabled state of QStandardItem."""
+    if not isinstance(item, QStandardItem):
+        raise TypeError('bad item type in change_enabled_flag() '
+                        '({})'.format(type(item)))
+    if enabled:
+        item.setFlags(item.flags() | Qt.ItemIsEnabled)
+    else:
+        # disabled
+        item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
 
 
 def _popup_choose(parent, filter_csv=False,
@@ -429,6 +442,8 @@ class UserInterface(object):
 
         self._stats = value
         plot.update_global_statistics(value)
+        self.change_plot_enabled_flag('Predicted Y – Real Y', True)
+        self.change_plot_enabled_flag('Predicted Y', True)
 
     @property
     def cv_stats(self):
@@ -450,7 +465,7 @@ class UserInterface(object):
                                 'composed by lists of the same length '
                                 '({})'.format(repr(value)))
         self._cv_stats = value
-
+        self.change_plot_enabled_flag('RMSECV', True)
         self.update_right_cv_info()
 
     @property
@@ -469,10 +484,10 @@ class UserInterface(object):
                ('T² – Q', 't_square_q'),
                ('Residuals – Leverage', 'residuals_leverage'),
                ('Samples – Leverage', 'samples_leverage'),
-               ('Q  Leverage', 'q_over_leverage'),
+               ('Q – Leverage', 'q_over_leverage'),
                ('Regression coefficients', 'regression_coefficients'),
-               ('Weights', 'weights'),
-               ('Weights line', 'weights_line'),
+               ('Weights Scatter Plot', 'weights'),
+               ('Weights Line Plot', 'weights_line'),
                ('Data', 'data'),
                ('RMSECV', 'rmesecv'))
         for index, (text, method) in enumerate(tmp):
@@ -572,8 +587,10 @@ class UserInterface(object):
         return getattr(self, str(Lane.Right) + name + 'FormWidget')
 
     def right_model_lvs(self):
-        """Number of LVs in the SpinBox in the right Model area."""
-        return getattr(self, 'RightLVsModelSpinBox').value()
+        return getattr(self, 'RightLVsModelSpinBox')
+
+    def right_model_change_lvs_button(self):
+        return getattr(self, 'RightLVsModelPushButton')
 
     def right_cv_start_button(self):
         return getattr(self, 'RightStartCVPushButton')
@@ -629,15 +646,10 @@ class UserInterface(object):
             self.current_mode not in (Mode.Start, Mode.Prediction))
 
         if self.current_mode == Mode.Start:
-            for lane in (Lane.Left, Lane.Central):
-                self.reset_widget_and_layout(Widget.Form, lane)
-                self.add(QLabel, lane, Column.Both, row=0, name='Hint',
-                         text='↑{}↑\n'.format(' ' * 48)
-                              'Several plots are available in the above '
-                              'dropdown menu.\n'
-                              '(if you create or load a model before)',
-                         label_alignment=Qt.AlignHCenter,
-                         policy=Policy.Expanding, size=(170, 520, 3610, 4240))
+            self.clear_plot_lanes_and_show_hints()
+            self.change_plot_enabled_flag('RMSECV', False)
+            self.change_plot_enabled_flag('Predicted Y – Real Y', False)
+            self.change_plot_enabled_flag('Predicted Y', False)
 
         self.SaveModelAction.setEnabled(self.current_mode != Mode.Start)
         self.LoadCsvToPredictAction.setEnabled(self.current_mode != Mode.Start)
@@ -647,15 +659,39 @@ class UserInterface(object):
 
         self.update_right_model_lvs_spinbox(
             minimum=1, maximum=getattr(self.plsda_model, 'max_lv', 7),
-            enabled=self.current_mode == Mode.Model)
+            enabled=self.current_mode in (Mode.Model, Mode.CV))
+        self.right_model_change_lvs_button().setEnabled(
+            self.current_mode in (Mode.Model, Mode.CV))
+
         self.update_right_cv_splits_spinbox(
-            minimum=1, maximum=getattr(self.plsda_model, 'n', 219),
+            minimum=2, maximum=getattr(self.plsda_model, 'n', 219),
             enabled=self.current_mode == Mode.CV)
         self.update_right_cv_samples_spinbox(
             minimum=1, maximum=getattr(self.plsda_model, 'n', 219),
             enabled=self.current_mode == Mode.CV)
         self.right_cv_start_button().setEnabled(self.current_mode == Mode.CV)
 
+        if self.current_mode == Mode.Prediction and \
+           (self.prediction_stats is None or self.test_set is None):
+            if popup_question(message='Would you like to load a csv file to '
+                                      'predict now?',
+                              parent=self.MainWindow, title='Load test set'):
+                self.load_csv_to_predict()
+
+
+    def change_plot_enabled_flag(self, plot_name, enabled):
+        """Enable or disable plot entry in drop down menus.
+
+           Matching is done with the plot_name string.
+        """
+        for combobox in (self.LeftComboBox, self.CentralComboBox):
+            for index, _ in enumerate(self.drop_down_menu):
+                if combobox.itemText(index) == plot_name:
+                    change_enable_flag(combobox.model().item(index), enabled)
+                    break
+            else:
+                IO.Log.warning('Could not {}able plot named "{}"'.format(
+                    'en' if enabled else 'dis', plot_name))
 
     def _replace_current_model(self):
         """Show a popup to ask if plsda_model should be replaced."""
@@ -722,12 +758,17 @@ class UserInterface(object):
                  word_wrap=False, label_alignment=Qt.AlignLeft,
                  parent_widget=parent)
         sb = self.add(QSpinBox, lane, Column.Right, row=1, name='LVs',
-                      parent_widget=parent, size=(45, 25, 170, 520))
+                      parent_widget=parent, size=(40, 25, 170, 520))
         sb.setEnabled(False)
 
-        self.add(QLabel, lane, Column.Both, row=2, name='ModelInfo',
+        cb = self.add(QPushButton, lane, Column.Both, row=2, name='LVs',
+                      text='Change LVs', parent_widget=parent,
+                      size=(70, 25, 112, 520))
+        cb.setEnabled(False)
+
+        self.add(QLabel, lane, Column.Both, row=3, name='ModelInfo',
                  text=model_info, label_alignment=Qt.AlignLeft,
-                 parent_widget=parent)
+                 parent_widget=parent, size=(100, 30, 360, 1000))
 
 
     def populate_right_cv_widget(self, cv_info=''):
@@ -758,7 +799,7 @@ class UserInterface(object):
 
         self.add(QLabel, lane, Column.Both, row=4, name='CVInfo',
                  text=cv_info, label_alignment=Qt.AlignLeft,
-                 parent_widget=parent)
+                 parent_widget=parent, size=(100, 30, 360, 1000))
 
     def populate_right_prediction_widget(self, prediction_info=''):
         lane, parent = Lane.Right, self.right_widget(Mode.Prediction)
@@ -769,7 +810,7 @@ class UserInterface(object):
 
         self.add(QLabel, lane, Column.Both, row=1, name='PredictionInfo',
                  text=prediction_info, label_alignment=Qt.AlignLeft,
-                 parent_widget=parent)
+                 parent_widget=parent, size=(100, 30, 360, 1000))
 
     def update_right_model_info(self):
         """Method to refresh the label with model infos."""
@@ -779,8 +820,10 @@ class UserInterface(object):
                                                self.plsda_model.m)
             text += 'Y-Block: {} x {}\n'.format(self.plsda_model.n,
                                                 self.plsda_model.p)
-            text += 'RMSEC: {}\n'.format(' ??? ')
-            text += 'R^2: {}\n'.format(' ??? ')
+            s = model.Statistics(y_real=self.train_set.y,
+                                 y_pred=self.plsda_model.Y_modeled_dummy)
+            text += 'RMSEC: {}\n'.format(s.rmsec)
+            text += 'R^2: {}\n'.format(s.r_squared)
             l.setText(text)
 
     def update_right_model_lvs_spinbox(self, minimum=None, maximum=None,
@@ -803,6 +846,8 @@ class UserInterface(object):
         """Method to refresh the label with cv infos."""
         l = getattr(self, 'RightCVInfoLabel', None)
         if l is not None:
+            self.cv_stats  # this is the list of lists returned by
+            #                cross_validation
             text = 'RMSECV: {}\n'.format(' ??? ')
             text += 'R^2 CV: {}\n'.format(' ??? ')
             l.setText(text)
@@ -850,6 +895,17 @@ class UserInterface(object):
             text += 'RMSEP: {}\n'.format(self.prediction_stats.rmsec)
             text += 'R^2 Pred: {}\n'.format(self.prediction_stats.r_squared)
             l.setText(text)
+
+    def clear_plot_lanes_and_show_hints(self):
+        for lane in (Lane.Left, Lane.Central):
+            self.reset_widget_and_layout(Widget.Form, lane)
+            self.add(QLabel, lane, Column.Both, row=0, name='Hint',
+                     text='↑{}↑\n'.format(' ' * 48)
+                          'Several plots are available in the above '
+                          'dropdown menu.\n'
+                          '(if you create or load a model before)',
+                     label_alignment=Qt.AlignHCenter,
+                     policy=Policy.Expanding, size=(170, 520, 3610, 4240))
 
     def reset_widget_and_layout(self, widget, lane, show=True):
         """Reset the [Left|Central][Form|VBox] Widget and Layout.
@@ -1112,10 +1168,14 @@ class UserInterface(object):
 
             IO.Log.debug(str(e))
             traceback.print_exc()
-            popup_error(message='An error occured while drawing '
-                                '{} plot:\n'.format(str(lane).lower())
-                                '{}'.format(str(e)),
-                        parent=self.MainWindow)
+            if 'is out of bounds ' in str(e) and '[1:1]' not in str(e) and \
+               ('plot.scores()' in str(e) or 'plot.loadings()' in str(e)):
+                self.back_button(lane).animateClick(1)
+            elif 'is out of bounds [1:1]' not in str(e):
+                popup_error(message='An error occured while drawing '
+                                    '{} plot:\n\n'.format(str(lane).lower())
+                                    '{}'.format(str(e)),
+                            parent=self.MainWindow)
         else:
             self.canvas(lane).draw()
             if not refresh:
@@ -1352,12 +1412,7 @@ class UserInterface(object):
         plot.data(self.figure(lane).add_subplot(111))
 
     def draw_rmesecv_plot(self, lane, refresh=False):
-        if self.cv_stats is None:
-            popup_error(message='Please run cross-validation at least once!',
-                        parent=self.MainWindow)
-        else:
-            plot.rmsecv_lv(self.figure(lane).add_subplot(111),
-                           stats=self.cv_stats)
+        plot.rmsecv_lv(self.figure(lane).add_subplot(111), stats=self.cv_stats)
 
     def new_model(self):
         """Initialize plsda_model attribute from csv."""
@@ -1406,6 +1461,7 @@ class UserInterface(object):
         IO.Log.debug('Model created correctly')
         self.current_mode = Mode.Model
         self.RightLVsModelSpinBox.setValue(self.plsda_model.nr_lv)
+        self.clear_plot_lanes_and_show_hints()
 
     def save_model(self):
         export_dir = popup_choose_output_directory(parent=self.MainWindow)
@@ -1442,9 +1498,17 @@ class UserInterface(object):
         IO.Log.debug('Model loaded correctly')
         self.current_mode = Mode.Model
         self.RightLVsModelSpinBox.setValue(self.plsda_model.nr_lv)
+        self.clear_plot_lanes_and_show_hints()
 
     def load_csv_to_predict(self):
         """Initialize test_set and prediction_stats attribute."""
+        if self.prediction_stats is not None or self.test_set is not None:
+            if not popup_question(message='Are you sure to replace the '
+                                          'current test set? ',
+                                  parent=self.MainWindow,
+                                  title='Replace current test set?'):
+                return
+
         input_file = popup_choose_input_file(parent=self.MainWindow,
                                              filter_csv=True)
         if input_file is None:
@@ -1453,8 +1517,10 @@ class UserInterface(object):
         try:
             test_set = model.TestSet(input_file, self.train_set)
         except Exception as e:
-            IO.Log.debug(str(e))
-            popup_error(message=str(e), parent=self.MainWindow)
+            traceback.print_exc()
+            popup_error(message='The loaded file is not compatible with the '
+                                'curent model',
+                        parent=self.MainWindow)
             return
 
         try:
@@ -1472,36 +1538,44 @@ class UserInterface(object):
         IO.Log.debug('TestSet created correctly')
         self.current_mode = Mode.Prediction
 
-    def update_latent_variables_number(self, num):
+    def update_latent_variables_number(self):
+        self.right_model_lvs().setEnabled(False)
+        self.right_model_change_lvs_button().setEnabled(False)
         try:
-            self.plsda_model.nr_lv = num
+            self.plsda_model.nr_lv = self.right_model_lvs().value()
         except AssertionError as e:
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
         else:
-            for lane in (Lane.Left, Lane.Central):
-                # Update LatentVariable maximum in SpinBox
-                for name in ('LVa', 'LVb', 'LVs'):
-                    try:
-                        getattr(self, str(lane) + name + 'SpinBox').setMaximum(
-                            self.plsda_model.nr_lv)
-                    except Exception:
-                        # probably the SpinBox does not exists yet
-                        continue
+            self.update_visible_plots()
+        finally:
+            self.right_model_lvs().setEnabled(True)
+            self.right_model_change_lvs_button().setEnabled(True)
 
-                # Update visible plots
+    def update_visible_plots(self):
+        for lane in (Lane.Left, Lane.Central):
+            # Update LatentVariable maximum in SpinBox
+            for name in ('LVa', 'LVb', 'LVs'):
                 try:
-                    # ensure canvas exists
-                    canvas = self.canvas(lane)
-                except AttributeError as e:
+                    getattr(self, str(lane) + name + 'SpinBox').setMaximum(
+                        self.plsda_model.nr_lv)
+                except Exception:
+                    # probably the SpinBox does not exists yet
                     continue
-                else:
-                    if canvas.isVisible():
-                        cb = getattr(self, str(lane) + 'ComboBox')
-                        for entry in self.drop_down_menu:
-                            if cb.currentIndex() == entry['index']:
-                                self.draw_plot(lane, entry, refresh=True)
-                                break
+
+            # Update visible plots
+            try:
+                # ensure canvas exists
+                canvas = self.canvas(lane)
+            except AttributeError as e:
+                continue
+            else:
+                if canvas.isVisible():
+                    cb = getattr(self, str(lane) + 'ComboBox')
+                    for entry in self.drop_down_menu:
+                        if cb.currentIndex() == entry['index']:
+                            self.draw_plot(lane, entry, refresh=True)
+                            break
 
     def cross_validation_wrapper(self):
         split = self.right_cv_splits()
@@ -1515,6 +1589,7 @@ class UserInterface(object):
             popup_error(message=str(e), parent=self.MainWindow)
         else:
             self.cv_stats = ret
+            self.update_visible_plots()
 
     def connect_handlers(self):
         self.NewModelAction.triggered.connect(self.new_model)
@@ -1544,8 +1619,8 @@ class UserInterface(object):
             lambda txt: (self.clear_cached_plot_preferences(Lane.Central),
                          self.call_plot_method(Lane.Central, text=txt)))
 
-        self.RightLVsModelSpinBox.valueChanged.connect(
-            lambda nr_lv: self.update_latent_variables_number(nr_lv))
+        self.RightLVsModelPushButton.clicked.connect(
+            self.update_latent_variables_number)
         self.RightStartCVPushButton.clicked.connect(
             self.cross_validation_wrapper)
 

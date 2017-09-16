@@ -293,6 +293,9 @@ def calculated_y(ax):
 
 def y_predicted_y_real(ax):
     """Plot the y predicted over the y measured."""
+    if STATS is None or TEST_SET is None:
+        IO.Log.debug('In plot.y_predicted_y_real() STATS or TEST_SET is None')
+        raise TypeError('Please run prediction')
 
     ax.set_xlabel('Measured Y')
     ax.set_ylabel('Predicted Y')
@@ -305,6 +308,9 @@ def y_predicted_y_real(ax):
 
 def y_predicted(ax):
     """Plot the y predicted, with color representing the current y."""
+    if STATS is None or TEST_SET is None:
+        IO.Log.debug('In plot.y_predicted() STATS or TEST_SET is None')
+        raise TypeError('Please run prediction')
 
     ax.set_xlabel('Sample')
     ax.set_ylabel('Y predicted')
@@ -407,6 +413,11 @@ def weights(ax, lv_a, lv_b):
 
     lv_a, lv_b = min(lv_a, lv_b), max(lv_a, lv_b)
 
+    if lv_a > MODEL.nr_lv or lv_b > MODEL.nr_lv:
+        raise ValueError('In plot.weights() at least one of the chosen latent '
+                         'variable numbers ({} and {}) '.format(lv_a, lv_b)
+                         'is out of bounds [1:{}]'.format(MODEL.nr_lv))
+
     scatter_wrapper(ax, MODEL.W[:, lv_a - 1], MODEL.W[:, lv_b - 1])
 
     for n in range(MODEL.W.shape[0]):
@@ -427,6 +438,10 @@ def weights(ax, lv_a, lv_b):
 
 def weights_line(ax, lv):
     """Plot all the weights used by the model."""
+    if lv > MODEL.nr_lv:
+        raise ValueError('In plot.weights_line() the chosen latent variable '
+                         'number ({}) '.format(lv)
+                         'is out of bounds [1:{}]'.format(MODEL.nr_lv))
     line_wrapper(ax, range(MODEL.W.shape[0]), MODEL.W[:, lv - 1])
 
     ax.set_title('Weights line plot')
@@ -449,6 +464,9 @@ def data(ax):
 
 def rmsecv_lv(ax, stats):
     """Plot the RMSECV value for the current cv."""
+    if stats is None:
+        IO.Log.debug('In plot.rmsecv_lv() stats is None')
+        raise TypeError('Please run cross-validation')
 
     r = []
     for j in range(len(stats[0])):               # lv
