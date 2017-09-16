@@ -337,9 +337,6 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
 
     assert X.shape[0] == Y.shape[0], "Incompatible X and Y matrices"
 
-    IO.Log.debug('Nipals X matrix: ' + str(X))
-    IO.Log.debug('Nipals Y matrix: ' + str(Y))
-
     n = X.shape[0]
     m = X.shape[1]
     p = Y.shape[1]
@@ -356,7 +353,6 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
 
     IO.Log.debug('Called model.Model with nr_lv: {}'.format(nr_lv))
     model = Model(X, Y, nr_lv)
-    IO.Log.debug('This line shouldn\'t be printed if you pushed StartCVButton')
 
     s_list_x = []
     s_list_y = []
@@ -438,7 +434,19 @@ def cross_validation(train_set, split, sample, max_lv):
     Example:
     [['split 0 lv 0', 'split 0 lv 1', 'split 0 lv 2'], ['split 1 lv 0',
     'split 1 lv 1', 'split 1 lv 2']]
+
+    Raise ValueError if any of the arguments is not within their bounds.
     """
+    if split <= 1 or split > train_set.n:
+        raise ValueError('The given split number ({}) '
+                         'is not valid.'.format(split))
+    if sample <= 1 or sample > train_set.n:
+        raise ValueError('The given sample number ({}) '
+                         'is not valid.'.format(sample))
+    if max_lv < 1 or max_lv > min(train_set.n, train_set.m):
+        raise ValueError('The given max LV number ({}) '
+                         'is not valid.'.format(max_lv))
+
     results = []
     for train, test in venetian_blind_split(train_set, split, sample):
         model = nipals(*train)
