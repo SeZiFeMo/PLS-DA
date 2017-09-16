@@ -305,16 +305,15 @@ class Statistics(object):
 
     @property
     def ess(self):
-        return np.linalg.norm(self.y_pred - self.y_real.mean(axis=0),
-                              axis=0)**2
+        return sum((self.y_pred - self.y_real.mean(axis=0))**2)
 
     @property
     def rss(self):
-        return np.linalg.norm(self.y_real - self.y_pred, axis=0)**2
+        return sum((self.y_real - self.y_pred)**2)
 
     @property
     def tss(self):
-        return self.ess + self.rss
+        return sum((self.y_real - self.y_real.mean(axis=0))**2)
 
     @property
     def rmsec(self):
@@ -323,6 +322,10 @@ class Statistics(object):
     @property
     def r_squared(self):
         r_squared = 1 - self.rss / self.tss
+
+        if np.any(r_squared) < 0:
+            IO.Log.warning('r_squared negative, reverting to ess + rss')
+            r_squared = self.ess + self.rss
 
         assert np.all(r_squared > 0), "Negative r_squared found"
         return r_squared
