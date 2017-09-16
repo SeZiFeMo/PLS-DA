@@ -1468,7 +1468,9 @@ class UserInterface(object):
         if export_dir is None:
             return
         try:
-            IO.dump(self.plsda_model, export_dir)
+            IO.dump(export_dir,
+                    split=self.right_cv_splits(),
+                    sample=self.right_cv_samples())
         except Exception as e:
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
@@ -1480,20 +1482,35 @@ class UserInterface(object):
         if not self._replace_current_model():
             return
 
-        workspace_dir = popup_choose_input_directory(parent=self.MainWindow)
-        if workspace_dir is None:
+        ws_dir = popup_choose_input_directory(parent=self.MainWindow)
+        if ws_dir is None:
             return
 
         plsda_model_copy = copy.deepcopy(self.plsda_model)
         train_set_copy = copy.deepcopy(self.train_set)
         try:
-            self.plsda_model, self.train_set = IO.load(workspace_dir)
+            plsda_model, train_set, split, sample = IO.load(ws_dir)
+            # Do not change this order, first the training set has to be
+            # initialized
+            self.train_set = train_set
+            # then the model because it depends on the training set to update
+            # the statistics in the right lane
+            self.plsda_model = plsda_model
         except Exception as e:
             self.plsda_model = plsda_model_copy
             self.train_set = train_set_copy
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
             return
+
+        try:
+            self.RightSplitsCVSpinBox.setValue(split)
+            self.RightSamplesCVSpinBox.setValue(sample)
+            self.cross_validation_wrapper()
+        except Exception as e:
+            IO.Log.debug(str(e))
+            # no need to return here, since model and train_set
+            # have been loaded successfully
 
         IO.Log.debug('Model loaded correctly')
         self.current_mode = Mode.Model

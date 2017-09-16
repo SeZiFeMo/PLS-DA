@@ -11,7 +11,7 @@ import plot
 import model
 
 
-def dump(plsda_model, workspace):
+def dump(workspace, split, sample):
     """Save the informations necessary to rebuild the model."""
     folder = os.path.abspath(workspace)
     if not os.path.isdir(folder):
@@ -26,7 +26,7 @@ def dump(plsda_model, workspace):
 
     data = {'nr_lv': model.nr_lv, 'centered': train_set.centered,
             'normalized': train_set.normalized,
-            'split': '???', 'sample': '???'}
+            'split': split, 'sample': sample}
     with open(os.path.join(folder, 'data.yaml'), 'w') as f:
         yaml.safe_dump(data, f)
 
@@ -41,7 +41,10 @@ def save_matrix(matrix, filename, header=''):
 
 
 def load(workspace):
-    """Return a plsda_model from csv file in workspace."""
+    """Load from workspace the informations necessary to rebuild the model.
+
+       Return: (plsda_model, train_set, split, samples)
+    """
     folder = os.path.abspath(workspace)
     if not os.path.isdir(folder):
         raise FileNotFoundError('Directory {} does not exist'.format(folder))
@@ -58,8 +61,7 @@ def load(workspace):
     nipals_model = model.nipals(dataset.x, dataset.y)
     nipals_model.nr_lv = data['nr_lv']
 
-
-    return nipals_model, dataset
+    return nipals_model, dataset, data['split'], data['sample']
 
 
 def mat2str(data, h_bar='-', v_bar='|', join='+'):
