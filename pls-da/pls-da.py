@@ -39,11 +39,11 @@ y_pred = nipals_model.predict(test_set.x)
 pred = model.Statistics(test_set.y, y_pred)
 plot.update_global_statistics(pred)
 
+IO.Log.set_level('debug')
 results = model.cross_validation(train_set, 5, 5, 7)
 for split in results:
     for lv in split:
         print(lv.rmsec)
-print(results)
 
 fig = plt.figure(tight_layout=True)
 

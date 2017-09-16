@@ -430,7 +430,19 @@ def cross_validation(train_set, split, sample, max_lv):
     Example:
     [['split 0 lv 0', 'split 0 lv 1', 'split 0 lv 2'], ['split 1 lv 0',
     'split 1 lv 1', 'split 1 lv 2']]
+
+    Raise ValueError if any of the arguments is not within their bounds.
     """
+    if split <= 1 or split > train_set.n:
+        raise ValueError('The given split number ({}) '
+                         'is not valid.'.format(split))
+    if sample <= 1 or sample > train_set.n:
+        raise ValueError('The given sample number ({}) '
+                         'is not valid.'.format(sample))
+    if max_lv < 1 or max_lv > min(train_set.n, train_set.m):
+        raise ValueError('The given max LV number ({}) '
+                         'is not valid.'.format(max_lv))
+
     results = []
     for train, test in venetian_blind_split(train_set, split, sample):
         model = nipals(*train)

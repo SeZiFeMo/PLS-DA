@@ -477,8 +477,6 @@ def rmsecv_lv(ax, stats):
         r.append(rmsecv)
 
     r = np.asarray(r)
-    IO.Log.debug('r variable in plot.rmsecv_lv()', r)
-    IO.Log.debug('r.T variable in plot.rmsecv_lv()', r.T)
 
     for i in range(len(r.T)):
         line_wrapper(ax, range(1, len(r) + 1), r.T[i])
