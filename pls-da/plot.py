@@ -470,16 +470,17 @@ def rmsecv_lv(ax, stats):
 
     r = []
     for j in range(len(stats[0])):               # lv
-        rmsecv = np.zeros((stats[0][j].p))
+        rss = np.zeros((stats[0][j].p))
         for i in range(len(stats)):              # split
-            for k, y in enumerate(stats[i][j].rmsec):     # y
-                rmsecv[k] += y/len(stats[0])
-        r.append(rmsecv)
+            for k, y in enumerate(stats[i][j].rss):     # y
+                rss[k] += y/len(stats[0])
+        r.append(rss)
 
     r = np.asarray(r)
+    r = np.sqrt(r.T / MODEL.n)
 
-    for i in range(len(r.T)):
-        line_wrapper(ax, range(1, len(r) + 1), r.T[i])
+    for i in range(len(r)):
+        line_wrapper(ax, range(1, len(r.T) + 1), r[i])
 
     ax.set_title('RMSECV')
     ax.set_xlabel('LV')
