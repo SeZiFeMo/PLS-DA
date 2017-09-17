@@ -823,8 +823,8 @@ class UserInterface(object):
                                                self.plsda_model.m)
             text += 'Y-Block: {} x {}\n'.format(self.plsda_model.n,
                                                 self.plsda_model.p)
-            s = model.Statistics(y_real=self.train_set.y,
-                                 y_pred=self.plsda_model.Y_modeled_dummy)
+            s = model.Statistics(y_real=self.plsda_model.Y,
+                                 y_pred=self.plsda_model.Y_modeled)
             text += 'RMSEC: {}\n'.format(s.rmsec)
             text += 'R²: {}\n'.format(s.r_squared)
             l.setText(text)
