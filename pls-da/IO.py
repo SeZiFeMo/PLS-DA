@@ -31,13 +31,15 @@ def dump(workspace, split, sample):
         yaml.safe_dump(data, f)
 
 
-def save_matrix(matrix, filename, header=''):
+def save_matrix(matrix, filename, header='', scientific_notation=False):
     """Save on CSV the specified matrix."""
     filename = os.path.abspath(filename)
     folder = os.path.split(filename)[0]
     if not os.path.isdir(folder):
         raise FileNotFoundError('Directory {} does not exist'.format(folder))
-    np.savetxt(filename, matrix, '%s', ';', header=header)
+    np.savetxt(filename, matrix,
+               '%s' if not scientific_notation else '%+15.9e',
+               ';', header=header)
 
 
 def load(workspace):

@@ -106,9 +106,12 @@ def _popup_choose(parent, filter_csv=False,
         dialog.setAcceptMode(QFileDialog.AcceptSave)
 
     if _file:
-        dialog.setFileMode(QFileDialog.ExistingFile)
+        if _input:
+            dialog.setFileMode(QFileDialog.ExistingFile)
         if filter_csv:
             dialog.setNameFilter('Comma-separated values files (*.csv *.txt)')
+            if _output:
+                dialog.setDefaultSuffix('csv')
     else:  # _directory
         dialog.setFileMode(QFileDialog.Directory)
         dialog.setOption(QFileDialog.ShowDirsOnly)
@@ -496,13 +499,13 @@ class UserInterface(object):
     @property
     def menu_bar(self):
         """Return a generator iterator over menu items properties."""
-        for name in ('Options', 'Change Mode', 'About'):
+        for name in ('File', 'Change Mode', 'About'):
             yield {'name': name.replace(' ', ''), 'title': '&' + name}
 
     def menu_action(self, menu):
         """Return a generator iterator over action items properties."""
         menu = menu.lstrip('Menu').replace(' ', '').replace('&', '')
-        if menu == 'Options':
+        if menu == 'File':
             tmp = (('&New model', 'Ctrl+N'),
                    ('&Save model', 'Ctrl+S'),
                    ('&Load model', 'Ctrl+L'),
@@ -667,7 +670,7 @@ class UserInterface(object):
             minimum=2, maximum=getattr(self.plsda_model, 'n', 219),
             enabled=self.current_mode == Mode.CV)
         self.update_right_cv_samples_spinbox(
-            minimum=1, maximum=getattr(self.plsda_model, 'n', 219),
+            minimum=2, maximum=getattr(self.plsda_model, 'n', 219),
             enabled=self.current_mode == Mode.CV)
         self.right_cv_start_button().setEnabled(self.current_mode == Mode.CV)
 
@@ -823,7 +826,7 @@ class UserInterface(object):
             s = model.Statistics(y_real=self.train_set.y,
                                  y_pred=self.plsda_model.Y_modeled_dummy)
             text += 'RMSEC: {}\n'.format(s.rmsec)
-            text += 'R^2: {}\n'.format(s.r_squared)
+            text += 'R²: {}\n'.format(s.r_squared)
             l.setText(text)
 
     def update_right_model_lvs_spinbox(self, minimum=None, maximum=None,
@@ -849,7 +852,7 @@ class UserInterface(object):
             self.cv_stats  # this is the list of lists returned by
             #                cross_validation
             text = 'RMSECV: {}\n'.format(' ??? ')
-            text += 'R^2 CV: {}\n'.format(' ??? ')
+            text += 'R² CV: {}\n'.format(' ??? ')
             l.setText(text)
 
     def update_right_cv_samples_spinbox(self, minimum=None, maximum=None,
@@ -893,7 +896,7 @@ class UserInterface(object):
             text += 'Y-Block: {} x {}\n'.format(self.test_set.n,
                                                 self.test_set.p)
             text += 'RMSEP: {}\n'.format(self.prediction_stats.rmsec)
-            text += 'R^2 Pred: {}\n'.format(self.prediction_stats.r_squared)
+            text += 'R² Pred: {}\n'.format(self.prediction_stats.r_squared)
             l.setText(text)
 
     def clear_plot_lanes_and_show_hints(self):
@@ -1555,6 +1558,59 @@ class UserInterface(object):
         IO.Log.debug('TestSet created correctly')
         self.current_mode = Mode.Prediction
 
+    def export_matrices(self):
+        all_matrices = (
+            ('X', '(n x m matrix of predictors)', 'X'),
+            ('T', '(n x m matrix of X scores)', 'T'),
+            ('P', '(m x m matrix of X loadings)', 'P'),
+            ('E', '(n x m matrix of X residuals)', 'E_x'),
+            ('Y', '(n x p matrix of responses)', 'Y'),
+            ('U', '(n x m matrix of Y scores)', 'U'),
+            ('Q', '(p x m matrix of Y loadings)', 'Q'),
+            ('F', '(n x p matrix of Y residuals)', 'E_y'),
+            ('W', '(m x m matrix of PLS weights)', 'W'),
+            ('B', '(m x p matrix of regression coefficients)', 'B'),
+            ('b', '(m x 1 vector of regression coefficients)', 'b'),
+            ('X eigenvalues', '(m x 1 vector)', 'x_eigenvalues'),
+            ('Y eigenvalues', '(m x 1 vector)', 'y_eigenvalues'),
+            ('Predicted Y in fit', '(n x p matrix)', 'Y_modeled'),
+
+            # ('T²',                 '(n x 1 vector)', 't_square'),
+            # ('Leverage',           '(n x 1 vector)', 'leverage'),
+            # ('Q residuals over X', '(n x 1 vector)', 'q_residuals_x'),
+            # ('Y_modeled_dummy',    '(n x p matrix)', 'Y_modeled_dummy'),
+
+            # Explained_variance_x (in %)
+            # Explained_variance_y (in %)
+            # Predicted_y_in_CV
+            # W1 = W*inv(P' * W)
+            )
+        combo, hair_space, item_list = QComboBox(), '\u200a', list()
+        max_width = max([combo.fontMetrics().boundingRect(name).width()
+                         for name, _, _ in all_matrices])
+        combo.clear()
+        for name, desc, _ in all_matrices:
+            item = name
+            while (combo.fontMetrics().boundingRect(item).width() < max_width):
+                item += hair_space
+            item_list.append(str(item + 10 * hair_space + desc))
+        delete(combo)
+
+        ok, index = popup_choose_item('Which matrix would you like to export?',
+                                      item_list, parent=self.MainWindow,
+                                      title='Export matrix to csv file')
+        if not ok:
+            return
+
+        path = popup_choose_output_file(self.MainWindow, filter_csv=True)
+        if path is None:
+            return
+
+        method = str(all_matrices[index][2])
+        header = str(all_matrices[index][0] + ' ' + all_matrices[index][1])
+        IO.save_matrix(getattr(self.plsda_model, method), path, header,
+                       scientific_notation=True)
+
     def update_latent_variables_number(self):
         self.right_model_lvs().setEnabled(False)
         self.right_model_change_lvs_button().setEnabled(False)
@@ -1613,8 +1669,7 @@ class UserInterface(object):
         self.SaveModelAction.triggered.connect(self.save_model)
         self.LoadModelAction.triggered.connect(self.load_model)
         self.LoadCsvToPredictAction.triggered.connect(self.load_csv_to_predict)
-        self.ExportMatricesAction.triggered.connect(
-            lambda: popup_error('exception.NotImplementedError', parent=self.MainWindow))
+        self.ExportMatricesAction.triggered.connect(self.export_matrices)
 
         self.QuitAction.triggered.connect(self.quit)
 
