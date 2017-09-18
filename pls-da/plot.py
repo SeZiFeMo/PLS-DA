@@ -142,7 +142,10 @@ def scree(ax, x=False, y=False):
     if bool(x) == bool(y):
         raise ValueError('In plot.scree() X, Y matrix flags must differ')
 
-    eigen = MODEL.x_eigenvalues if x else MODEL.y_eigenvalues
+    mdl = copy.deepcopy(MODEL)
+    mdl.nr_lv = mdl.max_lv
+
+    eigen = mdl.x_eigenvalues if x else mdl.y_eigenvalues
     line_wrapper(ax, range(1, len(eigen) + 1), eigen)
 
     ax.set_title('Scree plot for {}'.format('X' if x else 'Y'))
@@ -163,10 +166,13 @@ def cumulative_explained_variance(ax, x=False, y=False):
         raise ValueError('In plot.cumulative_explained_variance() X, Y matrix '
                          'flags must differ')
 
+    mdl = copy.deepcopy(MODEL)
+    mdl.nr_lv = mdl.max_lv
+
     if x:
-        cumulative_expl_var = MODEL.cumulative_explained_variance_x
+        cumulative_expl_var = mdl.cumulative_explained_variance_x
     else:
-        cumulative_expl_var = MODEL.cumulative_explained_variance_y
+        cumulative_expl_var = mdl.cumulative_explained_variance_y
 
     line_wrapper(ax, range(1, len(cumulative_expl_var) + 1),
                  cumulative_expl_var)
