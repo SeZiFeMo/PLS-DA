@@ -28,6 +28,7 @@ import copy
 import enum
 import traceback
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Toolbar
 from PyQt5.QtCore import QCoreApplication, QMetaObject, QRect, QSize, Qt
@@ -875,12 +876,21 @@ class UserInterface(object):
         """Method to refresh the label with cv infos."""
         l = getattr(self, 'RightCVInfoLabel', None)
         if l is not None:
-            self.cv_stats  # this is the list of lists returned by
-            #                cross_validation
-            text = 'RMSECV:\n{}\n'.format(
-                ' ??? ')
-            text += 'R² CV:\n{}\n'.format(
-                ' ??? ')
+            lv = self.plsda_model.nr_lv
+            rss = np.zeros((self.cv_stats[0][lv].p))
+            tss = np.zeros((self.cv_stats[0][lv].p))
+            for i in range(len(self.cv_stats)):  # split
+                for k in range(self.cv_stats[i][lv].p):
+                    print(self.cv_stats[i][lv].rss)
+                    rss[k] += self.cv_stats[i][lv].rss[k]
+                    tss[k] += self.cv_stats[i][lv].tss[k]
+
+            IO.Log.info("rss {} tss {}".format(rss, tss))
+            rmsecv = np.sqrt(rss / self.plsda_model.n / (len(self.cv_stats)))
+            r_square = 1 - rss/tss
+
+            text = 'RMSECV:\n{}\n'.format(utility.list_to_string(rmsecv))
+            text += 'R² CV:\n{}\n'.format(utility.list_to_string(r_square))
             l.setText(text)
 
     def update_right_cv_samples_spinbox(self, minimum=None, maximum=None,

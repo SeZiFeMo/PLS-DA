@@ -537,7 +537,7 @@ def rmsecv_lv(ax, stats):
         rss = np.zeros((stats[0][j].p))
         for i in range(len(stats)):  # split
             for k, y in enumerate(stats[i][j].rss):  # y
-                rss[k] += y/len(stats[0])
+                rss[k] += y/len(stats)  # divide by split nr
         r.append(rss)
 
     r = np.asarray(r)
