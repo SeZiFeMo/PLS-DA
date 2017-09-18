@@ -314,14 +314,14 @@ class UserInterface(object):
 
         lane = Lane.Right
         parent = self.set_attr(lane, QWidget, parent=main_splitter,
-                               size=(150, 580, 400, 4300))
+                               size=(150, 580, 300, 4300))
 
         layout = self.set_attr(lane, QGridLayout, parent=parent, policy=None)
         layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(5)
 
         current_mode_label = self.set_attr(
-            'CurrentMode', QLabel, parent=parent, size=(144, 22, 394, 22))
+            'CurrentMode', QLabel, parent=parent, size=(144, 22, 294, 22))
         current_mode_label.setLineWidth(1)
         current_mode_label.setTextFormat(Qt.AutoText)
         current_mode_label.setAlignment(Qt.AlignCenter)
@@ -331,12 +331,12 @@ class UserInterface(object):
 
         right_scroll_area = self.set_attr(
             lane, QScrollArea, parent=parent,
-            policy=None, size=(144, 547, 394, 4272))
+            policy=None, size=(144, 547, 294, 4272))
         layout.addWidget(right_scroll_area, 1, 0, 1, 1)
 
         right_vbox_widget = self.set_attr(
             str(lane) + str(Widget.VBox), QWidget, parent=right_scroll_area,
-            size=(138, 534, 388, 4259))
+            size=(138, 534, 290, 4259))
         right_vbox_widget.setGeometry(QRect(0, 0, 138, 534))
         right_vbox_widget.setLayoutDirection(Qt.LayoutDirectionAuto)
         right_scroll_area.setWidget(right_vbox_widget)
@@ -474,7 +474,7 @@ class UserInterface(object):
         self._stats = value
         plot.update_global_statistics(value)
         self.change_plot_enabled_flag('RMSEP', True)
-        self.change_plot_enabled_flag('Predicted Y – Real Y', True)
+        self.change_plot_enabled_flag('Real Y – Predicted Y', True)
         self.change_plot_enabled_flag('Predicted Y', True)
 
     @property
@@ -686,7 +686,7 @@ class UserInterface(object):
             self.clear_plot_lanes_and_show_hints()
             self.change_plot_enabled_flag('RMSECV', False)
             self.change_plot_enabled_flag('RMSEP', False)
-            self.change_plot_enabled_flag('Predicted Y – Real Y', False)
+            self.change_plot_enabled_flag('Real Y – Predicted Y', False)
             self.change_plot_enabled_flag('Predicted Y', False)
 
         self.SaveModelAction.setEnabled(self.current_mode != Mode.Start)
@@ -851,6 +851,10 @@ class UserInterface(object):
         """Method to refresh the label with model infos."""
         l = getattr(self, 'RightModelInfoLabel', None)
         if l is not None:
+            if self.plsda_model is None:
+                l.setText('')
+                return
+
             text = 'X-Block: {} x {}\n'.format(self.plsda_model.n,
                                                self.plsda_model.m)
             text += 'Y-Block: {} x {}\n'.format(self.plsda_model.n,
@@ -881,6 +885,10 @@ class UserInterface(object):
         """Method to refresh the label with cv infos."""
         l = getattr(self, 'RightCVInfoLabel', None)
         if l is not None:
+            if self.plsda_model is None or self.cv_stats is None:
+                l.setText('')
+                return
+
             lv = self.plsda_model.nr_lv - 1  # because it would start from 1
             rss = np.zeros((self.cv_stats[0][lv].p))
             tss = np.zeros((self.cv_stats[0][lv].p))
@@ -934,6 +942,10 @@ class UserInterface(object):
         """Method to refresh the label with prediction infos."""
         l = getattr(self, 'RightPredictionInfoLabel', None)
         if l is not None:
+            if self.test_set is None or self.cv_stats is None:
+                l.setText('')
+                return
+
             text = 'X-Block: {} x {}\n'.format(self.test_set.n,
                                                self.test_set.m)
             text += 'Y-Block: {} x {}\n'.format(self.test_set.n,
@@ -1691,6 +1703,10 @@ class UserInterface(object):
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
         else:
+            self.update_right_model_info()
+            self.update_right_cv_info()
+            self.update_right_prediction_info()
+
             self.update_visible_plots()
         finally:
             self.right_model_lvs().setEnabled(True)
