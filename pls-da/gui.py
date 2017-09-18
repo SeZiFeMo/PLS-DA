@@ -473,6 +473,7 @@ class UserInterface(object):
 
         self._stats = value
         plot.update_global_statistics(value)
+        self.change_plot_enabled_flag('RMSEP', False)
         self.change_plot_enabled_flag('Predicted Y – Real Y', True)
         self.change_plot_enabled_flag('Predicted Y', True)
 
@@ -522,7 +523,10 @@ class UserInterface(object):
                ('Weights Scatter Plot', 'weights'),
                ('Weights Line Plot', 'weights_line'),
                ('Data', 'data'),
-               ('RMSECV', 'rmesecv'))
+               ('RMSEC', 'rmesec'),
+               ('RMSECV', 'rmesecv'),
+               ('RMSEP', 'rmesep'),
+               )
         for index, (text, method) in enumerate(tmp):
             yield {'index': index, 'text': text, 'method': method + '_plot'}
 
@@ -681,6 +685,7 @@ class UserInterface(object):
         if self.current_mode == Mode.Start:
             self.clear_plot_lanes_and_show_hints()
             self.change_plot_enabled_flag('RMSECV', False)
+            self.change_plot_enabled_flag('RMSEP', False)
             self.change_plot_enabled_flag('Predicted Y – Real Y', False)
             self.change_plot_enabled_flag('Predicted Y', False)
 
@@ -1460,8 +1465,14 @@ class UserInterface(object):
     def draw_data_plot(self, lane, refresh=False):
         plot.data(self.figure(lane).add_subplot(111))
 
+    def draw_rmesec_plot(self, lane, refresh=False):
+        plot.rmsec_lv(self.figure(lane).add_subplot(111))
+
     def draw_rmesecv_plot(self, lane, refresh=False):
         plot.rmsecv_lv(self.figure(lane).add_subplot(111), stats=self.cv_stats)
+
+    def draw_rmesep_plot(self, lane, refresh=False):
+        plot.rmsep_lv(self.figure(lane).add_subplot(111))
 
     def new_model(self):
         """Initialize plsda_model attribute from csv."""
