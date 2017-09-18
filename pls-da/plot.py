@@ -25,6 +25,7 @@ __license__ = "GPL3"
 
 
 import collections
+import copy
 import functools
 import math
 import numpy as np
@@ -526,6 +527,26 @@ def data(ax):
     ax.set_ylabel('Values')
 
 
+def rmsec_lv(ax):
+    """Plot the RMSEC value over the lvs."""
+    mdl = copy.deepcopy(MODEL)
+
+    rmsec = []
+    for i in range(1, mdl.max_lv + 1):
+        mdl.nr_lv = i
+        pred = model.Statistics(y_real=mdl.Y, y_pred=mdl.Y_modeled)
+        rmsec.append(pred.rmsec)
+
+    rmsec = np.asarray(rmsec)
+
+    for y in rmsec.T:
+        line_wrapper(ax, range(1, mdl.max_lv + 1), y)
+
+    ax.set_title('RMSEC')
+    ax.set_xlabel('Latent variables')
+    ax.set_ylabel('RMSEC')
+
+
 def rmsecv_lv(ax, stats):
     """Plot the RMSECV value for the current cv."""
     if stats is None:
@@ -549,3 +570,24 @@ def rmsecv_lv(ax, stats):
     ax.set_title('RMSECV')
     ax.set_xlabel('Latent variables')
     ax.set_ylabel('RMSECV')
+
+
+def rmsep_lv(ax):
+    """Plot the RMSEC value over the lvs."""
+    mdl = copy.deepcopy(MODEL)
+
+    rmsep = []
+    for i in range(1, mdl.max_lv + 1):
+        mdl.nr_lv = i
+        y_pred = mdl.predict(TEST_SET.x)
+        pred = model.Statistics(y_real=TEST_SET.y, y_pred=y_pred)
+        rmsep.append(pred.rmsec)
+
+    rmsep = np.asarray(rmsep)
+
+    for y in rmsep.T:
+        line_wrapper(ax, range(1, mdl.max_lv + 1), y)
+
+    ax.set_title('RMSEP')
+    ax.set_xlabel('Latent variables')
+    ax.set_ylabel('RMSEP')
