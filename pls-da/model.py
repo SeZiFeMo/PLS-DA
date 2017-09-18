@@ -292,7 +292,7 @@ class Model(object):
 
     @utility.cached_property
     def Y_modeled_dummy(self):
-        dummy = [[1 if elem == max(row) else -1 for elem in row]
+        dummy = [[1 if elem == max(row) else 0 for elem in row]
                  for row in self.Y_modeled]
         return np.array(dummy)
 
@@ -366,7 +366,7 @@ class Statistics(object):
 
     @property
     def rmsec(self):
-        return np.sqrt(self.rss / self.y_real.shape[-1])
+        return np.sqrt(self.rss / self.y_real.shape[0])
 
     @property
     def r_squared(self):
