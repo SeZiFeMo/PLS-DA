@@ -473,7 +473,7 @@ class UserInterface(object):
 
         self._stats = value
         plot.update_global_statistics(value)
-        self.change_plot_enabled_flag('RMSEP', False)
+        self.change_plot_enabled_flag('RMSEP', True)
         self.change_plot_enabled_flag('Predicted Y – Real Y', True)
         self.change_plot_enabled_flag('Predicted Y', True)
 
