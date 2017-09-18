@@ -788,7 +788,8 @@ class UserInterface(object):
         lane, parent = Lane.Right, self.right_widget(Mode.Model)
 
         self.add(QLabel, lane, Column.Both, row=0, name='Model', text='Model:',
-                 label_alignment=Qt.AlignLeft, parent_widget=parent)
+                 label_alignment=Qt.AlignLeft, parent_widget=parent,
+                 size=(100, 20, 360, 30))
 
         self.add(QLabel, lane, Column.Left, row=1, name='LVs', text='LVs:',
                  word_wrap=False, label_alignment=Qt.AlignLeft,
@@ -849,6 +850,17 @@ class UserInterface(object):
 
     def update_right_model_info(self):
         """Method to refresh the label with model infos."""
+        m = getattr(self, 'RightModelLabel', None)
+        if m is not None and self.train_set is not None:
+            text = 'Model:\n'
+            text += 'Preprocessing: '
+            for method in ('autoscal', 'center', 'normaliz'):
+                if getattr(self.train_set, method + 'ed'):
+                    text += method + 'ing\n'
+                    break
+            else:
+                text += 'none\n'
+            self.RightModelLabel.setText(text)
         l = getattr(self, 'RightModelInfoLabel', None)
         if l is not None:
             if self.plsda_model is None:
@@ -958,6 +970,11 @@ class UserInterface(object):
 
     def clear_plot_lanes_and_show_hints(self):
         """Create a layout with a label to explain how to draw plots."""
+        for lane in (Lane.Left, Lane.Central):
+            self.clear_cached_plot_preferences(lane)
+            setattr(self, str(lane) + 'Canvas', None)
+            delattr(self, str(lane) + 'Canvas')
+
         for lane in (Lane.Left, Lane.Central):
             self.reset_widget_and_layout(Widget.Form, lane)
             self.add(QLabel, lane, Column.Both, row=0, name='Hint',
