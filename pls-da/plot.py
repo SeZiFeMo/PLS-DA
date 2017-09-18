@@ -302,7 +302,7 @@ def loadings(ax, lv_a, lv_b, x=False, y=False):
     for n in range(loadings_matrix.shape[0]):
         line_wrapper(ax, (0, loadings_matrix[n, lv_a - 1]),
                      (0, loadings_matrix[n, lv_b - 1]), linestyle='dashed')
-        ax.annotate(TRAIN_SET.header[n + 1],
+        ax.annotate(TRAIN_SET.header[n + 1] if x else TRAIN_SET.categories[n],
                     horizontalalignment='center',
                     textcoords='offset points',
                     verticalalignment='bottom',
@@ -318,8 +318,19 @@ def loadings(ax, lv_a, lv_b, x=False, y=False):
     ax.axhline(0, linestyle='dashed', color='black')
 
 
-def calculated_y(ax):
+def calculated_y(ax, index=None, label=None):
     """Plot the difference between the real categories and the modeled ones."""
+    if not isinstance(index, int) and not isinstance(label, str):
+        IO.Log.debug('In plot.calculated_y() both index and label were None')
+        raise TypeError('No y component was selected')
+    elif not isinstance(index, int):
+        index = TRAIN_SET.categories.index(label)
+    else:
+        label = TRAIN_SET.categories[index]
+
+    IO.Log.debug('plot.calculated_y() got index: {}'.format(str(index)))
+    IO.Log.debug('plot.calculated_y() got label: "{}"'.format(str(label)))
+
     ax.set_title('Calculated Y')
     ax.set_xlabel('Samples')
     ax.set_ylabel('Modeled Y')

@@ -1371,6 +1371,14 @@ class UserInterface(object):
         self.xy_radio_ab_spin_form(
             lane, group='ScoresAndLoadingsPlot', add_normalize=True)
 
+    def build_calculated_y_plot_form(self, lane):
+        group_name = str(lane) + 'CalculatedY'
+        for y in range(self.plsda_model.p):
+            self.add(QRadioButton, lane, Column.Right, row=y,
+                     name=self.train_set.categories[y], group_name=group_name)
+        self.add(QPushButton, lane, Column.Right, row=self.plsda_model.p,
+                 name='Plot', size=(70, 25, 20, 25))
+
     def build_weights_plot_form(self, lane):
         self.xy_radio_ab_spin_form(lane, group='WeightsPlot')
 
@@ -1451,7 +1459,17 @@ class UserInterface(object):
         self.draw_loadings_plot(lane, rows=2, cols=1, pos=2, refresh=refresh)
 
     def draw_calculated_y_plot(self, lane, refresh=False):
-        plot.calculated_y(self.figure(lane).add_subplot(111))
+        for y in range(self.plsda_model.p):
+            attr = str(lane) + self.train_set.categories[y] + 'RadioButton'
+            cb = getattr(self, attr, None)
+            if cb is not None and cb.isChecked():
+                index, label = y, self.train_set.categories[y]
+                break
+        else:
+            raise Exception('Could not draw "Calculated Y" plot, no radio '
+                            'button was checked')
+        plot.calculated_y(self.figure(lane).add_subplot(111),
+                          index=index, label=label)
 
     def draw_predicted_y_real_y_plot(self, lane, refresh=False):
         plot.y_predicted_y_real(self.figure(lane).add_subplot(111))
