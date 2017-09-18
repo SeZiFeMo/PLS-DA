@@ -1272,7 +1272,8 @@ class UserInterface(object):
                  group_name=str(lane) + group)
         self.add(QRadioButton, lane, Column.Left, row=1, name='Y',
                  group_name=str(lane) + group)
-        self.add(QPushButton, lane, Column.Left, row=2, name='Plot')
+        self.add(QPushButton, lane, Column.Left, row=2, name='Plot',
+                 size=(70, 25, 20, 25))
 
     def xy_radio_ab_spin_form(self, lane, group, add_normalize=False):
         self.add(QRadioButton, lane, Column.Left, row=0, name='X',
@@ -1294,7 +1295,8 @@ class UserInterface(object):
         if add_normalize:
             self.add(QCheckBox, lane, Column.Left, row=3, name='Normalize',
                      text='normalize')
-        self.add(QPushButton, lane, Column.Right, row=3, name='Plot')
+        self.add(QPushButton, lane, Column.Right, row=3, name='Plot',
+                 size=(70, 25, 20, 25))
 
         w1 = self.add(QLabel, lane, Column.Left, row=4, name='Warning',
                       text_format=Qt.RichText, label_alignment=Qt.AlignRight,
@@ -1322,7 +1324,8 @@ class UserInterface(object):
                  text='Latent variable')
         self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',
                  minimum=1, maximum=self.plsda_model.nr_lv)
-        self.add(QPushButton, lane, Column.Right, row=1, name='Plot')
+        self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
+                 size=(70, 25, 20, 25))
 
     def build_scores_plot_form(self, lane):
         self.xy_radio_ab_spin_form(
@@ -1352,7 +1355,8 @@ class UserInterface(object):
                  text='Latent variables')
         self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',
                  minimum=1, maximum=self.plsda_model.nr_lv)
-        self.add(QPushButton, lane, Column.Right, row=1, name='Plot')
+        self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
+                 size=(70, 25, 20, 25))
 
     def draw_scree_plot(self, lane, refresh=False):
         if refresh:
