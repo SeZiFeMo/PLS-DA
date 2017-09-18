@@ -697,9 +697,9 @@ class UserInterface(object):
 
         self.update_right_model_lvs_spinbox(
             minimum=1, maximum=getattr(self.plsda_model, 'max_lv', 7),
-            enabled=self.current_mode in (Mode.Model, Mode.CV))
+            enabled=self.current_mode != Mode.Start)
         self.right_model_change_lvs_button().setEnabled(
-            self.current_mode in (Mode.Model, Mode.CV))
+            self.current_mode != Mode.Start)
 
         self.update_right_cv_splits_spinbox(
             minimum=2, maximum=getattr(self.plsda_model, 'n', 219),
