@@ -511,7 +511,7 @@ class UserInterface(object):
                ('Biplot', 'biplot'),
                ('Scores & Loadings', 'scores_and_loadings'),
                ('Calculated Y', 'calculated_y'),
-               ('Predicted Y – Real Y', 'predicted_y_real_y'),
+               ('Real Y – Predicted Y', 'predicted_y_real_y'),
                ('Predicted Y', 'predicted_y'),
                ('Samples – X residuals', 'x_residuals_over_samples'),
                ('Samples – Y residuals', 'y_residuals_over_samples'),
@@ -1352,7 +1352,7 @@ class UserInterface(object):
 
     def build_weights_line_plot_form(self, lane):
         self.add(QLabel, lane, Column.Left, row=0, name='LVs',
-                 text='Latent variables')
+                 text='Latent variable')
         self.add(QSpinBox, lane, Column.Right, row=0, name='LVs',
                  minimum=1, maximum=self.plsda_model.nr_lv)
         self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
