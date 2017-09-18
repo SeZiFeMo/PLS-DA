@@ -1,6 +1,29 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+""" PLS-DA is a project about the Partial least squares Discriminant Analysis
+    on a given dataset.'
+    PLS-DA is a project developed for the Processing of Scientific Data exam
+    at University of Modena and Reggio Emilia.
+    Copyright (C) 2017  Serena Ziviani, Federico Motta
+    This file is part of PLS-DA.
+    PLS-DA is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+    PLS-DA is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with PLS-DA.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+__authors__ = "Serena Ziviani, Federico Motta"
+__copyright__ = "PLS-DA  Copyright (C)  2017"
+__license__ = "GPL3"
+
+
 import collections
 import functools
 import math
@@ -9,6 +32,10 @@ import scipy.stats as scipy_stats
 
 import IO
 import model
+
+
+if __name__ == '__main__':
+    raise SystemExit('Please do not run that script, load it!')
 
 
 MODEL = None
@@ -35,7 +62,7 @@ def symbol(category=None):
                # ('#000000', '+'),  #           plus
                # ('#000000', 'h'),  #           hexagon
                # ('#000000', 'p'),  #           pentagon
-               )
+              )
     index = -1
     if category in TRAIN_SET.categories:
         index = sorted(TRAIN_SET.categories).index(category) % len(records)
@@ -136,20 +163,20 @@ def cumulative_explained_variance(ax, x=False, y=False):
                          'flags must differ')
 
     if x:
-        cumulative_explained_variance = MODEL.cumulative_explained_variance_x
+        cumulative_expl_var = MODEL.cumulative_explained_variance_x
     else:
-        cumulative_explained_variance = MODEL.cumulative_explained_variance_y
+        cumulative_expl_var = MODEL.cumulative_explained_variance_y
 
-    line_wrapper(ax, range(1, len(cumulative_explained_variance) + 1),
-                 cumulative_explained_variance)
+    line_wrapper(ax, range(1, len(cumulative_expl_var) + 1),
+                 cumulative_expl_var)
 
     ax.set_title('Explained variance plot for {}'.format('X' if x else 'Y'))
     ax.set_xlabel('Number of latent variables')
     ax.set_ylabel('Cumulative variance captured (%)')
-    ax.set_xlim(0.5, len(cumulative_explained_variance) + 0.5)
-    ax.set_ylim(max(-2, cumulative_explained_variance[0] - 2), 102)
-    if len(cumulative_explained_variance) <= 12:
-        ax.set_xticks(list(range(1, len(cumulative_explained_variance) + 1)))
+    ax.set_xlim(0.5, len(cumulative_expl_var) + 0.5)
+    ax.set_ylim(max(-2, cumulative_expl_var[0] - 2), 102)
+    if len(cumulative_expl_var) <= 12:
+        ax.set_xticks(list(range(1, len(cumulative_expl_var) + 1)))
 
 
 def inner_relations(ax, num):
@@ -212,7 +239,7 @@ def scores(ax, lv_a, lv_b, x=False, y=False, normalize=False):
 
     if lv_a > MODEL.nr_lv or lv_b > MODEL.nr_lv:
         raise ValueError('In plot.scores() at least one of the chosen latent '
-                         'variable numbers ({} and {}) '.format(lv_a, lv_b)
+                         'variable numbers ({} and {}) '.format(lv_a, lv_b) +
                          'is out of bounds [1:{}]'.format(MODEL.nr_lv))
 
     scores_matrix = MODEL.T.copy() if x else MODEL.U.copy()
@@ -260,7 +287,7 @@ def loadings(ax, lv_a, lv_b, x=False, y=False):
 
     if lv_a > MODEL.nr_lv or lv_b > MODEL.nr_lv:
         raise ValueError('In plot.loadings() at least one of the chosen latent'
-                         ' variable numbers ({} and {}) '.format(lv_a, lv_b)
+                         ' variable numbers ({} and {}) '.format(lv_a, lv_b) +
                          'is out of bounds [1:{}]'.format(MODEL.nr_lv))
 
     loadings_matrix = MODEL.P.copy() if x else MODEL.Q.copy()
@@ -301,6 +328,7 @@ def y_predicted_y_real(ax):
         IO.Log.debug('In plot.y_predicted_y_real() STATS or TEST_SET is None')
         raise TypeError('Please run prediction')
 
+    ax.set_title('Predicted Y – Real Y')
     ax.set_xlabel('Measured Y')
     ax.set_ylabel('Predicted Y')
 
@@ -316,7 +344,8 @@ def y_predicted(ax):
         IO.Log.debug('In plot.y_predicted() STATS or TEST_SET is None')
         raise TypeError('Please run prediction')
 
-    ax.set_xlabel('Sample')
+    ax.set_title('Samples – Predicted Y')
+    ax.set_xlabel('Samples')
     ax.set_ylabel('Y predicted')
 
     for j in range(MODEL.p):
@@ -335,7 +364,7 @@ def y_predicted(ax):
 
 def t_square_q(ax):
     """Plot the q statistic over the Hotelling's t^2 with confidence levels."""
-    ax.set_title('T^2 - Q')
+    ax.set_title('T^2 – Q')
     ax.set_xlabel('Hotelling\'s T^2')
     ax.set_ylabel('Q residuals')
 
@@ -357,6 +386,34 @@ def t_square_q(ax):
     ax.legend(by_label.values(), by_label.keys())
 
 
+def x_residuals_over_samples(ax):
+    ax.set_title('Samples – X residuals')
+    ax.set_xlabel('Samples')
+    ax.set_ylabel('X residuals')
+
+    ax.set_xlim(-1, MODEL.n + 1)
+    ax.set_ylim(np.min(MODEL.E_x) - 1, np.max(MODEL.E_x) + 1)
+
+    ax.axhline(0, linestyle='dashed', color='black')
+    for sample, variables in enumerate(MODEL.E_x):
+        scatter_wrapper(ax, [sample for i in variables], variables,
+                        TRAIN_SET.categorical_y[sample])
+
+
+def y_residuals_over_samples(ax):
+    ax.set_title('Samples – Y residuals')
+    ax.set_xlabel('Samples')
+    ax.set_ylabel('Y residuals')
+
+    ax.set_xlim(-1, MODEL.n + 1)
+    ax.set_ylim(np.min(MODEL.E_y) - 1, np.max(MODEL.E_y) + 1)
+
+    ax.axhline(0, linestyle='dashed', color='black')
+    for sample, variables in enumerate(MODEL.E_y):
+        scatter_wrapper(ax, [sample for i in variables], variables,
+                        TRAIN_SET.categorical_y[sample])
+
+
 def y_residuals_leverage(ax):
     """Plot Y residuals over the leverage."""
     for j in range(MODEL.p):
@@ -364,6 +421,7 @@ def y_residuals_leverage(ax):
             scatter_wrapper(ax, MODEL.leverage[i], MODEL.E_y[i, j],
                             TRAIN_SET.categorical_y[i])
 
+    ax.set_title('Leverage – Y residuals')
     ax.set_xlabel('Leverage')
     ax.set_ylabel('Y residuals')
 
@@ -375,6 +433,7 @@ def leverage(ax):
         scatter_wrapper(ax, i, MODEL.leverage[i],
                         TRAIN_SET.categorical_y[i])
 
+    ax.set_title('Samples – Leverage')
     ax.set_xlabel('Samples')
     ax.set_ylabel('Leverage')
 
@@ -391,6 +450,7 @@ def q_over_leverage(ax):
 
     ax.axvline(q_confidence_level, linestyle='dashed', color='black')
 
+    ax.set_title('Q residuals – Leverage')
     ax.set_xlabel('Q residuals')
     ax.set_ylabel('Leverage')
 
@@ -419,7 +479,7 @@ def weights(ax, lv_a, lv_b):
 
     if lv_a > MODEL.nr_lv or lv_b > MODEL.nr_lv:
         raise ValueError('In plot.weights() at least one of the chosen latent '
-                         'variable numbers ({} and {}) '.format(lv_a, lv_b)
+                         'variable numbers ({} and {}) '.format(lv_a, lv_b) +
                          'is out of bounds [1:{}]'.format(MODEL.nr_lv))
 
     scatter_wrapper(ax, MODEL.W[:, lv_a - 1], MODEL.W[:, lv_b - 1])
@@ -444,7 +504,7 @@ def weights_line(ax, lv):
     """Plot all the weights used by the model."""
     if lv > MODEL.nr_lv:
         raise ValueError('In plot.weights_line() the chosen latent variable '
-                         'number ({}) '.format(lv)
+                         'number ({}) '.format(lv) +
                          'is out of bounds [1:{}]'.format(MODEL.nr_lv))
     line_wrapper(ax, range(MODEL.W.shape[0]), MODEL.W[:, lv - 1])
 
@@ -487,9 +547,5 @@ def rmsecv_lv(ax, stats):
         line_wrapper(ax, range(1, len(r.T) + 1), r[i])
 
     ax.set_title('RMSECV')
-    ax.set_xlabel('LV')
+    ax.set_xlabel('Latent variables')
     ax.set_ylabel('RMSECV')
-
-
-if __name__ == '__main__':
-    raise SystemExit('Please do not run that script, load it!')

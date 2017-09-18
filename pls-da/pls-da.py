@@ -1,67 +1,74 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import IO
-import model
-import plot
-import utility
+""" PLS-DA is a project about the Partial least squares Discriminant Analysis
+    on a given dataset.'
+    PLS-DA is a project developed for the Processing of Scientific Data exam
+    at University of Modena and Reggio Emilia.
+    Copyright (C) 2017  Serena Ziviani, Federico Motta
+    This file is part of PLS-DA.
+    PLS-DA is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+    PLS-DA is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with PLS-DA.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
-# Add here every external library used!
-try:
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import PyQt5.QtCore as QtCore
-    import PyQt5.QtWidgets as QtWidgets
-    import scipy
-    import sklearn.cross_decomposition as sklCD
-    import yaml
+__authors__ = "Serena Ziviani, Federico Motta"
+__copyright__ = "PLS-DA  Copyright (C)  2017"
+__license__ = "GPL3"
 
-except ImportError as e:
-    raise SystemExit('Could not import {} library, '.format(e.name)
-                     'please install it!')
 
 if __name__ != '__main__':
     raise SystemExit('Please do not load that script, run it!')
 
-utility.check_python_version()
+for lib in ('matplotlib', 'numpy', 'PyQt5', 'scipy', 'yaml'):
+    try:
+        exec('import ' + str(lib))
+    except ImportError:
+        raise SystemExit('Could not import {} library, '.format(lib) +
+                         'please install it!')
 
-train_set = model.TrainingSet('datasets/olive_training.csv')
-train_set.autoscale()
-plot.update_global_train_set(train_set)
 
-nipals_model = model.nipals(train_set.x, train_set.y)
-nipals_model.nr_lv = 3
-plot.update_global_model(nipals_model)
-test_set = model.TestSet('datasets/olive_test.csv', train_set)
-plot.update_global_test_set(test_set)
+from PyQt5.QtCore import QCoreApplication, QTimer
+from PyQt5.QtWidgets import QApplication
+import signal
+import sys
 
-y_pred = nipals_model.predict(test_set.x)
-pred = model.Statistics(test_set.y, y_pred)
-plot.update_global_statistics(pred)
+import gui
+import utility
 
-IO.Log.set_level('debug')
-results = model.cross_validation(train_set, 5, 5, 7)
-for split in results:
-    for lv in split:
-        print(lv.rmsec)
+# check python version
+if sys.version_info < (3,):
+    major, minor, *__ = sys.version_info
+    raise SystemExit('WARNING: You are using the Python interpreter {}.{}.\n'
+                     'Please use at least Python version 3!'.format(major,
+                                                                    minor))
 
-fig = plt.figure(tight_layout=True)
+# Create graphical environment
+application = QApplication(sys.argv)
+user_interface = gui.UserInterface('PLS-DA')
 
-# plot.scores(ax, 0, 1, x=True)
-# plot.loadings(ax, 0, 1, x=True)
-# plot.biplot(ax, 0, 1, x=True)
-# plot.cumulative_explained_variance(ax, x=True)
-# plot.scree(ax, y=True)
-plot.rmsecv_lv(fig.add_subplot(2, 2, 1), results)
-plot.biplot(fig.add_subplot(2, 2, 2), 0, 1, x=True)
-plot.MODEL.nr_lv = 4
-plot.t_square_q(fig.add_subplot(2, 2, 4))
-plot.q_over_leverage(fig.add_subplot(2, 2, 3))
-plt.show()
+# catch Ctrl+C or INTERRUPT signal
+signal.signal(signal.SIGINT, user_interface.quit)  # asks confirmation
 
-IO.save_matrix(nipals_model.X, ';'.join(['X', str(plot.MODEL.nr_lv),
-                                        str(plot.MODEL.X.shape)]), 'temp_file.csv')
-IO.dump(nipals_model, 'workspace')
-IO.load('workspace')
-print(test_set.categories)
+# catch TERMINATION signal
+signal.signal(signal.SIGTERM,
+              lambda *args: QCoreApplication.quit())  # quit immediately
 
+# Create a timer to let the python interpreter run ...
+timer = QTimer()
+timer.start(500)  # ... every 500 milliseconds ...
+timer.timeout.connect(lambda: None)  # ... and just do nothing
+
+if utility.CLI.args().verbose:
+    user_interface.MainWindow.dumpObjectTree()
+
+# Start Qt event loop
+user_interface.show()
+sys.exit(application.exec_())

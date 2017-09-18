@@ -1,8 +1,32 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+""" PLS-DA is a project about the Partial least squares Discriminant Analysis
+    on a given dataset.'
+    PLS-DA is a project developed for the Processing of Scientific Data exam
+    at University of Modena and Reggio Emilia.
+    Copyright (C) 2017  Serena Ziviani, Federico Motta
+    This file is part of PLS-DA.
+    PLS-DA is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+    PLS-DA is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with PLS-DA.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+__authors__ = "Serena Ziviani, Federico Motta"
+__copyright__ = "PLS-DA  Copyright (C)  2017"
+__license__ = "GPL3"
+
+
 import copy
 import enum
+import traceback
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Toolbar
@@ -15,13 +39,15 @@ from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QCheckBox,
                              QMessageBox, QPushButton, QRadioButton,
                              QScrollArea, QSizePolicy as Policy, QSpinBox,
                              QSplitter, QVBoxLayout, QWidget)
-import sys
-import traceback
 
 import IO
 import model
 import plot
 import utility
+
+
+if __name__ == '__main__':
+    raise SystemExit('Please do not run that script, load it!')
 
 
 def clear(layout):
@@ -485,10 +511,12 @@ class UserInterface(object):
                ('Calculated Y', 'calculated_y'),
                ('Predicted Y – Real Y', 'predicted_y_real_y'),
                ('Predicted Y', 'predicted_y'),
-               ('T² – Q', 't_square_q'),
-               ('Residuals – Leverage', 'residuals_leverage'),
+               ('Samples – X residuals', 'x_residuals_over_samples'),
+               ('Samples – Y residuals', 'y_residuals_over_samples'),
                ('Samples – Leverage', 'samples_leverage'),
                ('Q – Leverage', 'q_over_leverage'),
+               ('Leverage – Y residuals', 'residuals_leverage'),
+               ('T² – Q', 't_square_q'),
                ('Regression coefficients', 'regression_coefficients'),
                ('Weights Scatter Plot', 'weights'),
                ('Weights Line Plot', 'weights_line'),
@@ -708,9 +736,8 @@ class UserInterface(object):
         if popup_question(msg, title=title, parent=self.MainWindow):
             IO.Log.debug('YES (replacing current model)')
             return True
-        else:
-            IO.Log.debug('NO (not replacing current model)')
-            return False
+        IO.Log.debug('NO (not replacing current model)')
+        return False
 
     def populate_right_vbox_widgets_and_layouts(self):
         lane = Lane.Right
@@ -851,9 +878,9 @@ class UserInterface(object):
             self.cv_stats  # this is the list of lists returned by
             #                cross_validation
             text = 'RMSECV:\n{}\n'.format(
-                    ' ??? ')
+                ' ??? ')
             text += 'R² CV:\n{}\n'.format(
-                    ' ??? ')
+                ' ??? ')
             l.setText(text)
 
     def update_right_cv_samples_spinbox(self, minimum=None, maximum=None,
@@ -897,9 +924,9 @@ class UserInterface(object):
             text += 'Y-Block: {} x {}\n'.format(self.test_set.n,
                                                 self.test_set.p)
             text += 'RMSEP:\n{}\n'.format(
-                    utility.list_to_string(self.prediction_stats.rmsec))
+                utility.list_to_string(self.prediction_stats.rmsec))
             text += 'R² Pred:\n{}\n'.format(
-                    utility.list_to_string(self.prediction_stats.r_squared))
+                utility.list_to_string(self.prediction_stats.r_squared))
             l.setText(text)
 
     def clear_plot_lanes_and_show_hints(self):
@@ -907,10 +934,9 @@ class UserInterface(object):
         for lane in (Lane.Left, Lane.Central):
             self.reset_widget_and_layout(Widget.Form, lane)
             self.add(QLabel, lane, Column.Both, row=0, name='Hint',
-                     text='↑{}↑\n'.format(' ' * 48)
-                          'Several plots are available in the above '
-                          'dropdown menu.\n'
-                          '(if you create or load a model before)',
+                     text='↑{}↑\n'.format(' ' * 48) +
+                     'Several plots are available in the above dropdown menu.'
+                     '\n(if you create or load a model before)',
                      label_alignment=Qt.AlignHCenter,
                      policy=Policy.Expanding, size=(170, 520, 3610, 4240))
 
@@ -1104,15 +1130,15 @@ class UserInterface(object):
             if 'SpinBox' in name:
                 try:
                     cache[name] = getattr(self, str(lane) + name).value()
-                except (AttributeError, RuntimeError) as e:
+                except (AttributeError, RuntimeError):
                     cache.pop(name, None)
             else:
                 try:
                     cache[name] = getattr(self, str(lane) + name).isChecked()
-                except (AttributeError, RuntimeError) as e:
+                except (AttributeError, RuntimeError):
                     cache.pop(name, None)
             if name in cache:
-                IO.Log.debug('Added {}: {} '.format(name, cache[name])
+                IO.Log.debug('Added {}: {} '.format(name, cache[name]) +
                              'to cached plot preferences')
 
     def clear_cached_plot_preferences(self, lane):
@@ -1180,8 +1206,8 @@ class UserInterface(object):
                 self.back_button(lane).animateClick(1)
             elif 'is out of bounds [1:1]' not in str(e):
                 popup_error(message='An error occured while drawing '
-                                    '{} plot:\n\n'.format(str(lane).lower())
-                                    '{}'.format(str(e)),
+                            '{} plot:\n\n'.format(str(lane).lower()) +
+                            '{}'.format(str(e)),
                             parent=self.MainWindow)
         else:
             self.canvas(lane).draw()
@@ -1204,7 +1230,7 @@ class UserInterface(object):
                 # populate layouts with widget
                 try:
                     getattr(self, 'build_' + entry['method'] + '_form')(lane)
-                except AttributeError as e:
+                except AttributeError:
                     try:
                         # if there isn't a 'build_' method
                         # maybe there aren't inputs to choose,
@@ -1261,7 +1287,7 @@ class UserInterface(object):
         w2 = self.add(QLabel, lane, Column.Right, row=4, name='Warning',
                       text_format=Qt.RichText, label_alignment=Qt.AlignLeft,
                       text='<font color="red"> variables<br><br> differ!'
-                           '</font>')
+                      '</font>')
         w1.setVisible(False), w2.setVisible(False)
         sb1.valueChanged.connect(
             lambda sb1_value: (w1.setVisible(sb1_value == sb2.value()),
@@ -1393,6 +1419,12 @@ class UserInterface(object):
 
     def draw_samples_leverage_plot(self, lane, refresh=False):
         plot.leverage(self.figure(lane).add_subplot(111))
+
+    def draw_x_residuals_over_samples_plot(self, lane, refresh=False):
+        plot.x_residuals_over_samples(self.figure(lane).add_subplot(111))
+
+    def draw_y_residuals_over_samples_plot(self, lane, refresh=False):
+        plot.y_residuals_over_samples(self.figure(lane).add_subplot(111))
 
     def draw_q_over_leverage_plot(self, lane, refresh=False):
         plot.q_over_leverage(self.figure(lane).add_subplot(111))
@@ -1574,22 +1606,22 @@ class UserInterface(object):
             ('F', '(n x p', 'matrix of Y residuals)', 'E_y'),
             ('Predicted Y in fit', '(n x p', 'matrix)', 'Y_modeled'),
             ('Predicted Y in fit (dummy)', '(n x p', 'matrix of '
-                '\u00B1' + '1)', 'Y_modeled_dummy'),
+             '\u00B1' + '1)', 'Y_modeled_dummy'),
             ('W', '(m x m', 'matrix of PLS weights)', 'W'),
             ('W1', '(m x m', 'matrix)', 'W1'),
             ('B', '(m x p', 'matrix of regression coefficients)', 'B'),
             ('Inner relation', '(m x 1', 'vector of regression coefficients)',
-                'b'),
+             'b'),
             ('X eigenvalues', '(m x 1', 'vector)', 'x_eigenvalues'),
             ('Y eigenvalues', '(m x 1', 'vector)', 'y_eigenvalues'),
             ('X explained variance', '(m x 1', 'vector)',
-                'explained_variance_x'),
+             'explained_variance_x'),
             ('Y explained variance', '(m x 1', 'vector)',
-                'explained_variance_y'),
+             'explained_variance_y'),
             ('X cumulative explained variance', '(m x 1', 'vector)',
-                'cumulative_explained_variance_x'),
+             'cumulative_explained_variance_x'),
             ('Y cumulative explained variance', '(m x 1', 'vector)',
-                'cumulative_explained_variance_y'),
+             'cumulative_explained_variance_y'),
             ('T²', '(n x 1', 'vector)', 't_square'),
             ('Leverage', '(n x 1', 'vector)', 'leverage'),
             ('Q residuals over X', '(n x 1', 'vector)', 'q_residuals_x'),
@@ -1602,10 +1634,10 @@ class UserInterface(object):
                       for _, size, _, _ in all_matrices]) + (hs_w * 0.5)
         for n, s, desc, _ in all_matrices:
             name = n
-            while (combo.fontMetrics().boundingRect(name).width() < name_w):
+            while combo.fontMetrics().boundingRect(name).width() < name_w:
                 name += hs
             size = s
-            while (combo.fontMetrics().boundingRect(size).width() < size_w):
+            while combo.fontMetrics().boundingRect(size).width() < size_w:
                 size += hs
             item_list.append(str(name + size + desc))
         delete(combo)
@@ -1654,7 +1686,7 @@ class UserInterface(object):
             try:
                 # ensure canvas exists
                 canvas = self.canvas(lane)
-            except AttributeError as e:
+            except AttributeError:
                 continue
             else:
                 if canvas.isVisible():
@@ -1693,7 +1725,7 @@ class UserInterface(object):
             lambda: setattr(self, 'current_mode', Mode.Prediction))
 
         self.AboutThisProjectAction.triggered.connect(
-            lambda: self.about_this_project())
+            self.about_this_project)
         self.AboutQtAction.triggered.connect(QApplication.aboutQt)
 
         self.LeftComboBox.currentIndexChanged.connect(
@@ -1749,7 +1781,7 @@ class UserInterface(object):
             'http://www.gnu.org/licenses/</a>.</p>')
         dialog.exec()
 
-    def quit(self):
+    def quit(self, *args):
         """Ask for confirmation with a popup and quit returning 0."""
         if popup_question('Would you really like to quit?', title='Quit',
                           parent=self.MainWindow):
@@ -1757,14 +1789,3 @@ class UserInterface(object):
 
     def show(self):
         self.MainWindow.show()
-
-
-if __name__ == '__main__':
-    utility.check_python_version()
-
-    app = QApplication(sys.argv)
-    ui = UserInterface('PLS-DA')
-    ui.show()
-    if utility.CLI.args().verbose:
-        ui.MainWindow.dumpObjectTree()
-    sys.exit(app.exec_())

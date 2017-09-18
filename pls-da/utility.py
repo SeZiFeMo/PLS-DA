@@ -1,24 +1,35 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+""" PLS-DA is a project about the Partial least squares Discriminant Analysis
+    on a given dataset.'
+    PLS-DA is a project developed for the Processing of Scientific Data exam
+    at University of Modena and Reggio Emilia.
+    Copyright (C) 2017  Serena Ziviani, Federico Motta
+    This file is part of PLS-DA.
+    PLS-DA is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+    PLS-DA is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with PLS-DA.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+__authors__ = "Serena Ziviani, Federico Motta"
+__copyright__ = "PLS-DA  Copyright (C)  2017"
+__license__ = "GPL3"
+
+
 import argparse
-import sys
-import IO
 from functools import update_wrapper
+
 
 if __name__ == '__main__':
     raise SystemExit('Please do not run that script, load it!')
-
-
-def check_python_version():
-    if sys.version_info < (3,):
-        major, minor, *__ = sys.version_info
-        IO.Log.warning('You are using the Python interpreter {}.{}.\n'
-                       'Please use at least Python version 3!'.format(major,
-                                                                      minor))
-        exit(1)
-    else:
-        return True
 
 
 def list_to_string(seq, prec=6, separator=', '):
@@ -37,10 +48,35 @@ def get_unique_list(seq):
 class CLI(object):
 
     _args = None
-    _description = 'Script to ...\n'
-    _epilog = 'REQUIREMENTS: Python 3 (>= 3.4)\n'                             \
-        '              NumPy   https://pypi.python.org/pypi/numpy\n'          \
-        '              PyYAML  http://pyyaml.org/wiki/PyYAML\n'
+    _description = str('This program has been developed for the Processing of '
+                       'Scientific Data exam\n(EDS), at Physics, Informatics '
+                       'and Mathematics departement (FIM) of\nUniversity of '
+                       'Modena and Reggio Emilia (UNIMORE) in Italy.\n\n'
+                       'Its main purpose is to conduct a "Partial least '
+                       'squares Discriminant\nAnalysis" (PLS-DA) on a given '
+                       'dataset.')
+
+    _epilog = str('REQUIREMENTS: Python 3 (>= 3.5.3)\n' + ' ' * 14 +
+                  'Matplotlib http://matplotlib.org\n' + ' ' * 14 +
+                  'NumPy      http://pypi.python.org/pypi/numpy\n' + ' ' * 14 +
+                  'PyQt5      http://pypi.python.org/pypi/PyQt5\n' + ' ' * 14 +
+                  'PyYAML     http://pyyaml.org/wiki/PyYAML\n' + ' ' * 14 +
+                  'SciPy      http://www.scipy.org\n' +
+                  '\n\n' +
+                  'Copyright (C) 2017 Serena Ziviani, Federico Motta\n\n' +
+                  'This program is free software: you can redistribute it ' +
+                  'and/or modify it under\nthe terms of the GNU General ' +
+                  'Public License as published by the Free Software\n' +
+                  'Foundation, either version 3 of the License, or any later ' +
+                  'version.\n\n' +
+                  'This program is distributed in the hope that it will be ' +
+                  'useful, but WITHOUT\nANY WARRANTY; without even the ' +
+                  'implied warranty of MERCHANTABILITY or FITNESS\nFOR A ' +
+                  'PARTICULAR PURPOSE. See the GNU General Public License for ' +
+                  'more details.\n\n' +
+                  'You should have received a copy of the GNU General Public ' +
+                  'License along with\nthis program. If not, see ' +
+                  'http://www.gnu.org/licenses/.')
 
     def args(self=None):
         if CLI._args is None:

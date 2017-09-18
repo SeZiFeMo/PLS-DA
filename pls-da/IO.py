@@ -1,14 +1,41 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+""" PLS-DA is a project about the Partial least squares Discriminant Analysis
+    on a given dataset.'
+    PLS-DA is a project developed for the Processing of Scientific Data exam
+    at University of Modena and Reggio Emilia.
+    Copyright (C) 2017  Serena Ziviani, Federico Motta
+    This file is part of PLS-DA.
+    PLS-DA is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+    PLS-DA is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with PLS-DA.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+__authors__ = "Serena Ziviani, Federico Motta"
+__copyright__ = "PLS-DA  Copyright (C)  2017"
+__license__ = "GPL3"
+
+
 import logging
+import os
 import numpy as np
 import utility
 import yaml
-import os
 
 import plot
 import model
+
+
+if __name__ == '__main__':
+    raise SystemExit('Please do not run that script, load it!')
 
 
 def dump(workspace, split, sample):
@@ -17,14 +44,13 @@ def dump(workspace, split, sample):
     if not os.path.isdir(folder):
         raise FileNotFoundError('Directory {} does not exist'.format(folder))
 
-    model = plot.MODEL
     train_set = plot.TRAIN_SET
 
     matrix = train_set.body.copy()
     matrix.insert(0, train_set.header)
     save_matrix(matrix, filename=os.path.join(folder, 'dataset.csv'))
 
-    data = {'nr_lv': model.nr_lv, 'centered': train_set.centered,
+    data = {'nr_lv': plot.MODEL.nr_lv, 'centered': train_set.centered,
             'normalized': train_set.normalized,
             'split': split, 'sample': sample}
     with open(os.path.join(folder, 'data.yaml'), 'w') as f:
@@ -115,7 +141,7 @@ class Log(object):
             logging_level = getattr(logging, Log.__default.upper())
             logging.basicConfig(format='[%(levelname)-8s] %(message)s',
                                 level=logging_level)
-            for l in logging.Logger.manager.loggerDict.keys():
+            for l in logging.Logger.manager.loggerDict:
                 logging.getLogger(l).setLevel(logging.INFO)
 
             # current script / package logging
@@ -134,7 +160,7 @@ class Log(object):
             else:
                 data = yaml.dump(data, default_flow_style=False)
                 data = data.replace('\n...', '').rstrip('\n')
-            logger(msg.rstrip('\n') + my_new_line
+            logger(msg.rstrip('\n') + my_new_line +
                    data.replace('\n', my_new_line))
 
     @staticmethod
@@ -207,7 +233,3 @@ class CSV(object):
                     else:
                         body[i][j] = val
         return header, body
-
-
-if __name__ == '__main__':
-    raise SystemExit('Please do not run that script, load it!')

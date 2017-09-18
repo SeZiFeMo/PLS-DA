@@ -1,11 +1,38 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+""" PLS-DA is a project about the Partial least squares Discriminant Analysis
+    on a given dataset.'
+    PLS-DA is a project developed for the Processing of Scientific Data exam
+    at University of Modena and Reggio Emilia.
+    Copyright (C) 2017  Serena Ziviani, Federico Motta
+    This file is part of PLS-DA.
+    PLS-DA is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+    PLS-DA is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with PLS-DA.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+__authors__ = "Serena Ziviani, Federico Motta"
+__copyright__ = "PLS-DA  Copyright (C)  2017"
+__license__ = "GPL3"
+
+
 import math
 import numpy as np
 
 import IO
 import utility
+
+
+if __name__ == '__main__':
+    raise SystemExit('Please do not run that script, load it!')
 
 
 class Dataset(object):
@@ -186,7 +213,7 @@ class Model(object):
     def nr_lv(self, value):
         assert 0 < value <= self.max_lv, 'Chosen latent variable number ' \
                                          '{} out of bounds [0, {}]'.format(
-                                            value, self.max_lv)
+                                             value, self.max_lv)
 
         utility.clear_property_cache(self, 'Y_modeled')
         utility.clear_property_cache(self, 'Y_modeled_dummy')
@@ -519,7 +546,3 @@ def integer_bounds(P, T, col):
     """Return tuple with min and max integers bounds for P[col] and T[col]."""
     extracted = np.concatenate((P[:, col], T[:, col]))
     return math.floor(np.min(extracted)), math.ceil(np.max(extracted))
-
-
-if __name__ == '__main__':
-    raise SystemExit('Please do not run that script, load it!')
