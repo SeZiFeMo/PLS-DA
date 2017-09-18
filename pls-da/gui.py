@@ -876,7 +876,7 @@ class UserInterface(object):
         """Method to refresh the label with cv infos."""
         l = getattr(self, 'RightCVInfoLabel', None)
         if l is not None:
-            lv = self.plsda_model.nr_lv
+            lv = self.plsda_model.nr_lv - 1  # because it would start from 1
             rss = np.zeros((self.cv_stats[0][lv].p))
             tss = np.zeros((self.cv_stats[0][lv].p))
             for i in range(len(self.cv_stats)):  # split
