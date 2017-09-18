@@ -825,8 +825,8 @@ class UserInterface(object):
                                                 self.plsda_model.p)
             s = model.Statistics(y_real=self.plsda_model.Y,
                                  y_pred=self.plsda_model.Y_modeled)
-            text += 'RMSEC: {}\n'.format(s.rmsec)
-            text += 'R²: {}\n'.format(s.r_squared)
+            text += 'RMSEC:\n{}\n'.format(utility.list_to_string(s.rmsec))
+            text += 'R²:\n{}\n'.format(utility.list_to_string(s.r_squared))
             l.setText(text)
 
     def update_right_model_lvs_spinbox(self, minimum=None, maximum=None,
@@ -851,8 +851,10 @@ class UserInterface(object):
         if l is not None:
             self.cv_stats  # this is the list of lists returned by
             #                cross_validation
-            text = 'RMSECV: {}\n'.format(' ??? ')
-            text += 'R² CV: {}\n'.format(' ??? ')
+            text = 'RMSECV:\n{}\n'.format(
+                    ' ??? ')
+            text += 'R² CV:\n{}\n'.format(
+                    ' ??? ')
             l.setText(text)
 
     def update_right_cv_samples_spinbox(self, minimum=None, maximum=None,
@@ -895,8 +897,10 @@ class UserInterface(object):
                                                self.test_set.m)
             text += 'Y-Block: {} x {}\n'.format(self.test_set.n,
                                                 self.test_set.p)
-            text += 'RMSEP: {}\n'.format(self.prediction_stats.rmsec)
-            text += 'R² Pred: {}\n'.format(self.prediction_stats.r_squared)
+            text += 'RMSEP:\n{}\n'.format(
+                    utility.list_to_string(self.prediction_stats.rmsec))
+            text += 'R² Pred:\n{}\n'.format(
+                    utility.list_to_string(self.prediction_stats.r_squared))
             l.setText(text)
 
     def clear_plot_lanes_and_show_hints(self):
@@ -1560,40 +1564,50 @@ class UserInterface(object):
 
     def export_matrices(self):
         all_matrices = (
-            ('X', '(n x m matrix of predictors)', 'X'),
-            ('T', '(n x m matrix of X scores)', 'T'),
-            ('P', '(m x m matrix of X loadings)', 'P'),
-            ('E', '(n x m matrix of X residuals)', 'E_x'),
-            ('Y', '(n x p matrix of responses)', 'Y'),
-            ('U', '(n x m matrix of Y scores)', 'U'),
-            ('Q', '(p x m matrix of Y loadings)', 'Q'),
-            ('F', '(n x p matrix of Y residuals)', 'E_y'),
-            ('W', '(m x m matrix of PLS weights)', 'W'),
-            ('B', '(m x p matrix of regression coefficients)', 'B'),
-            ('b', '(m x 1 vector of regression coefficients)', 'b'),
-            ('X eigenvalues', '(m x 1 vector)', 'x_eigenvalues'),
-            ('Y eigenvalues', '(m x 1 vector)', 'y_eigenvalues'),
-            ('Predicted Y in fit', '(n x p matrix)', 'Y_modeled'),
-
-            # ('T²',                 '(n x 1 vector)', 't_square'),
-            # ('Leverage',           '(n x 1 vector)', 'leverage'),
-            # ('Q residuals over X', '(n x 1 vector)', 'q_residuals_x'),
-            # ('Y_modeled_dummy',    '(n x p matrix)', 'Y_modeled_dummy'),
-
-            # Explained_variance_x (in %)
-            # Explained_variance_y (in %)
-            # Predicted_y_in_CV
-            # W1 = W*inv(P' * W)
+            ('X', '(n x m', 'matrix of predictors)', 'X'),
+            ('T', '(n x m', 'matrix of X scores)', 'T'),
+            ('P', '(m x m', 'matrix of X loadings)', 'P'),
+            ('E', '(n x m', 'matrix of X residuals)', 'E_x'),
+            ('Y', '(n x p', 'matrix of responses)', 'Y'),
+            ('U', '(n x m', 'matrix of Y scores)', 'U'),
+            ('Q', '(p x m', 'matrix of Y loadings)', 'Q'),
+            ('F', '(n x p', 'matrix of Y residuals)', 'E_y'),
+            ('Predicted Y in fit', '(n x p', 'matrix)', 'Y_modeled'),
+            ('Predicted Y in fit (dummy)', '(n x p', 'matrix of '
+                '\u00B1' + '1)', 'Y_modeled_dummy'),
+            ('W', '(m x m', 'matrix of PLS weights)', 'W'),
+            ('W1', '(m x m', 'matrix)', 'W1'),
+            ('B', '(m x p', 'matrix of regression coefficients)', 'B'),
+            ('Inner relation', '(m x 1', 'vector of regression coefficients)',
+                'b'),
+            ('X eigenvalues', '(m x 1', 'vector)', 'x_eigenvalues'),
+            ('Y eigenvalues', '(m x 1', 'vector)', 'y_eigenvalues'),
+            ('X explained variance', '(m x 1', 'vector)',
+                'explained_variance_x'),
+            ('Y explained variance', '(m x 1', 'vector)',
+                'explained_variance_y'),
+            ('X cumulative explained variance', '(m x 1', 'vector)',
+                'cumulative_explained_variance_x'),
+            ('Y cumulative explained variance', '(m x 1', 'vector)',
+                'cumulative_explained_variance_y'),
+            ('T²', '(n x 1', 'vector)', 't_square'),
+            ('Leverage', '(n x 1', 'vector)', 'leverage'),
+            ('Q residuals over X', '(n x 1', 'vector)', 'q_residuals_x'),
             )
-        combo, hair_space, item_list = QComboBox(), '\u200a', list()
-        max_width = max([combo.fontMetrics().boundingRect(name).width()
-                         for name, _, _ in all_matrices])
-        combo.clear()
-        for name, desc, _ in all_matrices:
-            item = name
-            while (combo.fontMetrics().boundingRect(item).width() < max_width):
-                item += hair_space
-            item_list.append(str(item + 10 * hair_space + desc))
+        combo, hs, item_list = QComboBox(), '\u200a', list()
+        hs_w = combo.fontMetrics().boundingRect(hs).width()
+        name_w = max([combo.fontMetrics().boundingRect(name + 10 * hs).width()
+                      for name, _, _, _ in all_matrices]) + (hs_w * 0.5)
+        size_w = max([combo.fontMetrics().boundingRect(size + 4 * hs).width()
+                      for _, size, _, _ in all_matrices]) + (hs_w * 0.5)
+        for n, s, desc, _ in all_matrices:
+            name = n
+            while (combo.fontMetrics().boundingRect(name).width() < name_w):
+                name += hs
+            size = s
+            while (combo.fontMetrics().boundingRect(size).width() < size_w):
+                size += hs
+            item_list.append(str(name + size + desc))
         delete(combo)
 
         ok, index = popup_choose_item('Which matrix would you like to export?',
@@ -1606,8 +1620,8 @@ class UserInterface(object):
         if path is None:
             return
 
-        method = str(all_matrices[index][2])
-        header = str(all_matrices[index][0] + ' ' + all_matrices[index][1])
+        method = str(all_matrices[index][3])
+        header = ' '.join(all_matrices[index][:3])
         IO.save_matrix(getattr(self.plsda_model, method), path, header,
                        scientific_notation=True)
 

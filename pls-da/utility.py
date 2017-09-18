@@ -21,6 +21,13 @@ def check_python_version():
         return True
 
 
+def list_to_string(seq, prec=6, separator=', '):
+    ret = ''
+    for num in seq:
+        ret += '{0:.{1}f}'.format(num, prec) + separator
+    return ret.rstrip(separator)
+
+
 def get_unique_list(seq):
     """Return a list with duplicates removed, preserving order."""
     seen = set()
@@ -42,12 +49,6 @@ class CLI(object):
                 description=CLI._description,
                 epilog=CLI._epilog)
             group = parser.add_mutually_exclusive_group()
-            parser.add_argument('-i', '--input-file',
-                                default='datasets/olive_training.csv',
-                                dest='input_file',
-                                help='File with comma saved value dataset',
-                                metavar='file',
-                                type=str)
             group.add_argument('-q', '--quiet',
                                action='count',
                                default=0,

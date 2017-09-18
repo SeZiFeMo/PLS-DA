@@ -233,6 +233,31 @@ class Model(object):
     def y_eigenvalues(self):
         return self._y_eigenvalues[:self.nr_lv]
 
+    @property
+    def explained_variance_x(self):
+        """Return the explained variance of X eigenvalues."""
+        IO.Log.info('Eigenvalues for X: \n{}'.format(self.x_eigenvalues))
+        return 100 * self.x_eigenvalues / np.sum(self.x_eigenvalues)
+
+    @property
+    def explained_variance_y(self):
+        """Return the explained variance of Y eigenvalues."""
+        IO.Log.info('Eigenvalues for Y: \n{}'.format(self.y_eigenvalues))
+        return 100 * self.y_eigenvalues / np.sum(self.y_eigenvalues)
+
+    @property
+    def cumulative_explained_variance_x(self):
+        return np.cumsum(self.explained_variance_x)
+
+    @property
+    def cumulative_explained_variance_y(self):
+        return np.cumsum(self.explained_variance_y)
+
+    @property
+    def W1(self):
+        """W1 = W * inv(P' * W)"""
+        return self.W.dot(np.linalg.inv(self.P.T.dot(self.W)))
+
     @utility.cached_property
     def Y_modeled(self):
         Y_modeled = self.X.dot(self.B)
@@ -497,24 +522,6 @@ def integer_bounds(P, T, col):
     """Return tuple with min and max integers bounds for P[col] and T[col]."""
     extracted = np.concatenate((P[:, col], T[:, col]))
     return math.floor(np.min(extracted)), math.ceil(np.max(extracted))
-
-
-def explained_variance(model, matrix='x'):
-    """Return the explained variance of model.[x|y].eigenvalues
-
-       Raise ValueError if matrix is not 'x' or 'y'.
-    """
-    if matrix == 'x':
-        eigen = model.x_eigenvalues
-    elif matrix == 'y':
-        eigen = model.y_eigenvalues
-    else:
-        raise ValueError('Bad matrix parameter ({}) in '
-                         'explained_variance() '.format(repr(matrix)))
-
-    IO.Log.info('[model.explained_variance] '
-                'Eigenvalues for {}: \n{}'.format(matrix, eigen))
-    return 100 * eigen / np.sum(eigen)
 
 
 if __name__ == '__main__':

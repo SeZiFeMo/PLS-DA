@@ -132,20 +132,24 @@ def cumulative_explained_variance(ax, x=False, y=False):
        Raise ValueError if x and y does not differ.
     """
     if bool(x) == bool(y):
-        raise ValueError('In plot.explained_variance() X, Y matrix flags '
-                         'does not differ')
+        raise ValueError('In plot.cumulative_explained_variance() X, Y matrix '
+                         'flags must differ')
 
-    explained_variance = model.explained_variance(MODEL, 'x' if x else 'y')
-    line_wrapper(ax, range(1, len(explained_variance) + 1),
-                 np.cumsum(explained_variance))
+    if x:
+        cumulative_explained_variance = MODEL.cumulative_explained_variance_x
+    else:
+        cumulative_explained_variance = MODEL.cumulative_explained_variance_y
+
+    line_wrapper(ax, range(1, len(cumulative_explained_variance) + 1),
+                 cumulative_explained_variance)
 
     ax.set_title('Explained variance plot for {}'.format('X' if x else 'Y'))
     ax.set_xlabel('Number of latent variables')
     ax.set_ylabel('Cumulative variance captured (%)')
-    ax.set_xlim(0.5, len(explained_variance) + 0.5)
-    ax.set_ylim(max(-2, explained_variance[0] - 2), 102)
-    if len(explained_variance) <= 12:
-        ax.set_xticks(list(range(1, len(explained_variance) + 1)))
+    ax.set_xlim(0.5, len(cumulative_explained_variance) + 0.5)
+    ax.set_ylim(max(-2, cumulative_explained_variance[0] - 2), 102)
+    if len(cumulative_explained_variance) <= 12:
+        ax.set_xticks(list(range(1, len(cumulative_explained_variance) + 1)))
 
 
 def inner_relations(ax, num):
