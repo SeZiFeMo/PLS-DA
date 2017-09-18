@@ -163,10 +163,8 @@ class Model(object):
         self.m = X.shape[1]
         self.p = Y.shape[1]
 
-        # max_lv is the number of lv in which the model was calculated
-        # nr_lv is the number of lv used for prediction
-        self.max_lv = max_lv
-        self._nr_lv = max_lv
+        self.max_lv = max_lv  # number of lv in which the model was calculated
+        self._nr_lv = max_lv  # number of lv used for prediction
 
         self._T = np.zeros((self.n, max_lv))
         self._P = np.zeros((self.m, max_lv))
@@ -281,9 +279,8 @@ class Model(object):
 
     @utility.cached_property
     def B(self):
-        # Compute regression parameters B
-        # tmp = (P'W)^{-1}
-        tmp = np.linalg.inv(self.P.T.dot(self.W))
+        """Compute regression parameters B."""
+        tmp = np.linalg.inv(self.P.T.dot(self.W))  # tmp is: (P'W)^{-1}
         return ((self.W.dot(tmp)).dot(np.diag(self.b))).dot(self.Q.T)
 
     @utility.cached_property
@@ -381,7 +378,7 @@ def nipals(X, Y, nr_lv=None, tol=1e-6, max_iter=1e4):
     s_list_x = []
     s_list_y = []
 
-    # Loop for each possible PC
+    # Loop for each possible LV
     for i in range(nr_lv):
         # Initialize u as a column of E_x with maximum variance
         max_var_index = np.argmax(np.sum(np.power(E_y, 2), axis=0))

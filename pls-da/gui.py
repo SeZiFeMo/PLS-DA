@@ -323,6 +323,7 @@ class UserInterface(object):
 
         # Build three stacked areas in the right lane
         self.populate_right_vbox_widgets_and_layouts()
+
         # Fill them with their widgets
         self.populate_right_model_widget()
         self.populate_right_cv_widget()
@@ -681,7 +682,6 @@ class UserInterface(object):
                               parent=self.MainWindow, title='Load test set'):
                 self.load_csv_to_predict()
 
-
     def change_plot_enabled_flag(self, plot_name, enabled):
         """Enable or disable plot entry in drop down menus.
 
@@ -772,7 +772,6 @@ class UserInterface(object):
         self.add(QLabel, lane, Column.Both, row=3, name='ModelInfo',
                  text=model_info, label_alignment=Qt.AlignLeft,
                  parent_widget=parent, size=(100, 30, 360, 1000))
-
 
     def populate_right_cv_widget(self, cv_info=''):
         lane, parent = Lane.Right, self.right_widget(Mode.CV)
@@ -904,6 +903,7 @@ class UserInterface(object):
             l.setText(text)
 
     def clear_plot_lanes_and_show_hints(self):
+        """Create a layout with a label to explain how to draw plots."""
         for lane in (Lane.Left, Lane.Central):
             self.reset_widget_and_layout(Widget.Form, lane)
             self.add(QLabel, lane, Column.Both, row=0, name='Hint',
@@ -1671,7 +1671,6 @@ class UserInterface(object):
         try:
             ret = model.cross_validation(self.train_set, split, sample, max_lv)
         except Exception as e:
-            traceback.print_exc()
             IO.Log.debug(str(e))
             popup_error(message=str(e), parent=self.MainWindow)
         else:
@@ -1684,7 +1683,6 @@ class UserInterface(object):
         self.LoadModelAction.triggered.connect(self.load_model)
         self.LoadCsvToPredictAction.triggered.connect(self.load_csv_to_predict)
         self.ExportMatricesAction.triggered.connect(self.export_matrices)
-
         self.QuitAction.triggered.connect(self.quit)
 
         self.ModelAction.triggered.connect(
@@ -1762,10 +1760,11 @@ class UserInterface(object):
 
 
 if __name__ == '__main__':
+    utility.check_python_version()
+
     app = QApplication(sys.argv)
     ui = UserInterface('PLS-DA')
     ui.show()
     if utility.CLI.args().verbose:
         ui.MainWindow.dumpObjectTree()
-        #  ui.MainWindow.dumpObjectInfo()
     sys.exit(app.exec_())

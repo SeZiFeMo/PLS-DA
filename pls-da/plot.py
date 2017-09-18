@@ -30,8 +30,8 @@ def symbol(category=None):
                ('#A00000', 's'),  # dark_red, square
                ('#FFD700', '*'),  # gold,     star
                ('#0D0099', '.'),  # darkblue, point
-
-
+               # Here there are other markers, to use them uncomment them and
+               # set the colours you prefer
                # ('#000000', '+'),  #           plus
                # ('#000000', 'h'),  #           hexagon
                # ('#000000', 'p'),  #           pentagon
@@ -473,10 +473,10 @@ def rmsecv_lv(ax, stats):
         raise TypeError('Please run cross-validation')
 
     r = []
-    for j in range(len(stats[0])):               # lv
+    for j in range(len(stats[0])):  # lv
         rss = np.zeros((stats[0][j].p))
-        for i in range(len(stats)):              # split
-            for k, y in enumerate(stats[i][j].rss):     # y
+        for i in range(len(stats)):  # split
+            for k, y in enumerate(stats[i][j].rss):  # y
                 rss[k] += y/len(stats[0])
         r.append(rss)
 
