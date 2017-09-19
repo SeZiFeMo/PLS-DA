@@ -22,7 +22,7 @@ I requisiti del programma sono contenuti nel file __environment.yml__.
 ### Lanciare il programma
 1. Entrare nell'ambiente conda: ```activate MottaZivianiPLSDA```
 2. Lanciare il comando:
-```...```
+```python pls-da.py```
 
 ## FORMATO CSV
 Il file di input deve essere conforme allo standard dei file "comma separated

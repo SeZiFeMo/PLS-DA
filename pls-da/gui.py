@@ -475,7 +475,7 @@ class UserInterface(object):
         plot.update_global_statistics(value)
         self.change_plot_enabled_flag('RMSEP', True)
         self.change_plot_enabled_flag('Real Y – Predicted Y', True)
-        self.change_plot_enabled_flag('Predicted Y', True)
+        self.change_plot_enabled_flag('Y modeled – Prediction', True)
 
     @property
     def cv_stats(self):
@@ -512,7 +512,8 @@ class UserInterface(object):
                ('Scores & Loadings', 'scores_and_loadings'),
                ('Calculated Y', 'calculated_y'),
                ('Real Y – Predicted Y', 'predicted_y_real_y'),
-               ('Predicted Y', 'predicted_y'),
+               ('Y modeled – Prediction', 'predicted_y'),
+               ('Y modeled – Classification', 'y_modeled_class'),
                ('Samples – X residuals', 'x_residuals_over_samples'),
                ('Samples – Y residuals', 'y_residuals_over_samples'),
                ('Samples – Q', 'q_sample'),
@@ -692,7 +693,7 @@ class UserInterface(object):
             self.change_plot_enabled_flag('RMSECV', False)
             self.change_plot_enabled_flag('RMSEP', False)
             self.change_plot_enabled_flag('Real Y – Predicted Y', False)
-            self.change_plot_enabled_flag('Predicted Y', False)
+            self.change_plot_enabled_flag('Y modeled – Prediction', False)
 
         self.SaveModelAction.setEnabled(self.current_mode != Mode.Start)
         self.LoadCsvToPredictAction.setEnabled(self.current_mode != Mode.Start)
@@ -1267,7 +1268,8 @@ class UserInterface(object):
             self.vbox_widget(lane).resize(width, height)
 
             IO.Log.debug(str(e))
-            traceback.print_exc()
+            if utility.CLI.args.verbose:
+                traceback.print_exc()
             if 'is out of bounds ' in str(e) and '[1:1]' not in str(e) and \
                ('plot.scores()' in str(e) or 'plot.loadings()' in str(e)):
                 self.back_button(lane).animateClick(1)
@@ -1508,6 +1510,9 @@ class UserInterface(object):
     def draw_predicted_y_plot(self, lane, refresh=False):
         plot.y_predicted(self.figure(lane).add_subplot(111))
 
+    def draw_y_modeled_class_plot(self, lane, refresh=False):
+        plot.y_modeled_class(self.figure(lane).add_subplot(111))
+
     def draw_t_square_q_plot(self, lane, refresh=False):
         plot.t_square_q(self.figure(lane).add_subplot(111))
 
@@ -1692,7 +1697,8 @@ class UserInterface(object):
         try:
             test_set = model.TestSet(input_file, self.train_set)
         except Exception as e:
-            traceback.print_exc()
+            if utility.CLI.args.verbose:
+                traceback.print_exc()
             popup_error(message='The loaded file is not compatible with the '
                                 'curent model',
                         parent=self.MainWindow)
