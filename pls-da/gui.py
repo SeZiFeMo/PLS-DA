@@ -1791,7 +1791,7 @@ class UserInterface(object):
                 stats = model.Statistics(
                     y_real=self.test_set.y,
                     y_pred=self.plsda_model.predict(self.test_set.x))
-            self.prediction_stats = stats
+                self.prediction_stats = stats
             self.update_right_prediction_info()
 
             self.update_visible_plots()
