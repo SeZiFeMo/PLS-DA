@@ -912,7 +912,6 @@ class UserInterface(object):
             tss = np.zeros((self.cv_stats[0][lv].p))
             for i in range(len(self.cv_stats)):  # split
                 for k in range(self.cv_stats[i][lv].p):
-                    print(self.cv_stats[i][lv].rss)
                     rss[k] += self.cv_stats[i][lv].rss[k]
                     tss[k] += self.cv_stats[i][lv].tss[k]
 
@@ -1267,9 +1266,9 @@ class UserInterface(object):
             self.vbox_widget(lane).resize(width - 1, height - 1)
             self.vbox_widget(lane).resize(width, height)
 
-            IO.Log.debug(str(e))
             if utility.CLI.args.verbose:
                 traceback.print_exc()
+            IO.Log.debug(str(e))
             if 'is out of bounds ' in str(e) and '[1:1]' not in str(e) and \
                ('plot.scores()' in str(e) or 'plot.loadings()' in str(e)):
                 self.back_button(lane).animateClick(1)
@@ -1391,6 +1390,7 @@ class UserInterface(object):
     def build_biplot_plot_form(self, lane):
         self.xy_radio_ab_spin_form(
             lane, group='BiplotPlot', add_normalize=True)
+        self.normalize_check_box(lane).setChecked(True)
 
     def build_scores_and_loadings_plot_form(self, lane):
         self.xy_radio_ab_spin_form(
