@@ -424,11 +424,16 @@ def x_residuals_over_samples(ax, original=False):
     ax.set_xlabel('Samples')
     ax.set_ylabel('X residuals')
 
+    E_x = MODEL.E_x.copy()
+    if original:
+        E_x *= TRAIN_SET.sigma_x
+        E_x += TRAIN_SET.mean_x
+
     ax.set_xlim(-1, MODEL.n + 1)
-    ax.set_ylim(np.min(MODEL.E_x) - 1, np.max(MODEL.E_x) + 1)
+    ax.set_ylim(np.min(E_x) - 1, np.max(E_x) + 1)
 
     ax.axhline(0, linestyle='dashed', color='black')
-    for sample, variables in enumerate(MODEL.E_x):
+    for sample, variables in enumerate(E_x):
         scatter_wrapper(ax, [sample for i in variables], variables,
                         TRAIN_SET.categorical_y[sample])
 
@@ -438,11 +443,16 @@ def y_residuals_over_samples(ax, original=False):
     ax.set_xlabel('Samples')
     ax.set_ylabel('Y residuals')
 
+    E_y = MODEL.E_y.copy()
+    if original:
+        E_y *= TRAIN_SET.sigma_y
+        E_y += TRAIN_SET.mean_y
+
     ax.set_xlim(-1, MODEL.n + 1)
-    ax.set_ylim(np.min(MODEL.E_y) - 1, np.max(MODEL.E_y) + 1)
+    ax.set_ylim(np.min(E_y) - 1, np.max(E_y) + 1)
 
     ax.axhline(0, linestyle='dashed', color='black')
-    for sample, variables in enumerate(MODEL.E_y):
+    for sample, variables in enumerate(E_y):
         scatter_wrapper(ax, [sample for i in variables], variables,
                         TRAIN_SET.categorical_y[sample])
 
