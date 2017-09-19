@@ -382,8 +382,8 @@ def y_predicted(ax):
     ax.set_ylabel('Y predicted')
 
     for j in range(MODEL.p):
-        scatter_wrapper(ax, range(STATS.y_pred.shape[0]), STATS.y_pred[:, j],
-                        TEST_SET.categories[j])
+        line_wrapper(ax, range(STATS.y_pred.shape[0]), STATS.y_pred[:, j],
+                     TEST_SET.categories[j])
         # Add a vertical line at the beginning of each category
         ax.axvline(TEST_SET.categorical_y.index(TEST_SET.categories[j]),
                    linestyle='dashed', color='gray')
