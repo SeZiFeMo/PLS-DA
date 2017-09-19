@@ -331,13 +331,16 @@ def calculated_y(ax, index=None, label=None):
     IO.Log.debug('plot.calculated_y() got index: {}'.format(str(index)))
     IO.Log.debug('plot.calculated_y() got label: "{}"'.format(str(label)))
 
-    ax.set_title('Calculated Y')
+    ax.set_title('Calculated Y {} ({})'.format(index, label))
     ax.set_xlabel('Samples')
     ax.set_ylabel('Modeled Y')
-    for j in range(MODEL.p):
-        for i in range(MODEL.n):
-            scatter_wrapper(ax, i, MODEL.Y_modeled[i, j],
-                            TRAIN_SET.categorical_y[i])
+
+    ax.axhline(0, linestyle='dashed', color='black')
+    ax.axhline(1, linestyle='dotted', color='black')
+
+    for i in range(MODEL.n):
+        scatter_wrapper(ax, i, MODEL.Y_modeled[i, index],
+                        TRAIN_SET.categorical_y[i])
 
 
 def y_predicted_y_real(ax):
