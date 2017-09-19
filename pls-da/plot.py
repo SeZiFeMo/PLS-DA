@@ -482,7 +482,7 @@ def leverage(ax):
 
 
 def q_over_leverage(ax):
-    """Plot the Q statistics over the leverage."""
+    """Plot the Q statistic over the leverage."""
     q_res = MODEL.q_residuals_x
     for i in range(MODEL.n):
         scatter_wrapper(ax, q_res[i], MODEL.leverage[i],
@@ -496,6 +496,38 @@ def q_over_leverage(ax):
     ax.set_title('Q residuals – Leverage')
     ax.set_xlabel('Q residuals')
     ax.set_ylabel('Leverage')
+
+
+def q_sample(ax):
+    """Plot the Q statistic over the sample number."""
+    q_res = MODEL.q_residuals_x
+    for i in range(MODEL.n):
+        scatter_wrapper(ax, i, q_res[i], TRAIN_SET.categorical_y[i])
+
+    q_confidence_level = scipy_stats.norm.interval(
+        0.95, np.mean(q_res), np.std(q_res))[1]
+
+    ax.axvline(q_confidence_level, linestyle='dashed', color='black')
+
+    ax.set_title('Q residuals – Samples')
+    ax.set_xlabel('Q residuals')
+    ax.set_ylabel('Samples')
+
+
+def t_sample(ax):
+    """Plot the T^2 statistic over the sample number."""
+    ax.set_title('T^2 – Samples')
+    ax.set_xlabel('Hotelling\'s T^2')
+    ax.set_ylabel('Samples')
+
+    t_square = MODEL.t_square
+    for i in range(MODEL.n):
+        scatter_wrapper(ax, i, t_square[i], TRAIN_SET.categorical_y[i])
+
+    t_square_confidence_level = scipy_stats.norm.interval(
+        0.95, np.mean(t_square), np.std(t_square))[1]
+
+    ax.axvline(t_square_confidence_level, linestyle='dashed', color='black')
 
 
 def regression_coefficients(ax):
