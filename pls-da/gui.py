@@ -1267,7 +1267,7 @@ class UserInterface(object):
             self.vbox_widget(lane).resize(width - 1, height - 1)
             self.vbox_widget(lane).resize(width, height)
 
-            if utility.CLI.args.verbose:
+            if utility.CLI.args().verbose:
                 traceback.print_exc()
             IO.Log.debug(str(e))
             if 'is out of bounds ' in str(e) and '[1:1]' not in str(e) and \
@@ -1406,13 +1406,13 @@ class UserInterface(object):
 
     def build_x_residuals_over_samples_plot_form(self, lane):
         self.add(QCheckBox, lane, Column.Right, row=0, name='Normalize',
-                     text='use original')
+                 text='use original')
         self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
                  size=(70, 25, 20, 25))
 
     def build_y_residuals_over_samples_plot_form(self, lane):
         self.add(QCheckBox, lane, Column.Right, row=0, name='Normalize',
-                     text='use original')
+                 text='use original')
         self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
                  size=(70, 25, 20, 25))
 
@@ -1698,7 +1698,7 @@ class UserInterface(object):
         try:
             test_set = model.TestSet(input_file, self.train_set)
         except Exception as e:
-            if utility.CLI.args.verbose:
+            if utility.CLI.args().verbose:
                 traceback.print_exc()
             popup_error(message='The loaded file is not compatible with the '
                                 'curent model',
