@@ -516,7 +516,7 @@ class UserInterface(object):
                ('Samples – X residuals', 'x_residuals_over_samples'),
                ('Samples – Y residuals', 'y_residuals_over_samples'),
                ('Samples – Q', 'q_sample'),
-               ('Samples – T', 't_sample'),
+               ('Samples – T²', 't_sample'),
                ('Samples – Leverage', 'samples_leverage'),
                ('Q – Leverage', 'q_over_leverage'),
                ('Leverage – Y residuals', 'residuals_leverage'),
@@ -959,7 +959,7 @@ class UserInterface(object):
         """Method to refresh the label with prediction infos."""
         l = getattr(self, 'RightPredictionInfoLabel', None)
         if l is not None:
-            if self.test_set is None or self.cv_stats is None:
+            if self.test_set is None or self.prediction_stats is None:
                 l.setText('')
                 return
 
@@ -1787,6 +1787,11 @@ class UserInterface(object):
         else:
             self.update_right_model_info()
             self.update_right_cv_info()
+            if self.test_set is not None:
+                stats = model.Statistics(
+                    y_real=self.test_set.y,
+                    y_pred=self.plsda_model.predict(self.test_set.x))
+            self.prediction_stats = stats
             self.update_right_prediction_info()
 
             self.update_visible_plots()
