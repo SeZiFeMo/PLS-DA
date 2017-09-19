@@ -655,6 +655,9 @@ class UserInterface(object):
     def y_radio_button(self, lane):
         return getattr(self, str(lane) + 'YRadioButton')
 
+    def y_component_combo_box(self, lane):
+        return getattr(self, str(lane) + 'YComponentComboBox')
+
     @property
     def current_mode(self):
         """Return reference to gui.Mode object."""
@@ -1170,10 +1173,17 @@ class UserInterface(object):
         cache = getattr(self, str(lane) + 'PlotPreferences')
 
         for name in ('LVaSpinBox', 'LVbSpinBox', 'LVsSpinBox',
-                     'XRadioButton', 'YRadioButton', 'NormalizeCheckBox'):
+                     'XRadioButton', 'YRadioButton', 'NormalizeCheckBox',
+                     'YComponentComboBox'):
             if 'SpinBox' in name:
                 try:
                     cache[name] = getattr(self, str(lane) + name).value()
+                except (AttributeError, RuntimeError):
+                    cache.pop(name, None)
+            elif 'ComboBox' in name:
+                try:
+                    cache[name] = getattr(self,
+                                          str(lane) + name).currentIndex()
                 except (AttributeError, RuntimeError):
                     cache.pop(name, None)
             else:
@@ -1200,11 +1210,20 @@ class UserInterface(object):
                 else:
                     IO.Log.debug('Set {} with cached preference {}'.format(
                         str(lane) + name, str(cache[name])))
+            elif 'ComboBox' in name:  # 'YComboBox'
+                try:
+                    getattr(self,
+                            str(lane) + name).setCurrentIndex(cache[name])
+                except (AttributeError, RuntimeError) as e:
+                    pass  # widget not yet created or already garbage collected
+                else:
+                    IO.Log.debug('Set {} with cached preference {}'.format(
+                        str(lane) + name, str(cache[name])))
             else:  # 'XRadioButton', 'YRadioButton', 'NormalizeCheckBox'
                 try:
                     getattr(self, str(lane) + name).setChecked(cache[name])
                 except (AttributeError, RuntimeError) as e:
-                    pass
+                    pass  # widget not yet created or already garbage collected
                 else:
                     IO.Log.debug('Set {} with cached preference {}'.format(
                         str(lane) + name, str(cache[name])))
@@ -1214,15 +1233,17 @@ class UserInterface(object):
 
            Order of the tuple fields:
            'LVaSpinBox', 'LVbSpinBox', 'LVsSpinBox', ...
-           ... 'NormalizeCheckBox', 'XRadioButton', 'YRadioButton'
+           ... 'NormalizeCheckBox', 'XRadioButton', 'YRadioButton',
+           ... 'YComponentComboBox'
         """
         white_list = ('LVaSpinBox', 'LVbSpinBox', 'LVsSpinBox',
-                      'NormalizeCheckBox', 'XRadioButton', 'YRadioButton')
+                      'NormalizeCheckBox', 'XRadioButton', 'YRadioButton',
+                      'YComponentComboBox')
         cache = getattr(self, str(lane) + 'PlotPreferences')
         ret = tuple((cache.get(key, None) for key in white_list))
         for k in cache:
             assert k in white_list, 'Unknown cached plot preference: ' + str(k)
-        assert len(ret) == 6, 'Cached plot preferences should be 6'
+        assert len(ret) == 7, 'Cached plot preferences should be 7'
         IO.Log.debug('Cached plot preferences: {}'.format(repr(ret)))
         return ret
 
@@ -1372,12 +1393,11 @@ class UserInterface(object):
             lane, group='ScoresAndLoadingsPlot', add_normalize=True)
 
     def build_calculated_y_plot_form(self, lane):
-        group_name = str(lane) + 'CalculatedY'
+        cb = self.add(QComboBox, lane, Column.Right, row=0, name='YComponent')
         for y in range(self.plsda_model.p):
-            self.add(QRadioButton, lane, Column.Right, row=y,
-                     name=self.train_set.categories[y], group_name=group_name)
-        self.add(QPushButton, lane, Column.Right, row=self.plsda_model.p,
-                 name='Plot', size=(70, 25, 20, 25))
+            cb.addItem(self.train_set.categories[y])
+        self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
+                 size=(70, 25, 20, 25))
 
     def build_weights_plot_form(self, lane):
         self.xy_radio_ab_spin_form(lane, group='WeightsPlot')
@@ -1397,7 +1417,7 @@ class UserInterface(object):
 
     def draw_scree_plot(self, lane, refresh=False):
         if refresh:
-            _, _, _, _, x, y = self.get_cached_plot_preferences(lane)
+            _, _, _, _, x, y, _ = self.get_cached_plot_preferences(lane)
         else:
             x = self.x_radio_button(lane).isChecked()
             y = self.y_radio_button(lane).isChecked()
@@ -1405,7 +1425,7 @@ class UserInterface(object):
 
     def draw_explained_variance_plot(self, lane, refresh=False):
         if refresh:
-            _, _, _, _, x, y = self.get_cached_plot_preferences(lane)
+            _, _, _, _, x, y, _ = self.get_cached_plot_preferences(lane)
         else:
             x = self.x_radio_button(lane).isChecked()
             y = self.y_radio_button(lane).isChecked()
@@ -1414,14 +1434,14 @@ class UserInterface(object):
 
     def draw_inner_relations_plot(self, lane, refresh=False):
         if refresh:
-            _, _, lvs, _, _, _ = self.get_cached_plot_preferences(lane)
+            _, _, lvs, _, _, _, _ = self.get_cached_plot_preferences(lane)
         else:
             lvs = self.lvs_spin_box(lane).value()
         plot.inner_relations(ax=self.figure(lane).add_subplot(111), num=lvs)
 
     def draw_scores_plot(self, lane, rows=1, cols=1, pos=1, refresh=False):
         if refresh:
-            lva, lvb, _, norm, x, y = self.get_cached_plot_preferences(lane)
+            lva, lvb, _, norm, x, y, _ = self.get_cached_plot_preferences(lane)
         else:
             lva = self.lva_spin_box(lane).value()
             lvb = self.lvb_spin_box(lane).value()
@@ -1433,7 +1453,7 @@ class UserInterface(object):
 
     def draw_loadings_plot(self, lane, rows=1, cols=1, pos=1, refresh=False):
         if refresh:
-            lva, lvb, _, _, x, y = self.get_cached_plot_preferences(lane)
+            lva, lvb, _, _, x, y, _ = self.get_cached_plot_preferences(lane)
         else:
             lva = self.lva_spin_box(lane).value()
             lvb = self.lvb_spin_box(lane).value()
@@ -1444,7 +1464,7 @@ class UserInterface(object):
 
     def draw_biplot_plot(self, lane, refresh=False):
         if refresh:
-            lva, lvb, _, norm, x, y = self.get_cached_plot_preferences(lane)
+            lva, lvb, _, norm, x, y, _ = self.get_cached_plot_preferences(lane)
         else:
             lva = self.lva_spin_box(lane).value()
             lvb = self.lvb_spin_box(lane).value()
@@ -1459,15 +1479,12 @@ class UserInterface(object):
         self.draw_loadings_plot(lane, rows=2, cols=1, pos=2, refresh=refresh)
 
     def draw_calculated_y_plot(self, lane, refresh=False):
-        for y in range(self.plsda_model.p):
-            attr = str(lane) + self.train_set.categories[y] + 'RadioButton'
-            cb = getattr(self, attr, None)
-            if cb is not None and cb.isChecked():
-                index, label = y, self.train_set.categories[y]
-                break
+        if refresh:
+            _, _, _, _, _, _, index = self.get_cached_plot_preferences(lane)
+            label = self.train_set.categories[index]
         else:
-            raise Exception('Could not draw "Calculated Y" plot, no radio '
-                            'button was checked')
+            index = self.y_component_combo_box(lane).currentIndex()
+            label = self.y_component_combo_box(lane).currentText()
         plot.calculated_y(self.figure(lane).add_subplot(111),
                           index=index, label=label)
 
@@ -1500,7 +1517,7 @@ class UserInterface(object):
 
     def draw_weights_plot(self, lane, refresh=False):
         if refresh:
-            lva, lvb, _, _, _, _ = self.get_cached_plot_preferences(lane)
+            lva, lvb, _, _, _, _, _ = self.get_cached_plot_preferences(lane)
         else:
             lva = self.lva_spin_box(lane).value()
             lvb = self.lvb_spin_box(lane).value()
@@ -1508,7 +1525,7 @@ class UserInterface(object):
 
     def draw_weights_line_plot(self, lane, refresh=False):
         if refresh:
-            _, _, lvs, _, _, _ = self.get_cached_plot_preferences(lane)
+            _, _, lvs, _, _, _, _ = self.get_cached_plot_preferences(lane)
         else:
             lvs = self.lvs_spin_box(lane).value()
         plot.weights_line(ax=self.figure(lane).add_subplot(111), lv=lvs)
