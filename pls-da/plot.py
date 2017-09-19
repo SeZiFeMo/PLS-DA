@@ -343,7 +343,7 @@ def calculated_y(ax, index=None, label=None):
     IO.Log.debug('plot.calculated_y() got index: {}'.format(str(index)))
     IO.Log.debug('plot.calculated_y() got label: "{}"'.format(str(label)))
 
-    ax.set_title('Calculated Y {} ({})'.format(index, label))
+    ax.set_title('Calculated Y{} ({})'.format(index + 1, label))
     ax.set_xlabel('Samples')
     ax.set_ylabel('Modeled Y')
 
