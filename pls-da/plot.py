@@ -122,16 +122,28 @@ def scatter_wrapper(ax, x_values, y_values, cat=None):
                s=30)
 
 
-def line_wrapper(ax, x_values, y_values, cat=None, linestyle='solid'):
+def line_wrapper(ax, x_values, y_values, cat=None, linestyle='solid',
+                 label=None):
     """Draw a line plot using a different color for each category."""
-    ax.plot(x_values, y_values,
-            alpha=0.5,
-            color=symbol(cat)['hex'],
-            linestyle=linestyle,
-            marker=symbol(cat)['marker'],
-            markerfacecolor=symbol(cat)['hex'],
-            markeredgecolor=symbol(cat)['hex'],
-            markersize=5.48)
+    if label is not None:
+        ax.plot(x_values, y_values,
+                alpha=0.5,
+                color=symbol(cat)['hex'],
+                label=label,
+                linestyle=linestyle,
+                marker=symbol(cat)['marker'],
+                markerfacecolor=symbol(cat)['hex'],
+                markeredgecolor=symbol(cat)['hex'],
+                markersize=5.48)
+    else:
+        ax.plot(x_values, y_values,
+                alpha=0.5,
+                color=symbol(cat)['hex'],
+                linestyle=linestyle,
+                marker=symbol(cat)['marker'],
+                markerfacecolor=symbol(cat)['hex'],
+                markeredgecolor=symbol(cat)['hex'],
+                markersize=5.48)
 
 
 def scree(ax, x=False, y=False):
@@ -407,7 +419,7 @@ def t_square_q(ax):
     ax.legend(by_label.values(), by_label.keys())
 
 
-def x_residuals_over_samples(ax):
+def x_residuals_over_samples(ax, original=False):
     ax.set_title('Samples – X residuals')
     ax.set_xlabel('Samples')
     ax.set_ylabel('X residuals')
@@ -421,7 +433,7 @@ def x_residuals_over_samples(ax):
                         TRAIN_SET.categorical_y[sample])
 
 
-def y_residuals_over_samples(ax):
+def y_residuals_over_samples(ax, original=False):
     ax.set_title('Samples – Y residuals')
     ax.set_xlabel('Samples')
     ax.set_ylabel('Y residuals')
@@ -559,12 +571,15 @@ def rmsec_lv(ax):
 
     rmsec = np.asarray(rmsec)
 
-    for y in rmsec.T:
-        line_wrapper(ax, range(1, mdl.max_lv + 1), y)
+    for index_y, y in enumerate(rmsec.T):
+        line_wrapper(ax, range(1, mdl.max_lv + 1), y,
+                     cat=TRAIN_SET.categories[index_y],
+                     label=TRAIN_SET.categories[index_y])
 
     ax.set_title('RMSEC')
     ax.set_xlabel('Latent variables')
     ax.set_ylabel('RMSEC')
+    ax.legend()
 
 
 def rmsecv_lv(ax, stats):
@@ -585,11 +600,14 @@ def rmsecv_lv(ax, stats):
     r = np.sqrt(r.T / MODEL.n)
 
     for i in range(len(r)):
-        line_wrapper(ax, range(1, len(r.T) + 1), r[i])
+        line_wrapper(ax, range(1, len(r.T) + 1), r[i],
+                     cat=TRAIN_SET.categories[i],
+                     label=TRAIN_SET.categories[i])
 
     ax.set_title('RMSECV')
     ax.set_xlabel('Latent variables')
     ax.set_ylabel('RMSECV')
+    ax.legend()
 
 
 def rmsep_lv(ax):
@@ -605,9 +623,12 @@ def rmsep_lv(ax):
 
     rmsep = np.asarray(rmsep)
 
-    for y in rmsep.T:
-        line_wrapper(ax, range(1, mdl.max_lv + 1), y)
+    for index_y, y in enumerate(rmsep.T):
+        line_wrapper(ax, range(1, mdl.max_lv + 1), y,
+                     cat=TRAIN_SET.categories[index_y],
+                     label=TRAIN_SET.categories[index_y])
 
     ax.set_title('RMSEP')
     ax.set_xlabel('Latent variables')
     ax.set_ylabel('RMSEP')
+    ax.legend()

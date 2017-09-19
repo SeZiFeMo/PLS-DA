@@ -515,6 +515,8 @@ class UserInterface(object):
                ('Predicted Y', 'predicted_y'),
                ('Samples – X residuals', 'x_residuals_over_samples'),
                ('Samples – Y residuals', 'y_residuals_over_samples'),
+               ('Samples – Q', 'q_sample'),
+               ('Samples – T', 't_sample'),
                ('Samples – Leverage', 'samples_leverage'),
                ('Q – Leverage', 'q_over_leverage'),
                ('Leverage – Y residuals', 'residuals_leverage'),
@@ -1399,6 +1401,18 @@ class UserInterface(object):
         self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
                  size=(70, 25, 20, 25))
 
+    def build_x_residuals_over_samples_plot_form(self, lane):
+        self.add(QCheckBox, lane, Column.Right, row=0, name='Normalize',
+                     text='use original')
+        self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
+                 size=(70, 25, 20, 25))
+
+    def build_y_residuals_over_samples_plot_form(self, lane):
+        self.add(QCheckBox, lane, Column.Right, row=0, name='Normalize',
+                     text='use original')
+        self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
+                 size=(70, 25, 20, 25))
+
     def build_weights_plot_form(self, lane):
         self.xy_radio_ab_spin_form(lane, group='WeightsPlot')
 
@@ -1504,10 +1518,26 @@ class UserInterface(object):
         plot.leverage(self.figure(lane).add_subplot(111))
 
     def draw_x_residuals_over_samples_plot(self, lane, refresh=False):
-        plot.x_residuals_over_samples(self.figure(lane).add_subplot(111))
+        if refresh:
+            _, _, _, orig, _, _, _ = self.get_cached_plot_preferences(lane)
+        else:
+            orig = self.normalize_check_box(lane).checkState() == Qt.Checked
+        plot.x_residuals_over_samples(self.figure(lane).add_subplot(111),
+                                      original=orig)
 
     def draw_y_residuals_over_samples_plot(self, lane, refresh=False):
-        plot.y_residuals_over_samples(self.figure(lane).add_subplot(111))
+        if refresh:
+            _, _, _, orig, _, _, _ = self.get_cached_plot_preferences(lane)
+        else:
+            orig = self.normalize_check_box(lane).checkState() == Qt.Checked
+        plot.y_residuals_over_samples(self.figure(lane).add_subplot(111),
+                                      original=orig)
+
+    def draw_q_sample_plot(self, lane, refresh=False):
+        plot.q_sample(self.figure(lane).add_subplot(111))
+
+    def draw_t_sample_plot(self, lane, refresh=False):
+        plot.t_sample(self.figure(lane).add_subplot(111))
 
     def draw_q_over_leverage_plot(self, lane, refresh=False):
         plot.q_over_leverage(self.figure(lane).add_subplot(111))
