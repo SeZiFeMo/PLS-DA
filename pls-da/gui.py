@@ -315,14 +315,14 @@ class UserInterface(object):
 
         lane = Lane.Right
         parent = self.set_attr(lane, QWidget, parent=main_splitter,
-                               size=(150, 580, 300, 4300))
+                               size=(157, 580, 320, 4300))
 
         layout = self.set_attr(lane, QGridLayout, parent=parent, policy=None)
         layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(5)
 
         current_mode_label = self.set_attr(
-            'CurrentMode', QLabel, parent=parent, size=(144, 22, 294, 22))
+            'CurrentMode', QLabel, parent=parent, size=(151, 22, 314, 22))
         current_mode_label.setLineWidth(1)
         current_mode_label.setTextFormat(Qt.AutoText)
         current_mode_label.setAlignment(Qt.AlignCenter)
@@ -332,12 +332,12 @@ class UserInterface(object):
 
         right_scroll_area = self.set_attr(
             lane, QScrollArea, parent=parent,
-            policy=None, size=(144, 547, 294, 4272))
+            policy=None, size=(151, 547, 314, 4272))
         layout.addWidget(right_scroll_area, 1, 0, 1, 1)
 
         right_vbox_widget = self.set_attr(
             str(lane) + str(Widget.VBox), QWidget, parent=right_scroll_area,
-            size=(138, 534, 290, 4259))
+            size=(151, 534, 314, 4259))
         right_vbox_widget.setGeometry(QRect(0, 0, 138, 534))
         right_vbox_widget.setLayoutDirection(Qt.LayoutDirectionAuto)
         right_scroll_area.setWidget(right_vbox_widget)
@@ -763,7 +763,7 @@ class UserInterface(object):
 
         # DetailsLabel
         dl = self.set_attr('Details', QLabel, parent=self.vbox_widget(lane),
-                           size=(108, 20, 358, 20))
+                           size=(143, 15, 306, 15))
         dl.setTextInteractionFlags(Qt.TextSelectableByKeyboard
                                    | Qt.TextSelectableByMouse)
         dl.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
@@ -783,7 +783,7 @@ class UserInterface(object):
 
             w = self.set_attr(str(lane) + name + str(Widget.Form), QWidget,
                               parent=self.vbox_widget(lane),
-                              size=(108, 140, 358, 1406))
+                              size=(143, 140, 306, 1406))
             l = self.set_attr(str(lane) + name, QFormLayout,
                               parent=self.right_widget(kind), policy=None)
 
@@ -802,64 +802,65 @@ class UserInterface(object):
 
         self.add(QLabel, lane, Column.Both, row=0, name='Model', text='Model:',
                  label_alignment=Qt.AlignLeft, parent_widget=parent,
-                 size=(100, 20, 360, 30))
+                 size=(143, 20, 306, 50))
 
         self.add(QLabel, lane, Column.Left, row=1, name='LVs', text='LVs:',
                  word_wrap=False, label_alignment=Qt.AlignLeft,
-                 parent_widget=parent)
+                 parent_widget=parent, size=(53, 20, 55, 520))
         sb = self.add(QSpinBox, lane, Column.Right, row=1, name='LVs',
-                      parent_widget=parent, size=(40, 25, 170, 520))
+                      parent_widget=parent, size=(55, 25, 55, 520))
         sb.setEnabled(False)
 
         cb = self.add(QPushButton, lane, Column.Both, row=2, name='LVs',
                       text='Change LVs', parent_widget=parent,
-                      size=(70, 25, 112, 520))
+                      size=(70, 25, 109, 520))
         cb.setEnabled(False)
 
         self.add(QLabel, lane, Column.Both, row=3, name='ModelInfo',
                  text=model_info, label_alignment=Qt.AlignLeft,
-                 parent_widget=parent, size=(100, 30, 360, 1000))
+                 parent_widget=parent, size=(105, 1, 306, 1000))
 
     def populate_right_cv_widget(self, cv_info=''):
         lane, parent = Lane.Right, self.right_widget(Mode.CV)
 
         self.add(QLabel, lane, Column.Both, row=0, name='CV',
                  text='Cross-validation:', label_alignment=Qt.AlignLeft,
-                 parent_widget=parent)
+                 parent_widget=parent, size=(143, 20, 306, 30))
 
         self.add(QLabel, lane, Column.Left, row=1, name='Splits',
                  text='Splits:', word_wrap=False,
-                 label_alignment=Qt.AlignLeft, parent_widget=parent)
+                 label_alignment=Qt.AlignLeft, parent_widget=parent,
+                 size=(50, 20, 55, 520))
         sb = self.add(QSpinBox, lane, Column.Right, row=1, name='Splits',
-                      parent_widget=parent, size=(45, 25, 170, 520))
+                      parent_widget=parent, size=(45, 25, 55, 520))
         sb.setEnabled(False)
 
         self.add(QLabel, lane, Column.Left, row=2, name='Samples',
                  text='Samples per blind:', word_wrap=True,
                  label_alignment=Qt.AlignLeft, parent_widget=parent,
-                 size=(50, 40, 170, 520))
+                 size=(50, 40, 55, 520))
         sb = self.add(QSpinBox, lane, Column.Right, row=2, name='Samples',
-                      parent_widget=parent, size=(45, 25, 170, 520))
+                      parent_widget=parent, size=(45, 25, 55, 520))
         sb.setEnabled(False)
 
         self.add(QPushButton, lane, Column.Both, row=3, name='Start',
                  text='Start CV', parent_widget=parent,
-                 size=(70, 25, 127, 520))
+                 size=(70, 25, 109, 520))
 
         self.add(QLabel, lane, Column.Both, row=4, name='CVInfo',
                  text=cv_info, label_alignment=Qt.AlignLeft,
-                 parent_widget=parent, size=(100, 30, 360, 1000))
+                 parent_widget=parent, size=(105, 1, 306, 1000))
 
     def populate_right_prediction_widget(self, prediction_info=''):
         lane, parent = Lane.Right, self.right_widget(Mode.Prediction)
 
         self.add(QLabel, lane, Column.Both, row=0, name='Prediction',
                  text='Prediction:', label_alignment=Qt.AlignLeft,
-                 parent_widget=parent)
+                 parent_widget=parent, size=(143, 20, 306, 30))
 
         self.add(QLabel, lane, Column.Both, row=1, name='PredictionInfo',
                  text=prediction_info, label_alignment=Qt.AlignLeft,
-                 parent_widget=parent, size=(100, 30, 360, 1000))
+                 parent_widget=parent, size=(105, 1, 306, 1000))
 
     def update_right_model_info(self):
         """Method to refresh the label with model infos."""
@@ -869,7 +870,7 @@ class UserInterface(object):
             text += 'Preprocessing: '
             for method in ('autoscal', 'center', 'normaliz'):
                 if getattr(self.train_set, method + 'ed'):
-                    text += method + 'ing\n'
+                    text += method + 'ing'
                     break
             else:
                 text += 'none\n'
@@ -887,7 +888,7 @@ class UserInterface(object):
             s = model.Statistics(y_real=self.plsda_model.Y,
                                  y_pred=self.plsda_model.Y_modeled)
             text += 'RMSEC:\n{}\n'.format(utility.list_to_string(s.rmsec))
-            text += 'R²:\n{}\n'.format(utility.list_to_string(s.r_squared))
+            text += 'R²:\n{}'.format(utility.list_to_string(s.r_squared))
             l.setText(text)
 
     def update_right_model_lvs_spinbox(self, minimum=None, maximum=None,
@@ -927,7 +928,7 @@ class UserInterface(object):
             r_square = 1 - rss/tss
 
             text = 'RMSECV:\n{}\n'.format(utility.list_to_string(rmsecv))
-            text += 'R² CV:\n{}\n'.format(utility.list_to_string(r_square))
+            text += 'R² CV:\n{}'.format(utility.list_to_string(r_square))
             l.setText(text)
 
     def update_right_cv_samples_spinbox(self, minimum=None, maximum=None,
@@ -976,7 +977,7 @@ class UserInterface(object):
                                                 self.test_set.p)
             text += 'RMSEP:\n{}\n'.format(
                 utility.list_to_string(self.prediction_stats.rmsec))
-            text += 'R² Pred:\n{}\n'.format(
+            text += 'R² Pred:\n{}'.format(
                 utility.list_to_string(self.prediction_stats.r_squared))
             l.setText(text)
 
