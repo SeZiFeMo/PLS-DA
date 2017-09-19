@@ -63,7 +63,7 @@ def symbol(category=None):
                # ('#000000', '+'),  #           plus
                # ('#000000', 'h'),  #           hexagon
                # ('#000000', 'p'),  #           pentagon
-               )
+              )
     index = -1
     if category in TRAIN_SET.categories:
         index = sorted(TRAIN_SET.categories).index(category) % len(records)

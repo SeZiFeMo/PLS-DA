@@ -35,12 +35,11 @@ from PyQt5.QtCore import QCoreApplication, QMetaObject, QRect, QSize, Qt
 from PyQt5.QtGui import QStandardItem
 from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QCheckBox,
                              QComboBox, QDialog, QFileDialog, QFormLayout,
-                             QGridLayout, QFrame, QInputDialog, QHeaderView,
-                             QLabel, QLayout, QMainWindow, QMenu, QMenuBar,
+                             QGridLayout, QFrame, QInputDialog, QLabel,
+                             QLayout, QMainWindow, QMenu, QMenuBar,
                              QMessageBox, QPushButton, QRadioButton,
                              QScrollArea, QSizePolicy as Policy, QSpinBox,
-                             QSplitter, QTableWidget, QTableWidgetItem,
-                             QVBoxLayout, QWidget)
+                             QSplitter, QVBoxLayout, QWidget)
 
 import IO
 import model
@@ -477,7 +476,6 @@ class UserInterface(object):
         self.change_plot_enabled_flag('RMSEP', True)
         self.change_plot_enabled_flag('Real Y – Predicted Y', True)
         self.change_plot_enabled_flag('Y modeled – Prediction', True)
-        self.change_plot_enabled_flag('Predicted values', True)
 
     @property
     def cv_stats(self):
@@ -500,7 +498,6 @@ class UserInterface(object):
                                 '({})'.format(repr(value)))
         self._cv_stats = value
         self.change_plot_enabled_flag('RMSECV', True)
-        self.change_plot_enabled_flag('Classified values', True)
         self.update_right_cv_info()
 
     @property
@@ -532,8 +529,6 @@ class UserInterface(object):
                ('RMSEC', 'rmesec'),
                ('RMSECV', 'rmesecv'),
                ('RMSEP', 'rmesep'),
-               ('Classified values', 'classified_table'),
-               ('Predicted values', 'predicted_table'),
                )
         for index, (text, method) in enumerate(tmp):
             yield {'index': index, 'text': text, 'method': method + '_plot'}
@@ -699,8 +694,6 @@ class UserInterface(object):
             self.change_plot_enabled_flag('RMSEP', False)
             self.change_plot_enabled_flag('Real Y – Predicted Y', False)
             self.change_plot_enabled_flag('Y modeled – Prediction', False)
-            self.change_plot_enabled_flag('Classified values', False)
-            self.change_plot_enabled_flag('Predicted values', False)
 
         self.SaveModelAction.setEnabled(self.current_mode != Mode.Start)
         self.LoadCsvToPredictAction.setEnabled(self.current_mode != Mode.Start)
@@ -1274,7 +1267,7 @@ class UserInterface(object):
             self.vbox_widget(lane).resize(width - 1, height - 1)
             self.vbox_widget(lane).resize(width, height)
 
-            if utility.CLI.args().verbose:
+            if utility.CLI.args.verbose:
                 traceback.print_exc()
             IO.Log.debug(str(e))
             if 'is out of bounds ' in str(e) and '[1:1]' not in str(e) and \
@@ -1413,13 +1406,13 @@ class UserInterface(object):
 
     def build_x_residuals_over_samples_plot_form(self, lane):
         self.add(QCheckBox, lane, Column.Right, row=0, name='Normalize',
-                 text='use original')
+                     text='use original')
         self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
                  size=(70, 25, 20, 25))
 
     def build_y_residuals_over_samples_plot_form(self, lane):
         self.add(QCheckBox, lane, Column.Right, row=0, name='Normalize',
-                 text='use original')
+                     text='use original')
         self.add(QPushButton, lane, Column.Right, row=1, name='Plot',
                  size=(70, 25, 20, 25))
 
@@ -1585,88 +1578,6 @@ class UserInterface(object):
     def draw_rmesep_plot(self, lane, refresh=False):
         plot.rmsep_lv(self.figure(lane).add_subplot(111))
 
-    def draw_classified_table_plot(self, lane, refresh=False):
-        # hide usual stuff in VBoxLayout for plots
-        for name in ('Toolbar', 'Canvas', 'BackPushButton'):
-            w = getattr(self, str(lane) + name, None)
-            if w is not None:
-                w.setVisible(False)
-
-        # add TableWidget instead
-        table = QTableWidget(self.vbox_widget(lane))
-        setattr(self, str(lane) + 'TableWidget', table)
-        self.vbox_layout(lane).insertWidget(0, table)
-        table.setVisible(True)
-
-        # set number of rows and columns
-        rows = len(self.train_set.categories)
-        cols = rows
-        table.setRowCount(rows)
-        table.setColumnCount(cols)
-
-        # set row and column labels
-        table.setVerticalHeaderLabels(['Predicted as ' + cat
-                                       for cat in self.train_set.categories])
-        table.setHorizontalHeaderLabels(self.train_set.categories)
-
-        # fill cells
-        for row in range(rows):
-            for col in range(cols):
-                # create a non editable cell from a string
-                item = QTableWidgetItem('{}, {}'.format(str(row), str(col)))
-                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                item.setTextAlignment(Qt.AlignCenter)
-                table.setItem(row, col, item)
-
-        # stretch table to use all horizontal space
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
-        # set table height to its minimum
-        h = table.horizontalHeader().height()
-        h += sum([table.rowHeight(r) for r in range(rows)])
-        table.setMaximumHeight(h + 2)
-
-    def draw_predicted_table_plot(self, lane, refresh=False):
-        # hide usual stuff in VBoxLayout for plots
-        for name in ('Toolbar', 'Canvas', 'BackPushButton'):
-            w = getattr(self, str(lane) + name, None)
-            if w is not None:
-                w.setVisible(False)
-
-        # add TableWidget instead
-        table = QTableWidget(self.vbox_widget(lane))
-        setattr(self, str(lane) + 'TableWidget', table)
-        self.vbox_layout(lane).insertWidget(0, table)
-        table.setVisible(True)
-
-        # set number of rows and columns
-        rows = len(self.train_set.categories)
-        cols = rows
-        table.setRowCount(rows)
-        table.setColumnCount(cols)
-
-        # set row and column labels
-        table.setVerticalHeaderLabels(['Predicted as ' + cat
-                                       for cat in self.train_set.categories])
-        table.setHorizontalHeaderLabels(self.train_set.categories)
-
-        # fill cells
-        for row in range(rows):
-            for col in range(cols):
-                # create a non editable cell from a string
-                item = QTableWidgetItem('{}, {}'.format(str(row), str(col)))
-                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                item.setTextAlignment(Qt.AlignCenter)
-                table.setItem(row, col, item)
-
-        # stretch table to use all horizontal space
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
-        # set table height to its minimum
-        h = table.horizontalHeader().height()
-        h += sum([table.rowHeight(r) for r in range(rows)])
-        table.setMaximumHeight(h + 2)
-
     def new_model(self):
         """Initialize plsda_model attribute from csv."""
         if not self._replace_current_model():
@@ -1784,12 +1695,10 @@ class UserInterface(object):
         if input_file is None:
             return
 
-        self.path_csv_to_predict = input_file
-
         try:
             test_set = model.TestSet(input_file, self.train_set)
         except Exception as e:
-            if utility.CLI.args().verbose:
+            if utility.CLI.args.verbose:
                 traceback.print_exc()
             popup_error(message='The loaded file is not compatible with the '
                                 'curent model',
@@ -1885,13 +1794,11 @@ class UserInterface(object):
         else:
             self.update_right_model_info()
             self.update_right_cv_info()
-            if self.test_set is not None and \
-               getattr(self, 'path_csv_to_predict', None) is not None:
-                self.test_set = model.TestSet(self.path_csv_to_predict,
-                                              self.train_set)
-                self.prediction_stats = model.Statistics(
+            if self.test_set is not None:
+                stats = model.Statistics(
                     y_real=self.test_set.y,
                     y_pred=self.plsda_model.predict(self.test_set.x))
+                self.prediction_stats = stats
             self.update_right_prediction_info()
 
             self.update_visible_plots()
