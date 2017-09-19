@@ -350,7 +350,7 @@ def calculated_y(ax, index=None, label=None):
     ax.axhline(0, linestyle='dashed', color='black')
 
     for i in range(MODEL.n):
-        scatter_wrapper(ax, i, MODEL.Y_modeled[i, index],
+        line_wrapper(ax, i, MODEL.Y_modeled[i, index],
                         TRAIN_SET.categorical_y[i])
 
 
@@ -395,7 +395,7 @@ def y_predicted(ax):
 
 
 def y_modeled_class(ax):
-    """Plot the y mdeled, with color representing the current y."""
+    """Plot the y modeled, with color representing the current y."""
 
     ax.set_title('Samples – Modeled Y - Classification')
     ax.set_xlabel('Samples')
@@ -529,7 +529,7 @@ def q_sample(ax):
     q_confidence_level = scipy_stats.norm.interval(
         0.95, np.mean(q_res), np.std(q_res))[1]
 
-    ax.axvline(q_confidence_level, linestyle='dashed', color='black')
+    ax.axhline(q_confidence_level, linestyle='dashed', color='black')
 
     ax.set_title('Q residuals – Samples')
     ax.set_xlabel('Q residuals')
@@ -549,7 +549,7 @@ def t_sample(ax):
     t_square_confidence_level = scipy_stats.norm.interval(
         0.95, np.mean(t_square), np.std(t_square))[1]
 
-    ax.axvline(t_square_confidence_level, linestyle='dashed', color='black')
+    ax.axhline(t_square_confidence_level, linestyle='dashed', color='black')
 
 
 def regression_coefficients(ax):
