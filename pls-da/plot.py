@@ -348,7 +348,6 @@ def calculated_y(ax, index=None, label=None):
     ax.set_ylabel('Modeled Y')
 
     ax.axhline(0, linestyle='dashed', color='black')
-    ax.axhline(1, linestyle='dotted', color='black')
 
     for i in range(MODEL.n):
         scatter_wrapper(ax, i, MODEL.Y_modeled[i, index],
@@ -377,7 +376,7 @@ def y_predicted(ax):
         IO.Log.debug('In plot.y_predicted() STATS or TEST_SET is None')
         raise TypeError('Please run prediction')
 
-    ax.set_title('Samples – Predicted Y')
+    ax.set_title('Samples – Modeled Y - Prediction')
     ax.set_xlabel('Samples')
     ax.set_ylabel('Y predicted')
 
@@ -393,6 +392,29 @@ def y_predicted(ax):
     for j in range(MODEL.p):
         ax.text(TEST_SET.categorical_y.index(TEST_SET.categories[j]) + 1,
                 ylim - .25, TEST_SET.categories[j])
+
+
+def y_modeled_class(ax):
+    """Plot the y mdeled, with color representing the current y."""
+
+    ax.set_title('Samples – Modeled Y - Classification')
+    ax.set_xlabel('Samples')
+    ax.set_ylabel('Y modeled')
+
+    stats = model.Statistics(MODEL.Y, MODEL.Y_modeled)
+
+    for j in range(MODEL.p):
+        line_wrapper(ax, range(stats.y_pred.shape[0]), stats.y_pred[:, j],
+                     TRAIN_SET.categories[j])
+        # Add a vertical line at the beginning of each category
+        ax.axvline(TRAIN_SET.categorical_y.index(TRAIN_SET.categories[j]),
+                   linestyle='dashed', color='gray')
+
+    ylim = ax.get_ylim()[1]
+    ax.set_xlim(0, ax.get_xlim()[1])
+    for j in range(MODEL.p):
+        ax.text(TRAIN_SET.categorical_y.index(TRAIN_SET.categories[j]) + 1,
+                ylim - .25, TRAIN_SET.categories[j])
 
 
 def t_square_q(ax):
