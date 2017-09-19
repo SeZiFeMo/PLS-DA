@@ -1,0 +1,16 @@
+name: MottaZivianiPLSDA
+dependencies:
+    - python=3.6.2
+    - cycler=0.10.0
+    - numpy=1.13.1
+    - matplotlib=2.0.2
+    - pyparsing=2.2.0
+    - python-dateutil=2.6.0
+    - pytz=2017.2
+    - pyyaml=3.12
+    # - scikit-learn=0.18.2
+    - scipy=0.19.1
+    - six=1.10.0
+    - pip:
+        - PyQt5==5.9
+        - sip==4.19.3
