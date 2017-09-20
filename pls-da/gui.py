@@ -924,7 +924,7 @@ class UserInterface(object):
                     tss[k] += self.cv_stats[i][lv].tss[k]
 
             IO.Log.info("rss {} tss {}".format(rss, tss))
-            rmsecv = np.sqrt(rss / self.plsda_model.n / (len(self.cv_stats)))
+            rmsecv = np.sqrt(rss / self.plsda_model.n)
             r_square = 1 - rss/tss
 
             text = 'RMSECV:\n{}\n'.format(utility.list_to_string(rmsecv))
