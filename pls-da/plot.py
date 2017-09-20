@@ -355,7 +355,8 @@ def calculated_y(ax, index=None, label=None):
 
     for i in range(MODEL.n):
         line_wrapper(ax, i, MODEL.Y_modeled[i, index],
-                     TRAIN_SET.categorical_y[i])
+                     TRAIN_SET.categorical_y[i],
+                     label=TRAIN_SET.categorical_y[i])
 
     handles, labels = ax.get_legend_handles_labels()
     by_label = collections.OrderedDict(zip(labels, handles))
