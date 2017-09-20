@@ -394,7 +394,7 @@ def y_predicted(ax):
 
     for j in range(MODEL.p):
         line_wrapper(ax, range(STATS.y_pred.shape[0]), STATS.y_pred[:, j],
-                     TEST_SET.categories[j])
+                     TEST_SET.categories[j], label=TEST_SET.categories[j])
         # Add a vertical line at the beginning of each category
         ax.axvline(TEST_SET.categorical_y.index(TEST_SET.categories[j]),
                    linestyle='dashed', color='gray')
@@ -421,7 +421,7 @@ def y_modeled_class(ax):
 
     for j in range(MODEL.p):
         line_wrapper(ax, range(stats.y_pred.shape[0]), stats.y_pred[:, j],
-                     TRAIN_SET.categories[j])
+                     TRAIN_SET.categories[j], label=TRAIN_SET.categories[j])
         # Add a vertical line at the beginning of each category
         ax.axvline(TRAIN_SET.categorical_y.index(TRAIN_SET.categories[j]),
                    linestyle='dashed', color='gray')
@@ -664,7 +664,8 @@ def data(ax):
     """Plot the dataset distinguishing with colors the categories."""
     for i in range(MODEL.n):
         line_wrapper(ax, range(MODEL.m), TRAIN_SET.x[i],
-                     TRAIN_SET.categorical_y[i])
+                     TRAIN_SET.categorical_y[i],
+                     label=TRAIN_SET.categorical_y[i])
 
     ax.set_title('Data by category')
     ax.set_xlabel('Samples')
