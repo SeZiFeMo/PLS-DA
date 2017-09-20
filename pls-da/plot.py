@@ -218,6 +218,10 @@ def inner_relations(ax, num):
     ax.set_xlabel('t{}'.format(num))
     ax.set_ylabel('u{}'.format(num))
 
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
+
 
 def biplot(ax, lv_a, lv_b, x=False, y=False, normalize=True):
     """Plot loadings and scores on lv_a, lv_b components for the x or y matrix.
@@ -351,7 +355,11 @@ def calculated_y(ax, index=None, label=None):
 
     for i in range(MODEL.n):
         line_wrapper(ax, i, MODEL.Y_modeled[i, index],
-                        TRAIN_SET.categorical_y[i])
+                     TRAIN_SET.categorical_y[i])
+
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
 
 
 def y_predicted_y_real(ax):
@@ -368,6 +376,10 @@ def y_predicted_y_real(ax):
         for i in range(MODEL.m):
             scatter_wrapper(ax, STATS.y_real[i, j], STATS.y_pred[i, j],
                             TEST_SET.categories[j])
+
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
 
 
 def y_predicted(ax):
@@ -393,6 +405,10 @@ def y_predicted(ax):
         ax.text(TEST_SET.categorical_y.index(TEST_SET.categories[j]) + 1,
                 ylim - .25, TEST_SET.categories[j])
 
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
+
 
 def y_modeled_class(ax):
     """Plot the y modeled, with color representing the current y."""
@@ -415,6 +431,10 @@ def y_modeled_class(ax):
     for j in range(MODEL.p):
         ax.text(TRAIN_SET.categorical_y.index(TRAIN_SET.categories[j]) + 1,
                 ylim - .25, TRAIN_SET.categories[j])
+
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
 
 
 def t_square_q(ax):
@@ -459,6 +479,10 @@ def x_residuals_over_samples(ax, original=False):
         scatter_wrapper(ax, [sample for i in variables], variables,
                         TRAIN_SET.categorical_y[sample])
 
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
+
 
 def y_residuals_over_samples(ax, original=False):
     ax.set_title('Samples – Y residuals')
@@ -478,6 +502,10 @@ def y_residuals_over_samples(ax, original=False):
         scatter_wrapper(ax, [sample for i in variables], variables,
                         TRAIN_SET.categorical_y[sample])
 
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
+
 
 def y_residuals_leverage(ax):
     """Plot Y residuals over the leverage."""
@@ -490,6 +518,10 @@ def y_residuals_leverage(ax):
     ax.set_xlabel('Leverage')
     ax.set_ylabel('Y residuals')
 
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
+
 
 def leverage(ax):
 
@@ -501,6 +533,10 @@ def leverage(ax):
     ax.set_title('Samples – Leverage')
     ax.set_xlabel('Samples')
     ax.set_ylabel('Leverage')
+
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
 
 
 def q_over_leverage(ax):
@@ -519,6 +555,10 @@ def q_over_leverage(ax):
     ax.set_xlabel('Q residuals')
     ax.set_ylabel('Leverage')
 
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
+
 
 def q_sample(ax):
     """Plot the Q statistic over the sample number."""
@@ -535,6 +575,10 @@ def q_sample(ax):
     ax.set_xlabel('Q residuals')
     ax.set_ylabel('Samples')
 
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
+
 
 def t_sample(ax):
     """Plot the T^2 statistic over the sample number."""
@@ -550,6 +594,10 @@ def t_sample(ax):
         0.95, np.mean(t_square), np.std(t_square))[1]
 
     ax.axhline(t_square_confidence_level, linestyle='dashed', color='black')
+
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
 
 
 def regression_coefficients(ax):
@@ -621,6 +669,10 @@ def data(ax):
     ax.set_title('Data by category')
     ax.set_xlabel('Samples')
     ax.set_ylabel('Values')
+
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = collections.OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys())
 
 
 def rmsec_lv(ax):
