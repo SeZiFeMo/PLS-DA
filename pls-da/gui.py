@@ -711,7 +711,7 @@ class UserInterface(object):
             minimum=2, maximum=getattr(self.plsda_model, 'n', 219),
             enabled=self.current_mode == Mode.CV)
         self.update_right_cv_samples_spinbox(
-            minimum=2, maximum=getattr(self.plsda_model, 'n', 219),
+            minimum=1, maximum=getattr(self.plsda_model, 'n', 219),
             enabled=self.current_mode == Mode.CV)
         self.right_cv_start_button().setEnabled(self.current_mode == Mode.CV)
 
@@ -829,7 +829,7 @@ class UserInterface(object):
         sb.setEnabled(False)
 
         self.add(QLabel, lane, Column.Left, row=2, name='Samples',
-                 text='Samples per blind:', word_wrap=True,
+                 text='Repeti_ tions:', word_wrap=True,
                  label_alignment=Qt.AlignLeft, parent_widget=parent,
                  size=(50, 40, 55, 520))
         sb = self.add(QSpinBox, lane, Column.Right, row=2, name='Samples',

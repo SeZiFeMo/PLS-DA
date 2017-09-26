@@ -488,7 +488,7 @@ def cross_validation(train_set, split, sample, max_lv):
     if split <= 1 or split > train_set.n:
         raise ValueError('The given split number ({}) '
                          'is not valid.'.format(split))
-    if sample <= 1 or sample > train_set.n:
+    if sample < 1 or sample > train_set.n:
         raise ValueError('The given sample number ({}) '
                          'is not valid.'.format(sample))
     if max_lv < 1 or max_lv > min(train_set.n, train_set.m):
