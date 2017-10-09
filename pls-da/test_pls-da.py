@@ -89,7 +89,7 @@ class test_model_module(unittest.TestCase):
     null_3x2 = np.array([[0.0 for c in range(2)] for r in range(3)])
 
     def setUp(self):
-        self.train_set = model.TrainingSet()
+        self.train_set = model.TrainingSet('datasets/olive_training.csv')
 
     def tearDown(self):
         self.train_set = None
@@ -163,7 +163,7 @@ class test_eigen_module(unittest.TestCase):
                            [0.5 + 1e-8, 0.5 - 1e-8]])
 
     def setUp(self):
-        self.train_set = model.TrainingSet()
+        self.train_set = model.TrainingSet('datasets/olive_training.csv')
         self.train_set.x = self.matrix_3x3.copy()
         self.train_set.y = self.matrix_3x2.copy()
 
@@ -196,12 +196,12 @@ class test_eigen_module(unittest.TestCase):
                                    atol=absolute_tolerance)
 
     def test_nipals_eigenvectors_x_variance(self):
-        np.testing.assert_allclose(model.explained_variance(self.nipals, 'x'),
+        np.testing.assert_allclose(self.nipals.explained_variance_x,
                                    self.x_variance, atol=absolute_tolerance)
 
-    @unittest.skip("Different algorithm")
+    @unittest.skip('explained_variance_y is not the y variance')
     def test_nipals_eigenvectors_y_variance(self):
-        np.testing.assert_allclose(model.explained_variance(self.nipals, 'y'),
+        np.testing.assert_allclose(self.nipals.explained_variance_y,
                                    self.y_variance, atol=absolute_tolerance)
 
 
@@ -209,7 +209,7 @@ class nipals_abstract(object):
 
     def setUp(self):
         j = 2
-        self.train_set = model.TrainingSet()
+        self.train_set = model.TrainingSet('datasets/olive_training.csv')
 
         X = np.array([[1, 1.9], [1.9, 1], [3.8, 4.2], [4, 3.6], [3.6, 4.4]])
         Y = np.array([[1, 0], [1, 0], [0, 1], [0, 1], [0, 1]])
@@ -342,11 +342,6 @@ class nipals_abstract(object):
                         np.testing.assert_allclose(t_i.T.dot(t_j), norm,
                                                    atol=absolute_tolerance)
 
-    def test_coef(self):
-        np.testing.assert_allclose(self.train_set.y,
-                                   self.nipals.Y_modeled_dummy,
-                                   atol=absolute_tolerance)
-
     def test_nr_lv_implementation_all_matrices(self):
         mdl = copy.deepcopy(self.nipals)
         n = mdl.n
@@ -381,7 +376,7 @@ class test_plot_module(unittest.TestCase):
     y = [0, 3, -1, 3, 10]
 
     def setUp(self):
-        self.train_set = model.TrainingSet()
+        self.train_set = model.TrainingSet('datasets/olive_training.csv')
         plot.update_global_train_set(self.train_set)
         model_nipals = model.nipals(self.train_set.x, self.train_set.y)
         plot.update_global_model(model_nipals)
@@ -434,7 +429,7 @@ class test_plot_module(unittest.TestCase):
         plot.biplot(plt.gca(), 0, 1, x=True)
         plot.scores(plt.gca(), 0, 1, x=True)
         plot.loadings(plt.gca(), 0, 1, x=True)
-        plot.calculated_y(plt.gca())
+        plot.calculated_y(plt.gca(), 0)
         plot.y_predicted_y_real(plt.gca())
         plot.y_predicted(plt.gca())
         plot.t_square_q(plt.gca())
@@ -445,17 +440,12 @@ class test_plot_module(unittest.TestCase):
         plot.weights(plt.gca(), 0, 1)
         plot.weights_line(plt.gca(), 0)
         plot.data(plt.gca())
-        plot.sklearn_inner_relations(plt.gca(), 0)
 
 
 class test_utility_module(unittest.TestCase):
 
-    def test_check_python_version(self):
-        self.assertTrue(utility.check_python_version())
-
     def test_CLI_args(self):
         self.assertIsInstance(utility.CLI.args(), argparse.Namespace)
-        self.assertTrue(hasattr(utility.CLI.args(), 'input_file'))
 
 
 if __name__ == '__main__':
