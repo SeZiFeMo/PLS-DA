@@ -67,8 +67,17 @@ class test_IO_module(unittest.TestCase):
                                 ['G', -2.5, 100, 2.9],
                                 ['B', 15, 1.23, 4.56]])
 
+    def test_dump(self):
+        pass
 
-class test_model_module(unittest.TestCase):
+    def test_save_matrix(self):
+        pass
+
+    def test_load(self):
+        pass
+
+
+class test_trainingset_preprocessing(unittest.TestCase):
 
     matrix_A = np.array([[2.0, 3.0, 4.0, 5.0],
                          [4.0, 6.0, 8.0, 10.0],
@@ -94,7 +103,7 @@ class test_model_module(unittest.TestCase):
     def tearDown(self):
         self.train_set = None
 
-    def test_Preprocessing_init(self):
+    def test_TrainingSet_init(self):
         self.assertEqual(len(self.train_set.header), self.train_set.m + 1)
         self.assertEqual(len(self.train_set.categorical_y), self.train_set.n)
         self.assertEqual(len(self.train_set.y), self.train_set.n)
@@ -104,7 +113,7 @@ class test_model_module(unittest.TestCase):
         self.assertFalse(self.train_set.normalized)
         self.assertFalse(self.train_set.autoscaled)
 
-    def test_Preprocessing_center(self):
+    def test_TrainingSet_center(self):
         self.train_set.x = self.matrix_3x3.copy()
         self.train_set.y = self.matrix_3x2.copy()
 
@@ -118,7 +127,7 @@ class test_model_module(unittest.TestCase):
         np.testing.assert_allclose(self.train_set.y, self.null_3x2,
                                    atol=absolute_tolerance)
 
-    def test_Preprocessing_normalize(self):
+    def test_TrainingSet_normalize(self):
         self.train_set.x = self.matrix_A.copy()
         self.train_set.y = self.matrix_A.copy()
 
@@ -130,7 +139,7 @@ class test_model_module(unittest.TestCase):
         np.testing.assert_allclose(self.train_set.x, self.normalized_A)
         np.testing.assert_allclose(self.train_set.y, self.normalized_A)
 
-    def test_Preprocess_autoscale(self):
+    def test_TrainingSet_autoscale(self):
         dataset_copy = self.train_set.x.copy()
         dummy_y_copy = self.train_set.y.copy()
 
@@ -397,6 +406,9 @@ class test_plot_module(unittest.TestCase):
                 self.assertTrue(key in cat_symbols)
                 self.assertIsInstance(cat_symbols[key], str)
 
+    def test_update_globals(self):
+        pass
+
     def test_scatter_wrapper(self):
         for cat in self.train_set.categories:
             self.assertIsNone(plot.scatter_wrapper(plt.gca(), self.x, self.y,
@@ -410,13 +422,49 @@ class test_plot_module(unittest.TestCase):
         self.assertRaises(ValueError, plot.scatter_wrapper, plt.gca(),
                           456, 'string', 'U')
 
-    def test_scores_plot(self):
+    def test_line_wrapper(self):
+        pass
+
+    def test_scree(self):
+        pass
+
+    def test_cumulative_explained_variance(self):
+        pass
+
+    def test_inner_relation(self):
+        pass
+
+    def test_biplot(self):
+        pass
+
+    def test_scores(self):
         self.assertRaises(ValueError, plot.scores, plt.gca(),
                           lv_a=1, lv_b=1, x=True)
 
-    def test_loadings_plot(self):
+    def test_loadings(self):
         self.assertRaises(ValueError, plot.loadings, plt.gca(),
                           lv_a=1, lv_b=1, y=True)
+
+    def test_calculated_y(self):
+        pass
+
+    def test_y_predicted_y_real(self):
+        pass
+
+    def test_y_predicted(self):
+        pass
+
+    def test_y_modeled_class(self):
+        pass
+
+    def test_weights(self):
+        pass
+
+    def test_weights_line(self):
+        pass
+
+    def rmsec_lv(self):
+        pass
 
     def test_check_consistency(self):
         plot.scatter_wrapper(plt.gca(), self.x, self.y)
@@ -446,6 +494,15 @@ class test_utility_module(unittest.TestCase):
 
     def test_CLI_args(self):
         self.assertIsInstance(utility.CLI.args(), argparse.Namespace)
+
+    def test_list_to_string(self):
+        pass
+
+    def test_get_unique_list(self):
+        pass
+
+    def test_cached_property(self):
+        pass
 
 
 if __name__ == '__main__':
