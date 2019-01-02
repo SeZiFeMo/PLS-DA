@@ -23,7 +23,7 @@ Requirements list is in the file __environment.yml__.
 ```python pls-da.py```
 
 ## CSV FORMAT
-The input files have to be compliant with the _command separated value_ standard, thus the separator used is the semicolon ';' and the encoding of the file is ISO8859 (the standard one in Italy).
+The input files have to be compliant with the _comma separated value_ standard, thus the separator used is the semicolon ';' and the encoding of the file is ISO8859 (the standard one in Italy).
 The first row have to have the variable labels.
 The first column have to be the "Category" type, while the others the variables values.
 
